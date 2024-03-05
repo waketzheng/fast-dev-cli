@@ -60,8 +60,7 @@ except ModuleNotFoundError:
     _Group.command = _command  # type:ignore
 
     @click.group()
-    def cli() -> None:
-        ...  # pragma: no cover
+    def cli() -> None: ...  # pragma: no cover
 
 
 TOML_FILE = "pyproject.toml"
@@ -225,8 +224,7 @@ def bump():
     return BumpUp(commit, part, dry="--dry" in args).run()
 
 
-class EnvError(Exception):
-    ...
+class EnvError(Exception): ...
 
 
 class Project:
