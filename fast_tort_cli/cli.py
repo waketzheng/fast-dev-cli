@@ -492,9 +492,8 @@ class LintCode(DryRun):
         if check_only:
             tools[0] += " --check-only"
             tools[1] += " --check --fast"
-            tools[2] = tools[2].split()[0]
-        elif load_bool("NO_FIX"):
-            tools[2] = tools[2].rsplit(None, 1)[0]
+        if check_only or load_bool("NO_FIX"):
+            tools[2] = tools[2].replace(" --fix", "")
         if load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
