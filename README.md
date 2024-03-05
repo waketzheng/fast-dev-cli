@@ -1,9 +1,8 @@
 <p align="center">
-  <a href="https://fastapi.tiangolo.com"><img src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png" alt="FastAPI"></a>
-  <a href="https://tortoise.github.io"><img src="https://avatars.githubusercontent.com/u/42678965" alt="TortoiseORM"></a>
+  <img src="https://fasttortcli.waketzheng.top/img/logo-margin/logo-teal.png" alt="FastTortCli">
 </p>
 <p align="center">
-    <em>Toolkit for FastAPI+TortoiseORM projects to runserver/migration/lint ...</em>
+    <em>Toolkit for python code lint/test/bump ...</em>
 </p>
 <p align="center">
 <a href="https://pypi.org/project/fast-tort-cli" target="_blank">

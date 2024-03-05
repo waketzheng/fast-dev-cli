@@ -490,13 +490,13 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(cls, paths=".", check_only=False):
         cmd = ""
-        tools = ["isort", "black", "ruff --fix", "mypy"]
+        tools = ["isort", "black", "ruff check --fix", "mypy"]
         if check_only:
             tools[0] += " --check-only"
             tools[1] += " --check --fast"
             tools[2] = tools[2].split()[0]
         elif load_bool("NO_FIX"):
-            tools[2] = tools[2].split()[0]
+            tools[2] = tools[2].rsplit(None, 1)[0]
         if load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
