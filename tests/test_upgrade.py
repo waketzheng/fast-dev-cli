@@ -205,10 +205,14 @@ def test_gen_cmd():
     )
 
 
-def test_get_work_dir(mocker):
-    assert UpgradeDependencies.get_work_dir() == Path(__file__).parent.parent
-    # mocker.patch.object(UpgradeDependencies, "workdir", return_value=None)
-    # try:
-    #     UpgradeDependencies.get_work_dir() == Path(__file__).parent.parent
-    # except Exception as e:
-    #     assert "is a poetry project" in str(e)
+def test_get_dir(mocker):
+    me = Path(__file__)
+    parent = me.parent
+    root = parent.parent
+    assert (
+        UpgradeDependencies.get_work_dir() == UpgradeDependencies.get_root_dir() == root
+    )
+    with chdir(parent):
+        assert UpgradeDependencies.get_root_dir() == parent
+        mocker.patch.object(UpgradeDependencies, "python_exec_dir", return_value=me)
+        assert UpgradeDependencies.get_root_dir() == root

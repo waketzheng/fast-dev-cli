@@ -53,3 +53,8 @@ def test_with_push(mocker):
     with _clear_tags():
         git_tag_cmd = git_tag.gen()
     assert git_tag_cmd == f"git tag -a {version} -m '' && git push --tags"
+    mocker.patch.object(git_tag, "has_v_prefix", return_value=True)
+    tag_cmd = f"git tag -a v{version} -m '' && git push --tags"
+    assert git_tag.gen() == tag_cmd
+    mocker.patch.object(git_tag, "should_push", return_value=True)
+    assert git_tag.gen() == tag_cmd + " && git push"

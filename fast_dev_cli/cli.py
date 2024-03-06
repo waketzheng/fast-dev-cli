@@ -230,13 +230,18 @@ class EnvError(Exception): ...
 class Project:
     path_depth = 5
 
-    @classmethod
-    def get_work_dir(cls, name=TOML_FILE, cwd: Path | None = None) -> Path:
-        parent = cwd or Path.cwd()
-        for _ in range(cls.path_depth):
+    @staticmethod
+    def work_dir(name: str, parent: Path, depth: int) -> Path | None:
+        for _ in range(depth):
             if parent.joinpath(name).exists():
                 return parent
             parent = parent.parent
+        return None
+
+    @classmethod
+    def get_work_dir(cls, name=TOML_FILE, cwd: Path | None = None) -> Path:
+        if d := cls.work_dir(name, cwd or Path.cwd(), cls.path_depth):
+            return d
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
@@ -244,10 +249,14 @@ class Project:
         toml_file = cls.get_work_dir().resolve() / TOML_FILE  # to be optimize
         return toml_file.read_text("utf8")
 
+    @staticmethod
+    def python_exec_dir() -> Path:
+        return Path(sys.executable).parent
+
     @classmethod
     def get_root_dir(cls, cwd: Path | None = None) -> Path:
         root = cwd or Path.cwd()
-        venv_parent = Path(sys.executable).parent.parent
+        venv_parent = cls.python_exec_dir().parent.parent
         if root.is_relative_to(venv_parent):
             root = venv_parent
         return root
@@ -421,13 +430,19 @@ class GitTag(DryRun):
         self.message = message
         super().__init__(dry=dry)
 
+    def has_v_prefix(self) -> bool:
+        return "v" in capture_cmd_output("git tag")
+
+    def should_push(self) -> bool:
+        return "git push" in self.git_status
+
     def gen(self):
         version = get_current_version(verbose=False)
-        if "v" in capture_cmd_output("git tag"):
+        if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
             version = "v" + version
         cmd = f"git tag -a {version} -m {self.message!r} && git push --tags"
-        if "git push" in self.git_status:
+        if self.should_push():
             cmd += " && git push"
         return cmd
 

@@ -78,6 +78,10 @@ def test_lint_class(mocker):
     assert check.gen() == (
         "isort --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
     )
+    mocker.patch("fast_dev_cli.cli.Project.work_dir", return_value=None)
+    assert LintCode(".").gen() == (
+        "isort --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
+    )
 
 
 def test_lint_func(mocker):
