@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "fast-tort-cli"
+name = "fast-dev-cli"
 version = "0.6.0"
 description = ""
 authors = ["Waket Zheng <waketzheng@gmail.com>"]
 readme = "README.md"
-packages = [{include = "fast_tort_cli"}]
+packages = [{include = "fast_dev_cli"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -41,7 +41,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-fast = "fast_tort_cli:cli"
+fast = "fast_dev_cli:cli"
 
 [tool.isort]
 profile = "black"

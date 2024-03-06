@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 from tests.utils import capture_stdout, temp_file
 
-from fast_tort_cli.cli import (
+from fast_dev_cli.cli import (
     GitTag,
     capture_cmd_output,
     get_current_version,

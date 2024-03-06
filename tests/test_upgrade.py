@@ -3,7 +3,7 @@ from contextlib import chdir, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from fast_tort_cli.cli import TOML_FILE, UpgradeDependencies, run_and_echo, upgrade
+from fast_dev_cli.cli import TOML_FILE, UpgradeDependencies, run_and_echo, upgrade
 
 
 def test_parse_value():

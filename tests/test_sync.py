@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tests.utils import capture_stdout, temp_file
 
-from fast_tort_cli.cli import TOML_FILE, Sync, sync
+from fast_dev_cli.cli import TOML_FILE, Sync, sync
 
 TOML_TEXT = """
 [tool.poetry]
@@ -28,7 +28,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 def test_sync_not_in_venv(mocker):
-    mocker.patch("fast_tort_cli.cli.is_venv", return_value=False)
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     assert (
         Sync("req.txt", "", True, dry=True).gen()
         == "poetry export --with=dev --without-hashes -o req.txt && poetry run pip install -r req.txt"
@@ -46,7 +46,7 @@ def test_sync_not_in_venv(mocker):
 
 
 def test_sync(mocker):
-    mocker.patch("fast_tort_cli.cli.is_venv", return_value=True)
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert (
         Sync("req.txt", "", True, dry=True).gen()
         == "poetry export --with=dev --without-hashes -o req.txt && pip install -r req.txt"

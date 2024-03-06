@@ -41,7 +41,7 @@ jobs:
       - name: build
         run: poetry build
       - name: Test with pytest
-        run: poetry run coverage run --source=fast_tort_cli -m pytest
+        run: poetry run coverage run --source=fast_dev_cli -m pytest
       - name: Upload Coverage
         run: poetry run coveralls --service=github
         env:

@@ -7,9 +7,10 @@ import pytest
 from pytest_mock import MockerFixture
 from tests.utils import mock_sys_argv
 
-from fast_tort_cli.cli import (
+from fast_dev_cli.cli import (
     TOML_FILE,
     BumpUp,
+    EnvError,
     Exit,
     Project,
     bump,
@@ -86,12 +87,11 @@ def test_bump(
         d.mkdir()
         with chdir(d):
             work_dir = Project.get_work_dir()
-            work_dir2 = Project.workdir(TOML_FILE)
+            work_dir2 = Project.get_work_dir(TOML_FILE)
             assert Path.cwd() == d == anyio.run(anyio.Path.cwd)
-            sub = d / "1/2/3/4/5"
+            sub = d / ("1/" * Project.path_depth)
             sub.mkdir(parents=True, exist_ok=True)
             with chdir(sub):
-                async_work_dir = anyio.run(Project.work_dir, TOML_FILE, anyio.Path.cwd)
-                sync_work_dir = Project.workdir(TOML_FILE)
+                with pytest.raises(EnvError):
+                    Project.get_work_dir(TOML_FILE)
         assert work_dir == work_dir2 == tmp_path
-        assert async_work_dir == sync_work_dir is None

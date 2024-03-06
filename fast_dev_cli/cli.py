@@ -228,34 +228,15 @@ class EnvError(Exception): ...
 
 
 class Project:
-    @staticmethod
-    async def work_dir(name: str, cwd) -> Path | None:
-        parent = await cwd()
-        for _ in range(5):
-            if await parent.joinpath(name).exists():
-                return parent._path
-            parent = parent.parent
-        return None
-
-    @staticmethod
-    def workdir(name: str, cwd: Path | None = None) -> Path | None:
-        parent = cwd or Path.cwd()
-        for _ in range(5):
-            if parent.joinpath(name).exists():
-                return parent
-            parent = parent.parent
-        return None
+    path_depth = 5
 
     @classmethod
     def get_work_dir(cls, name=TOML_FILE, cwd: Path | None = None) -> Path:
-        try:
-            from anyio import Path, run
-
-            if (p := run(cls.work_dir, name, Path.cwd)) is not None:
-                return p
-        except ModuleNotFoundError:
-            if (path := cls.workdir(name, cwd)) is not None:
-                return path
+        parent = cwd or Path.cwd()
+        for _ in range(cls.path_depth):
+            if parent.joinpath(name).exists():
+                return parent
+            parent = parent.parent
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
@@ -521,8 +502,8 @@ class LintCode(DryRun):
             if cls.check_lint_tool_installed():
                 prefix = ""
             else:
-                if check_call("python -c 'import fast_tort_cli'"):
-                    command = 'python -m pip install -U "fast_tort_cli[all]"'
+                if check_call("python -c 'import fast_dev_cli'"):
+                    command = 'python -m pip install -U "fast_dev_cli[all]"'
                     tip = "You may need to run the following command to install lint tools"
                     secho(f"{tip}:\n\n  {command}\n", fg="yellow")
         cmd += lint_them.format(prefix, paths, *tools)

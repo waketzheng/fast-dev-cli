@@ -1,6 +1,6 @@
 from tests.utils import capture_stdout
 
-from fast_tort_cli.cli import get_current_version, version
+from fast_dev_cli.cli import get_current_version, version
 
 
 def test_version():
