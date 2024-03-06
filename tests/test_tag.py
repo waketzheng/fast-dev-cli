@@ -2,7 +2,13 @@ from contextlib import contextmanager
 
 from tests.utils import capture_stdout, temp_file
 
-from fast_tort_cli.cli import GitTag, get_current_version, run_and_echo, tag
+from fast_tort_cli.cli import (
+    GitTag,
+    capture_cmd_output,
+    get_current_version,
+    run_and_echo,
+    tag,
+)
 
 
 def test_tag():
@@ -42,7 +48,8 @@ def test_with_push(mocker):
     git_tag = GitTag("", dry=True)
     mocker.patch.object(git_tag, "git_status", return_value="git push")
     version = get_current_version()
-    assert git_tag.gen() == f"git tag -a v{version} -m '' && git push --tags"
+    prefix = "v" if "v" in capture_cmd_output(["git", "tag"]) else ""
+    assert git_tag.gen() == f"git tag -a {prefix}{version} -m '' && git push --tags"
     with _clear_tags():
         git_tag_cmd = git_tag.gen()
     assert git_tag_cmd == f"git tag -a {version} -m '' && git push --tags"

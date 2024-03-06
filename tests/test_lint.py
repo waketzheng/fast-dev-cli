@@ -97,6 +97,7 @@ def test_lint_func(mocker):
 
 
 def test_lint_without_black_installed(mocker):
+    mocker.patch("fast_tort_cli.cli.is_venv", return_value=True)
     mocker.patch(
         "fast_tort_cli.cli.LintCode.check_lint_tool_installed", return_value=False
     )
