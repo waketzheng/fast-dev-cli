@@ -2,7 +2,6 @@ from contextlib import chdir, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-import anyio
 import pytest
 from pytest_mock import MockerFixture
 from tests.utils import mock_sys_argv
@@ -88,7 +87,7 @@ def test_bump(
         with chdir(d):
             work_dir = Project.get_work_dir()
             work_dir2 = Project.get_work_dir(TOML_FILE)
-            assert Path.cwd() == d == anyio.run(anyio.Path.cwd)
+            assert Path.cwd() == d
             sub = d / ("1/" * Project.path_depth)
             sub.mkdir(parents=True, exist_ok=True)
             with chdir(sub):

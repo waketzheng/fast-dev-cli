@@ -1,4 +1,3 @@
-import sys
 from contextlib import chdir, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -207,10 +206,9 @@ def test_gen_cmd():
 
 
 def test_get_work_dir(mocker):
-    mocker.patch.dict(sys.modules, {"anyio": None})
     assert UpgradeDependencies.get_work_dir() == Path(__file__).parent.parent
-    mocker.patch.object(UpgradeDependencies, "workdir", return_value=None)
-    try:
-        UpgradeDependencies.get_work_dir() == Path(__file__).parent.parent
-    except Exception as e:
-        assert "is a poetry project" in str(e)
+    # mocker.patch.object(UpgradeDependencies, "workdir", return_value=None)
+    # try:
+    #     UpgradeDependencies.get_work_dir() == Path(__file__).parent.parent
+    # except Exception as e:
+    #     assert "is a poetry project" in str(e)

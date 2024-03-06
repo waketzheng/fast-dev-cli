@@ -14,7 +14,6 @@ black = {version = ">=23.9.1", optional = true}
 ruff = {version = ">=0.3", optional = true}
 typer = {extras = ["all"], version = ">=0.9.0", optional = true}
 mypy = {version = ">=1.5.0", optional = true}
-anyio = {version = ">=3.7.1", optional = true}
 coverage = {version = ">=6.5.0", optional = true}
 bumpversion = {version = "^0.6.0", optional = true}
 pytest = {version = "^8.0.2", optional = true}
@@ -23,7 +22,6 @@ pytest = {version = "^8.0.2", optional = true}
 all = ["isort", "black", "ruff", "typer", "mypy", "bumpversion", "pytest", "coverage"]
 
 [tool.poetry.group.dev.dependencies]
-anyio = "*"
 isort = "*"
 black = "*"
 ruff = ">=0.3"
