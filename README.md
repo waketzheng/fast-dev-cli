@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/pypi/v/fast-dev-cli?color=%2334D058&label=pypi%20package" alt="Package version">
 </a>
 <a href="https://pypi.org/project/fast-dev-cli" target="_blank">
-    <img src="https://img.shields.io/pypi/pyversions/fast-dev-cli.svg?color=%2334D058" alt="Supported Python versions">
+    <img src="https://img.shields.io/pypi/pyversions/fast-dev-cli.svg" alt="Supported Python versions">
 </a>
 <a href="https://github.com/waketzheng/fast-dev-cli/actions?query=workflow:ci" target="_blank">
     <img src="https://github.com/waketzheng/fast-dev-cli/workflows/ci/badge.svg" alt="GithubActionResult">
@@ -47,6 +47,10 @@ fast lint /path/to/file-or-directory
 ```bash
 fast bump
 ```
+- Run unittest and report coverage
+```bash
+fast test
+```
 - Export requirement file and install `pip install -r `
 ```bash
 fast sync
@@ -54,8 +58,4 @@ fast sync
 - Upgrade main/dev dependenices to latest version
 ```bash
 fast upgrade
-```
-- Run unittest and report coverage
-```bash
-fast test
 ```
