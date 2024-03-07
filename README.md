@@ -37,6 +37,8 @@ $ pip install "fast-dev-cli[all]"
 Successfully installed fast-dev-cli
 ```
 
+</div>
+
 ## Usage
 
 - Lint py code:
