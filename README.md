@@ -57,7 +57,7 @@ fast test
 ```bash
 fast sync
 ```
-- Upgrade main/dev dependenices to latest version
+- Upgrade main/dev dependencies to latest version
 ```bash
 fast upgrade
 ```

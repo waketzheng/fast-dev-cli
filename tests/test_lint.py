@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from tests.utils import capture_stdout, mock_sys_argv
 
-from fast_dev_cli.cli import LintCode, capture_cmd_output, check_only, lint, make_style
+from fast_dev_cli.cli import LintCode, capture_cmd_output, lint, make_style, only_check
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def test_make_style(mocker):
         in stream.getvalue()
     )
     with capture_stdout() as stream:
-        check_only(dry=True)
+        only_check(dry=True)
     assert (
         "isort --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
         in stream.getvalue()

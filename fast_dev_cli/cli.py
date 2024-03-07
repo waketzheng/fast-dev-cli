@@ -164,9 +164,9 @@ class BumpUp(DryRun):
             raise Exit(1) from e
 
     def gen(self) -> str:
-        version = get_current_version()
+        _version = get_current_version()
         filename = self.filename
-        echo(f"Current version(@{filename}): {version}")
+        echo(f"Current version(@{filename}): {_version}")
         if self.part:
             part = self.get_part(self.part)
         else:
@@ -177,7 +177,7 @@ class BumpUp(DryRun):
                 part = "patch"
         self.part = part
         parse = r'--parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"'
-        cmd = f'bumpversion {parse} --current-version="{version}" {part} {filename}'
+        cmd = f'bumpversion {parse} --current-version="{_version}" {part} {filename}'
         if self.commit:
             if part != "patch":
                 cmd += " --tag"
@@ -279,11 +279,11 @@ class UpgradeDependencies(Project, DryRun):
 
         Example::
             >>> s= 'typer = {extras = ["all"], version = "^0.9.0", optional = true}'
-            >>> parse_value(s, 'extras')
+            >>> UpgradeDependencies.parse_value(s, 'extras')
             'all'
-            >>> parse_value(s, 'optional')
+            >>> UpgradeDependencies.parse_value(s, 'optional')
             'true'
-            >>> parse_value(s, 'version')
+            >>> UpgradeDependencies.parse_value(s, 'version')
             '^0.9.0'
         """
         sep = key + " = "
@@ -402,16 +402,16 @@ class UpgradeDependencies(Project, DryRun):
         dev_flags: str,
     ) -> str:
         command = "poetry add "
-        upgrade = ""
+        _upgrade = ""
         if main_args:
-            upgrade = command + " ".join(main_args)
+            _upgrade = command + " ".join(main_args)
         if dev_args:
-            if upgrade:
-                upgrade += " && "
-            upgrade += command + dev_flags + " " + " ".join(dev_args)
+            if _upgrade:
+                _upgrade += " && "
+            _upgrade += command + dev_flags + " " + " ".join(dev_args)
         for single in others:
-            upgrade += f" && poetry add {' '.join(single)}"
-        return upgrade
+            _upgrade += f" && poetry add {' '.join(single)}"
+        return _upgrade
 
     def gen(self) -> str:
         return self.gen_cmd()
@@ -437,11 +437,11 @@ class GitTag(DryRun):
         return "git push" in self.git_status
 
     def gen(self):
-        version = get_current_version(verbose=False)
+        _version = get_current_version(verbose=False)
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
-            version = "v" + version
-        cmd = f"git tag -a {version} -m {self.message!r} && git push --tags"
+            _version = "v" + _version
+        cmd = f"git tag -a {_version} -m {self.message!r} && git push --tags"
         if self.should_push():
             cmd += " && git push"
         return cmd
@@ -555,7 +555,7 @@ def make_style(
 
 
 @cli.command(name="check")
-def check_only(
+def only_check(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ):
     """Check code style without reformat"""
