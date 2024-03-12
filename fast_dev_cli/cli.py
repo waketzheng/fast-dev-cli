@@ -484,7 +484,7 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(cls, paths=".", check_only=False):
         cmd = ""
-        tools = ["isort", "black", "ruff check --fix", "mypy"]
+        tools = ["isort --profile=black", "black", "ruff check --fix", "mypy"]
         if check_only:
             tools[0] += " --check-only"
             tools[1] += " --check --fast"

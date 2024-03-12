@@ -20,7 +20,7 @@ def mock_skip_mypy(monkeypatch):
 def test_check():
     command = capture_cmd_output("fast check --dry")
     assert (
-        "isort --check-only --src=fast_dev_cli . && " in command
+        "isort --profile=black --check-only --src=fast_dev_cli . && " in command
         and "black --check --fast . && " in command
         and "ruff check . && " in command
         and "mypy ." in command
@@ -35,7 +35,7 @@ def test_lint_cmd():
         == command
     )
     assert (
-        "isort --src=fast_dev_cli . && " in command
+        "isort --profile=black --src=fast_dev_cli . && " in command
         and "black . && " in command
         and "ruff check --fix . && " in command
         and "mypy ." in command
@@ -52,19 +52,19 @@ def test_make_style(mocker):
     with capture_stdout() as stream:
         make_style(".", check_only=False, dry=True)
     assert (
-        "isort --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
         in stream.getvalue()
     )
     with capture_stdout() as stream:
         make_style(".", check_only=True, dry=True)
     assert (
-        "isort --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
+        "isort --profile=black --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
         in stream.getvalue()
     )
     with capture_stdout() as stream:
         only_check(dry=True)
     assert (
-        "isort --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
+        "isort --profile=black --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
         in stream.getvalue()
     )
 
@@ -72,15 +72,15 @@ def test_make_style(mocker):
 def test_lint_class(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == (
-        "isort --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
     )
     check = LintCode(".", check_only=True)
     assert check.gen() == (
-        "isort --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
+        "isort --profile=black --check-only --src=fast_dev_cli . && black --check --fast . && ruff check . && mypy ."
     )
     mocker.patch("fast_dev_cli.cli.Project.work_dir", return_value=None)
     assert LintCode(".").gen() == (
-        "isort --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
     )
 
 
@@ -89,13 +89,13 @@ def test_lint_func(mocker):
     with capture_stdout() as stream:
         lint(".", dry=True)
     assert (
-        "isort --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check --fix . && mypy ."
         in stream.getvalue()
     )
     with mock_sys_argv(["tests"]), capture_stdout() as stream:
         lint(dry=True)
     assert (
-        "isort --src=fast_dev_cli tests && black tests && ruff check --fix tests && mypy tests"
+        "isort --profile=black --src=fast_dev_cli tests && black tests && ruff check --fix tests && mypy tests"
         in stream.getvalue()
     )
 
@@ -117,14 +117,14 @@ def test_lint_without_black_installed(mocker):
 def test_no_fix(mock_no_fix, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == (
-        "isort --src=fast_dev_cli . && black . && ruff check . && mypy ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check . && mypy ."
     )
 
 
 def test_skip_mypy(mock_skip_mypy, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == (
-        "isort --src=fast_dev_cli . && black . && ruff check --fix ."
+        "isort --profile=black --src=fast_dev_cli . && black . && ruff check --fix ."
     )
 
 
@@ -134,12 +134,12 @@ def test_not_in_root(mocker):
     with chdir(root / "fast_dev_cli"):
         assert (
             LintCode(".").gen()
-            == "isort --src=. . && black . && ruff check --fix . && mypy ."
+            == "isort --profile=black --src=. . && black . && ruff check --fix . && mypy ."
         )
     with chdir(root / "tests"):
         assert (
             LintCode(".").gen()
-            == "isort --src=../fast_dev_cli . && black . && ruff check --fix . && mypy ."
+            == "isort --profile=black --src=../fast_dev_cli . && black . && ruff check --fix . && mypy ."
         )
         sub = Path("temp_dir")
         sub.mkdir()
@@ -148,5 +148,5 @@ def test_not_in_root(mocker):
         sub.rmdir()
         assert (
             cmd
-            == "isort --src=../../fast_dev_cli . && black . && ruff check --fix . && mypy ."
+            == "isort --profile=black --src=../../fast_dev_cli . && black . && ruff check --fix . && mypy ."
         )
