@@ -14,6 +14,15 @@ def mock_sys_argv(args: list[str]):
 
 @contextmanager
 def capture_stdout():
+    """Redirect sys.stdout to a new StringIO
+
+    Example::
+    ```py
+        with capture_stdout() as stream:
+            GitTag(message="", dry=True).run()
+        assert "git tag -a" in stream.getvalue()
+    ```
+    """
     stream = StringIO()
     with redirect_stdout(stream):
         yield stream
