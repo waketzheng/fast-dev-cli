@@ -209,6 +209,7 @@ def bump_version(
     ),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ):
+    """Bump up version string in pyproject.toml"""
     return BumpUp(commit, part.value, dry=dry).run()
 
 

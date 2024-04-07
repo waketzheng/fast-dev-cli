@@ -34,7 +34,7 @@ Python 3.11+
 ```console
 $ pip install "fast-dev-cli[all]"
 ---> 100%
-Successfully installed fast-dev-cli
+Successfully installed fast-dev-cli isort black ruff mypy typer bumpversion pytest coverage
 ```
 
 </div>
@@ -44,6 +44,10 @@ Successfully installed fast-dev-cli
 - Lint py code:
 ```bash
 fast lint /path/to/file-or-directory
+```
+- Check only
+```bash
+fast check
 ```
 - Bump up version in pyproject.toml
 ```bash
