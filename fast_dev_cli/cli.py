@@ -604,6 +604,10 @@ def sync(
     Sync(filename, extras, save, dry=dry).run()
 
 
+def _should_run_test_script(path: Path) -> bool:
+    return path.exists()
+
+
 @cli.command()
 def test(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
@@ -611,7 +615,8 @@ def test(
     """Run unittest by pytest and report coverage"""
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
-    if (test_script := root / "scripts" / "test.sh").exists():
+    test_script = root / "scripts" / "test.sh"
+    if _should_run_test_script(test_script):
         cmd = f"sh {test_script.relative_to(root)}"
         if cwd != root:
             cmd = f"cd {root} && " + cmd

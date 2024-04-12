@@ -1,3 +1,5 @@
+import pathlib
+
 from pytest_mock import MockerFixture
 from tests.utils import capture_stdout
 
@@ -38,3 +40,18 @@ def test_test_no_in_venv(mocker: MockerFixture):
         '--> poetry run coverage run -m pytest -s && poetry run coverage report --omit="tests/*" -m'
         in stream.getvalue()
     )
+
+
+def test_run_script(mocker: MockerFixture, capsys):
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=True)
+    test(dry=True)
+    assert "sh scripts/test.sh" in capsys.readouterr().out
+
+
+def test_run_script_in_sub_directory(mocker: MockerFixture, capsys):
+    parent = pathlib.Path(__file__).parent
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=True)
+    mocker.patch("pathlib.Path.cwd", return_value=parent)
+    test(dry=True)
+    out = capsys.readouterr().out
+    assert f"cd {parent.parent} && sh scripts/test.sh" in out
