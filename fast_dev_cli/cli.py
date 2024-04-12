@@ -7,6 +7,7 @@ from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 from subprocess import CompletedProcess
+from typing import Self, Type
 
 __version__ = importlib.metadata.version(Path(__file__).parent.name)
 
@@ -129,14 +130,14 @@ def exit_if_run_failed(
 
 
 class DryRun:
-    def __init__(self, _exit=False, dry=False):
+    def __init__(self: Self, _exit=False, dry=False) -> None:
         self.dry = dry
         self._exit = _exit
 
-    def gen(self) -> str:
+    def gen(self: Self) -> str:
         raise NotImplementedError
 
-    def run(self) -> None:
+    def run(self: Self) -> None:
         exit_if_run_failed(self.gen(), _exit=self._exit, dry=self.dry)
 
 
@@ -146,7 +147,9 @@ class BumpUp(DryRun):
         minor = "minor"
         major = "major"
 
-    def __init__(self, commit: bool, part: str, filename=TOML_FILE, dry=False):
+    def __init__(
+        self: Self, commit: bool, part: str, filename=TOML_FILE, dry=False
+    ) -> None:
         self.commit = commit
         self.part = part
         self.filename = filename
@@ -163,7 +166,7 @@ class BumpUp(DryRun):
             echo(f"Invalid part: {s!r}")
             raise Exit(1) from e
 
-    def gen(self) -> str:
+    def gen(self: Self) -> str:
         _version = get_current_version()
         filename = self.filename
         echo(f"Current version(@{filename}): {_version}")
@@ -186,7 +189,7 @@ class BumpUp(DryRun):
             cmd += " --allow-dirty"
         return cmd
 
-    def run(self) -> None:
+    def run(self: Self) -> None:
         super().run()
         if not self.commit and not self.dry:
             new_version = get_current_version(True)
@@ -196,7 +199,7 @@ class BumpUp(DryRun):
 
 
 @cli.command()
-def version():
+def version() -> None:
     """Show the version of this tool"""
     echo(__version__)
 
@@ -208,12 +211,12 @@ def bump_version(
         False, "--commit", "-c", help="Whether run `git commit` after version changed"
     ),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Bump up version string in pyproject.toml"""
     return BumpUp(commit, part.value, dry=dry).run()
 
 
-def bump():
+def bump() -> None:
     part, commit = "", False
     if args := sys.argv[2:]:
         if "-c" in args or "--commit" in args:
@@ -240,13 +243,17 @@ class Project:
         return None
 
     @classmethod
-    def get_work_dir(cls, name=TOML_FILE, cwd: Path | None = None) -> Path:
+    def get_work_dir(
+        cls: Type[Self], name=TOML_FILE, cwd: Path | None = None, allow_cwd=False
+    ) -> Path:
         if d := cls.work_dir(name, cwd or Path.cwd(), cls.path_depth):
             return d
+        if allow_cwd:
+            return cls.get_root_dir(cwd)
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
-    def load_toml_text(cls):
+    def load_toml_text(cls: Type[Self]) -> str:
         toml_file = cls.get_work_dir().resolve() / TOML_FILE  # to be optimize
         return toml_file.read_text("utf8")
 
@@ -255,7 +262,7 @@ class Project:
         return Path(sys.executable).parent
 
     @classmethod
-    def get_root_dir(cls, cwd: Path | None = None) -> Path:
+    def get_root_dir(cls: Type[Self], cwd: Path | None = None) -> Path:
         root = cwd or Path.cwd()
         venv_parent = cls.python_exec_dir().parent.parent
         if root.is_relative_to(venv_parent):
@@ -314,7 +321,7 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def build_args(
-        cls, package_lines: list[str]
+        cls: Type[Self], package_lines: list[str]
     ) -> tuple[list[str], dict[str, list[str]]]:
         args: list[str] = []  # ['typer[all]', 'fastapi']
         specials: dict[str, list[str]] = {}  # {'--platform linux': ['gunicorn']}
@@ -348,7 +355,7 @@ class UpgradeDependencies(Project, DryRun):
         return args, specials
 
     @classmethod
-    def should_with_dev(cls):
+    def should_with_dev(cls: Type[Self]) -> bool:
         text = cls.load_toml_text()
         return cls.DevFlag.new in text or cls.DevFlag.old in text
 
@@ -365,7 +372,7 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def get_args(
-        cls, toml_text: str | None = None
+        cls: Type[Self], toml_text: str | None = None
     ) -> tuple[list[str], list[str], list[list[str]], str]:
         if toml_text is None:
             toml_text = cls.load_toml_text()
@@ -391,7 +398,7 @@ class UpgradeDependencies(Project, DryRun):
         return prod_packs, dev_packs, others, dev_flag
 
     @classmethod
-    def gen_cmd(cls) -> str:
+    def gen_cmd(cls: Type[Self]) -> str:
         main_args, dev_args, others, dev_flags = cls.get_args()
         return cls.to_cmd(main_args, dev_args, others, dev_flags)
 
@@ -414,30 +421,30 @@ class UpgradeDependencies(Project, DryRun):
             _upgrade += f" && poetry add {' '.join(single)}"
         return _upgrade
 
-    def gen(self) -> str:
+    def gen(self: Self) -> str:
         return self.gen_cmd()
 
 
 @cli.command()
 def upgrade(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
     UpgradeDependencies(dry=dry).run()
 
 
 class GitTag(DryRun):
-    def __init__(self, message, dry):
+    def __init__(self: Self, message: str, dry: bool) -> None:
         self.message = message
         super().__init__(dry=dry)
 
-    def has_v_prefix(self) -> bool:
+    def has_v_prefix(self: Self) -> bool:
         return "v" in capture_cmd_output("git tag")
 
-    def should_push(self) -> bool:
+    def should_push(self: Self) -> bool:
         return "git push" in self.git_status
 
-    def gen(self):
+    def gen(self: Self) -> str:
         _version = get_current_version(verbose=False)
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
@@ -448,17 +455,17 @@ class GitTag(DryRun):
         return cmd
 
     @cached_property
-    def git_status(self) -> str:
+    def git_status(self: Self) -> str:
         return capture_cmd_output("git status")
 
-    def mark_tag(self) -> bool:
+    def mark_tag(self: Self) -> bool:
         if not re.search(r"working (tree|directory) clean", self.git_status):
             run_and_echo("git status")
             echo("ERROR: Please run git commit to make sure working tree is clean!")
             return False
         return bool(super().run())
 
-    def run(self):
+    def run(self: Self) -> None:
         if self.mark_tag() and not self.dry:
             echo("You may want to publish package:\n poetry publish --build")
 
@@ -467,13 +474,13 @@ class GitTag(DryRun):
 def tag(
     message: str = Option("", "-m", "--message"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Run shell command: git tag -a <current-version-in-pyproject.toml> -m {message}"""
     GitTag(message, dry=dry).run()
 
 
 class LintCode(DryRun):
-    def __init__(self, args, check_only=False, _exit=False, dry=False):
+    def __init__(self: Self, args, check_only=False, _exit=False, dry=False) -> None:
         self.args = args
         self.check_only = check_only
         super().__init__(_exit, dry)
@@ -483,7 +490,7 @@ class LintCode(DryRun):
         return check_call("black --version")
 
     @classmethod
-    def to_cmd(cls, paths=".", check_only=False):
+    def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
         cmd = ""
         tools = ["isort --profile=black", "black", "ruff check --fix", "mypy"]
         if check_only:
@@ -496,10 +503,7 @@ class LintCode(DryRun):
             tools = tools[:-1]
         lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
         current_path = Path.cwd()
-        try:
-            root = Project.get_work_dir(cwd=current_path)
-        except EnvError:
-            root = Project.get_root_dir(cwd=current_path)
+        root = Project.get_work_dir(cwd=current_path, allow_cwd=True)
         app_name = root.name.replace("-", "_")
         if (app_dir := root / app_name).exists() or (app_dir := root / "app").exists():
             if current_path == app_dir:
@@ -525,18 +529,18 @@ class LintCode(DryRun):
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
 
-    def gen(self) -> str:
+    def gen(self: Self) -> str:
         paths = " ".join(self.args) if self.args else "."
         return self.to_cmd(paths, self.check_only)
 
 
-def lint(files=None, dry=False):
+def lint(files=None, dry=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     LintCode(files, dry=dry).run()
 
 
-def check(files=None, dry=False):
+def check(files=None, dry=False) -> None:
     LintCode(files, check_only=True, _exit=True, dry=dry).run()
 
 
@@ -545,7 +549,7 @@ def make_style(
     files: list[str],
     check_only: bool = Option(False, "--check-only", "-c"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Run: isort+black+ruff to reformat code and then mypy to check"""
     if isinstance(files, str):
         files = [files]
@@ -558,13 +562,13 @@ def make_style(
 @cli.command(name="check")
 def only_check(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Check code style without reformat"""
     check(dry=dry)
 
 
 class Sync(DryRun):
-    def __init__(self, filename: str, extras: str, save: bool, dry=False):
+    def __init__(self: Self, filename: str, extras: str, save: bool, dry=False) -> None:
         self.filename = filename
         self.extras = extras
         self._save = save
@@ -595,7 +599,7 @@ def sync(
         False, "--save", "-s", help="Whether save the requirement file"
     ),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Export dependencies by poetry to a txt file then install by pip."""
     Sync(filename, extras, save, dry=dry).run()
 
@@ -603,12 +607,28 @@ def sync(
 @cli.command()
 def test(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-):
+) -> None:
     """Run unittest by pytest and report coverage"""
-    cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
-    if not is_venv() or not check_call("coverage --version"):
-        sep = " && "
-        cmd = sep.join("poetry run " + i for i in cmd.split(sep))
+    cwd = Path.cwd()
+    root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
+    if (test_script := root / "scripts" / "test.sh").exists():
+        cmd = f"sh {test_script.relative_to(root)}"
+        if cwd != root:
+            cmd = f"cd {root} && " + cmd
+    else:
+        cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
+        if not is_venv() or not check_call("coverage --version"):
+            sep = " && "
+            cmd = sep.join("poetry run " + i for i in cmd.split(sep))
+    exit_if_run_failed(cmd, dry=dry)
+
+
+@cli.command()
+def upload(
+    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+) -> None:
+    """Shortcut for package publish"""
+    cmd = "poetry publish --build"
     exit_if_run_failed(cmd, dry=dry)
 
 
