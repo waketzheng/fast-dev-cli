@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fast-dev-cli"
-version = "0.6.4"
+version = "0.6.5"
 description = ""
 authors = ["Waket Zheng <waketzheng@gmail.com>"]
 readme = "README.md"

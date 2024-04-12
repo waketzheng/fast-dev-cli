@@ -29,12 +29,11 @@ def test_tag():
     assert "git tag -a" in stream.getvalue()
 
 
-def test_echo_when_not_dry(mocker):
+def test_echo_when_not_dry(mocker, capsys):
     git_tag = GitTag("", dry=False)
     mocker.patch.object(git_tag, "mark_tag", return_value=True)
-    with capture_stdout() as stream:
-        git_tag.run()
-    assert "poetry publish --build" in stream.getvalue()
+    git_tag.run()
+    assert "poetry publish --build" in capsys.readouterr().out
 
 
 @contextmanager

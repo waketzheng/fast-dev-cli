@@ -1,7 +1,7 @@
 from contextlib import chdir
 from pathlib import Path
 
-from tests.utils import capture_stdout, temp_file
+from tests.utils import temp_file
 
 from fast_dev_cli.cli import TOML_FILE, Sync, sync
 
@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 """
 
 
-def test_sync_not_in_venv(mocker):
+def test_sync_not_in_venv(mocker, capsys):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     assert (
         Sync("req.txt", "", True, dry=True).gen()
@@ -40,9 +40,8 @@ def test_sync_not_in_venv(mocker):
         cmd
         == "poetry export --extras='all' --without-hashes -o req.txt && poetry run pip install -r req.txt && rm -f req.txt"
     )
-    with capture_stdout() as stream:
-        sync(extras="all", save=False, dry=True)
-    assert "pip install -r" in stream.getvalue()
+    sync(extras="all", save=False, dry=True)
+    assert "pip install -r" in capsys.readouterr().out
 
 
 def test_sync(mocker):
