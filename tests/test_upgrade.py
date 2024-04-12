@@ -161,7 +161,8 @@ pytest = {version = "^4.0", platform = "linux"}
 
 def test_gen_cmd():
     expected = 'poetry add --group dev "ipython@latest" "coveralls@latest" "pytest-mock@latest" && poetry add --optional "bumpversion@latest" "pytest@latest"'
-    assert UpgradeDependencies.gen_cmd() == UpgradeDependencies().gen() == expected
+    assert UpgradeDependencies.gen_cmd() == expected
+    assert UpgradeDependencies().gen() == expected + " && poetry update"
     stream = StringIO()
     with redirect_stdout(stream):
         upgrade(dry=True)

@@ -422,7 +422,7 @@ class UpgradeDependencies(Project, DryRun):
         return _upgrade
 
     def gen(self: Self) -> str:
-        return self.gen_cmd()
+        return self.gen_cmd() + " && poetry update"
 
 
 @cli.command()
