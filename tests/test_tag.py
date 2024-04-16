@@ -1,7 +1,5 @@
 from contextlib import contextmanager
 
-from tests.utils import capture_stdout, temp_file
-
 from fast_dev_cli.cli import (
     GitTag,
     capture_cmd_output,
@@ -9,6 +7,7 @@ from fast_dev_cli.cli import (
     run_and_echo,
     tag,
 )
+from tests.utils import capture_stdout, temp_file
 
 
 def test_tag():

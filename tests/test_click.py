@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from click.core import Group
+
 from tests.utils import mock_sys_argv
 
 
@@ -27,8 +28,9 @@ def test_click(mocker):
 
 def test_click_lint_multi_files(mocker):
     mocker.patch.dict(sys.modules, {"typer": None})
-    with mock_sys_argv(["lint", "tests", "fast_dev_cli"]), chdir(
-        Path(__file__).parent.parent
+    with (
+        mock_sys_argv(["lint", "tests", "fast_dev_cli"]),
+        chdir(Path(__file__).parent.parent),
     ):
         cli = importlib.import_module("fast_dev_cli.cli")
         importlib.reload(cli)

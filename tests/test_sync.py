@@ -1,9 +1,8 @@
 from contextlib import chdir
 from pathlib import Path
 
-from tests.utils import temp_file
-
 from fast_dev_cli.cli import TOML_FILE, Sync, sync
+from tests.utils import temp_file
 
 TOML_TEXT = """
 [tool.poetry]

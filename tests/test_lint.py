@@ -2,9 +2,9 @@ from contextlib import chdir
 from pathlib import Path
 
 import pytest
-from tests.utils import capture_stdout, mock_sys_argv
 
 from fast_dev_cli.cli import LintCode, capture_cmd_output, lint, make_style, only_check
+from tests.utils import capture_stdout, mock_sys_argv
 
 
 @pytest.fixture

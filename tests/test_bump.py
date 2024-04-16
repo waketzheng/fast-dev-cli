@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
-from tests.utils import mock_sys_argv
 
 from fast_dev_cli.cli import (
     TOML_FILE,
@@ -16,6 +15,7 @@ from fast_dev_cli.cli import (
     bump_version,
     get_current_version,
 )
+from tests.utils import mock_sys_argv
 
 
 def test_bump(
@@ -75,8 +75,9 @@ def test_bump(
             bump()
         assert patch_with_commit.replace(version, new_version) in stream.getvalue()
         stream = StringIO()
-        with redirect_stdout(stream), mock_sys_argv(
-            ["-c", "minor", "--commit", "--dry"]
+        with (
+            redirect_stdout(stream),
+            mock_sys_argv(["-c", "minor", "--commit", "--dry"]),
         ):
             bump()
         assert minor_with_commit.replace(version, new_version) in stream.getvalue()

@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import tomllib
 from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
@@ -422,7 +423,7 @@ class UpgradeDependencies(Project, DryRun):
         return _upgrade
 
     def gen(self: Self) -> str:
-        return self.gen_cmd() + " && poetry update"
+        return self.gen_cmd() + " && poetry update && poetry lock"
 
 
 @cli.command()
@@ -492,12 +493,11 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
         cmd = ""
-        tools = ["isort --profile=black", "black", "ruff check --fix", "mypy"]
+        tools = ["ruff check --extend-select=I --fix", "ruff format", "mypy"]
         if check_only:
-            tools[0] += " --check-only"
-            tools[1] += " --check --fast"
+            tools[1] += " --check"
         if check_only or load_bool("NO_FIX"):
-            tools[2] = tools[2].replace(" --fix", "")
+            tools[0] = tools[0].replace(" --fix", "")
         if load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
@@ -506,17 +506,23 @@ class LintCode(DryRun):
         root = Project.get_work_dir(cwd=current_path, allow_cwd=True)
         app_name = root.name.replace("-", "_")
         if (app_dir := root / app_name).exists() or (app_dir := root / "app").exists():
-            if current_path == app_dir:
-                tools[0] += " --src=."
-            elif current_path == root:
-                tools[0] += f" --src={app_dir.name}"
-            else:
-                parents = "../"
-                for i, p in enumerate(current_path.parents):
-                    if p == root:
-                        parents *= i + 1
-                        break
-                tools[0] += f" --src={parents}{app_dir.name}"
+            try:
+                settings = tomllib.loads(root.joinpath(TOML_FILE).read_text())
+            except (tomllib.TOMLDecodeError, FileNotFoundError):
+                settings = {}
+            if not settings.get("tool", {}).get("ruff", {}).get("src"):
+                if current_path == app_dir:
+                    src = "."
+                elif current_path == root:
+                    src = app_dir.name
+                else:
+                    parents = "../"
+                    for i, p in enumerate(current_path.parents):
+                        if p == root:
+                            parents *= i + 1
+                            break
+                    src = f"{parents}{app_dir.name}"
+                tools[0] += f' --config="src=[{src!r}]"'
         prefix = "poetry run "
         if is_venv():
             if cls.check_lint_tool_installed():
