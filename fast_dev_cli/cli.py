@@ -246,7 +246,8 @@ class Project:
     def get_work_dir(
         cls: Type[Self], name=TOML_FILE, cwd: Path | None = None, allow_cwd=False
     ) -> Path:
-        if d := cls.work_dir(name, cwd or Path.cwd(), cls.path_depth):
+        cwd = cwd or Path.cwd()
+        if d := cls.work_dir(name, cwd, cls.path_depth):
             return d
         if allow_cwd:
             return cls.get_root_dir(cwd)

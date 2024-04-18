@@ -94,4 +94,5 @@ def test_bump(
             with chdir(sub):
                 with pytest.raises(EnvError):
                     Project.get_work_dir(TOML_FILE)
+                Project.get_work_dir(allow_cwd=True) == Path.cwd()
         assert work_dir == work_dir2 == tmp_path
