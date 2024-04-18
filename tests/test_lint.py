@@ -17,30 +17,25 @@ def mock_skip_mypy(monkeypatch):
     monkeypatch.setenv("SKIP_MYPY", "1")
 
 
+SEP = " && "
 LINT_CMD = "ruff check --extend-select=I --fix . && ruff format . && mypy ."
 CHECK_CMD = "ruff check --extend-select=I . && ruff format --check . && mypy ."
 
 
 def test_check():
     command = capture_cmd_output("fast check --dry")
-    assert (
-        "ruff check --extend-select=I . && " in command
-        and "ruff format --check . && " in command
-        and "mypy ." in command
-    )
+    for cmd in CHECK_CMD.split(SEP):
+        assert cmd in command
 
 
 def test_lint_cmd():
     command = capture_cmd_output("poetry run python fast_dev_cli/cli.py lint . --dry")
+    for cmd in LINT_CMD.split(SEP):
+        assert cmd in command
     assert (
         capture_cmd_output("poetry run python fast_dev_cli/cli.py lint --dry")
         == capture_cmd_output("poetry run fast lint --dry")
         == command
-    )
-    assert (
-        "ruff check --extend-select=I --fix . && " in command
-        and "ruff format . && " in command
-        and "mypy ." in command
     )
     assert (
         capture_cmd_output("poetry run python fast_dev_cli/cli.py lint .")
@@ -53,10 +48,7 @@ def test_make_style(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
         make_style(".", check_only=False, dry=True)
-    assert (
-        "ruff check --extend-select=I --fix . && ruff format . && mypy ."
-        in stream.getvalue()
-    )
+    assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
         make_style(".", check_only=True, dry=True)
     assert CHECK_CMD in stream.getvalue()
@@ -81,7 +73,7 @@ def test_lint_func(mocker):
     assert LINT_CMD in stream.getvalue()
     with mock_sys_argv(["tests"]), capture_stdout() as stream:
         lint(dry=True)
-    assert LINT_CMD in stream.getvalue()
+    assert LINT_CMD.replace(" .", " tests") in stream.getvalue()
 
 
 def test_lint_without_black_installed(mocker):
@@ -100,12 +92,13 @@ def test_lint_without_black_installed(mocker):
 
 def test_no_fix(mock_no_fix, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD
+    assert LintCode(".").gen() == LINT_CMD.replace(" --fix", "")
 
 
 def test_skip_mypy(mock_skip_mypy, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD
+    cmds = LINT_CMD.split(SEP)
+    assert LintCode(".").gen() == SEP.join(i for i in cmds if not i.startswith("mypy"))
 
 
 def test_not_in_root(mocker):
