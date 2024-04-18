@@ -3,7 +3,6 @@ import os
 import re
 import subprocess
 import sys
-import tomllib
 from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
@@ -502,27 +501,6 @@ class LintCode(DryRun):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
-        current_path = Path.cwd()
-        root = Project.get_work_dir(cwd=current_path, allow_cwd=True)
-        app_name = root.name.replace("-", "_")
-        if (app_dir := root / app_name).exists() or (app_dir := root / "app").exists():
-            try:
-                settings = tomllib.loads(root.joinpath(TOML_FILE).read_text())
-            except (tomllib.TOMLDecodeError, FileNotFoundError):
-                settings = {}
-            if not settings.get("tool", {}).get("ruff", {}).get("src"):
-                if current_path == app_dir:
-                    src = "."
-                elif current_path == root:
-                    src = app_dir.name
-                else:
-                    parents = "../"
-                    for i, p in enumerate(current_path.parents):
-                        if p == root:
-                            parents *= i + 1
-                            break
-                    src = f"{parents}{app_dir.name}"
-                tools[0] += f' --config="src=[{src!r}]"'
         prefix = "poetry run "
         if is_venv():
             if cls.check_lint_tool_installed():
