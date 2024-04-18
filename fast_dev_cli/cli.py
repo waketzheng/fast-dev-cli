@@ -488,7 +488,7 @@ class LintCode(DryRun):
 
     @staticmethod
     def check_lint_tool_installed() -> bool:
-        return check_call("black --version")
+        return check_call("ruff --version")
 
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
@@ -535,7 +535,7 @@ def make_style(
     check_only: bool = Option(False, "--check-only", "-c"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
-    """Run: isort+black+ruff to reformat code and then mypy to check"""
+    """Run: ruff check/format to reformat code and then mypy to check"""
     if isinstance(files, str):
         files = [files]
     if check_only:
