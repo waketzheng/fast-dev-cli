@@ -7,8 +7,9 @@ readme = "README.md"
 packages = [{include = "fast_dev_cli"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 click = ">=7.1.1"  # Many package depends on click, so only limit min version
+strenum = {version = "^0.4.15", python = "<3.11"}
 coverage = {version = ">=6.5.0", optional = true}  # use >= to compare with coveralls
 ruff = {version = "^0.4.2", optional = true}
 mypy = {version = "^1.10.0", optional = true}
@@ -29,6 +30,7 @@ pytest = "^8.2.0"
 ipython = "^8.24.0"
 bumpversion = "^0.6.0"
 pytest-mock = "^3.14.0"
+type-extensions = "^0.1.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -17,6 +17,12 @@
 <a href="https://coveralls.io/github/waketzheng/fast-dev-cli?branch=main" target="_blank">
     <img src="https://coveralls.io/repos/github/waketzheng/fast-dev-cli/badge.svg?branch=main" alt="Coverage Status">
 </a>
+<a href="https://github.com/astral-sh/ruff" target="_blank">
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+</a>
+<a href="https://github.com/python/mypy" target="_blank">
+    <img src="https://img.shields.io/badge/mypy-100%25-green.svg" alt="Mypy Coverage">
+</a>
 </p>
 
 ---

@@ -3,11 +3,22 @@ import os
 import re
 import subprocess
 import sys
-from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import Self, Type
+from typing import TYPE_CHECKING, Type
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum  # type:ignore[no-redef]
+
+if TYPE_CHECKING:
+    try:
+        from typing import Self
+    except ImportError:
+        from typing_extensions import Self
+
 
 __version__ = importlib.metadata.version(Path(__file__).parent.name)
 
@@ -130,14 +141,14 @@ def exit_if_run_failed(
 
 
 class DryRun:
-    def __init__(self: Self, _exit=False, dry=False) -> None:
+    def __init__(self: "Self", _exit=False, dry=False) -> None:
         self.dry = dry
         self._exit = _exit
 
-    def gen(self: Self) -> str:
+    def gen(self: "Self") -> str:
         raise NotImplementedError
 
-    def run(self: Self) -> None:
+    def run(self: "Self") -> None:
         exit_if_run_failed(self.gen(), _exit=self._exit, dry=self.dry)
 
 
@@ -148,7 +159,7 @@ class BumpUp(DryRun):
         major = "major"
 
     def __init__(
-        self: Self, commit: bool, part: str, filename=TOML_FILE, dry=False
+        self: "Self", commit: bool, part: str, filename=TOML_FILE, dry=False
     ) -> None:
         self.commit = commit
         self.part = part
@@ -166,7 +177,7 @@ class BumpUp(DryRun):
             echo(f"Invalid part: {s!r}")
             raise Exit(1) from e
 
-    def gen(self: Self) -> str:
+    def gen(self: "Self") -> str:
         _version = get_current_version()
         filename = self.filename
         echo(f"Current version(@{filename}): {_version}")
@@ -189,7 +200,7 @@ class BumpUp(DryRun):
             cmd += " --allow-dirty"
         return cmd
 
-    def run(self: Self) -> None:
+    def run(self: "Self") -> None:
         super().run()
         if not self.commit and not self.dry:
             new_version = get_current_version(True)
@@ -244,7 +255,7 @@ class Project:
 
     @classmethod
     def get_work_dir(
-        cls: Type[Self], name=TOML_FILE, cwd: Path | None = None, allow_cwd=False
+        cls: Type["Self"], name=TOML_FILE, cwd: Path | None = None, allow_cwd=False
     ) -> Path:
         cwd = cwd or Path.cwd()
         if d := cls.work_dir(name, cwd, cls.path_depth):
@@ -254,7 +265,7 @@ class Project:
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
-    def load_toml_text(cls: Type[Self]) -> str:
+    def load_toml_text(cls: Type["Self"]) -> str:
         toml_file = cls.get_work_dir().resolve() / TOML_FILE  # to be optimize
         return toml_file.read_text("utf8")
 
@@ -263,7 +274,7 @@ class Project:
         return Path(sys.executable).parent
 
     @classmethod
-    def get_root_dir(cls: Type[Self], cwd: Path | None = None) -> Path:
+    def get_root_dir(cls: Type["Self"], cwd: Path | None = None) -> Path:
         root = cwd or Path.cwd()
         venv_parent = cls.python_exec_dir().parent.parent
         if root.is_relative_to(venv_parent):
@@ -322,7 +333,7 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def build_args(
-        cls: Type[Self], package_lines: list[str]
+        cls: Type["Self"], package_lines: list[str]
     ) -> tuple[list[str], dict[str, list[str]]]:
         args: list[str] = []  # ['typer[all]', 'fastapi']
         specials: dict[str, list[str]] = {}  # {'--platform linux': ['gunicorn']}
@@ -356,7 +367,7 @@ class UpgradeDependencies(Project, DryRun):
         return args, specials
 
     @classmethod
-    def should_with_dev(cls: Type[Self]) -> bool:
+    def should_with_dev(cls: Type["Self"]) -> bool:
         text = cls.load_toml_text()
         return cls.DevFlag.new in text or cls.DevFlag.old in text
 
@@ -373,7 +384,7 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def get_args(
-        cls: Type[Self], toml_text: str | None = None
+        cls: Type["Self"], toml_text: str | None = None
     ) -> tuple[list[str], list[str], list[list[str]], str]:
         if toml_text is None:
             toml_text = cls.load_toml_text()
@@ -399,7 +410,7 @@ class UpgradeDependencies(Project, DryRun):
         return prod_packs, dev_packs, others, dev_flag
 
     @classmethod
-    def gen_cmd(cls: Type[Self]) -> str:
+    def gen_cmd(cls: Type["Self"]) -> str:
         main_args, dev_args, others, dev_flags = cls.get_args()
         return cls.to_cmd(main_args, dev_args, others, dev_flags)
 
@@ -422,7 +433,7 @@ class UpgradeDependencies(Project, DryRun):
             _upgrade += f" && poetry add {' '.join(single)}"
         return _upgrade
 
-    def gen(self: Self) -> str:
+    def gen(self: "Self") -> str:
         return self.gen_cmd() + " && poetry lock && poetry update"
 
 
@@ -435,17 +446,17 @@ def upgrade(
 
 
 class GitTag(DryRun):
-    def __init__(self: Self, message: str, dry: bool) -> None:
+    def __init__(self: "Self", message: str, dry: bool) -> None:
         self.message = message
         super().__init__(dry=dry)
 
-    def has_v_prefix(self: Self) -> bool:
+    def has_v_prefix(self: "Self") -> bool:
         return "v" in capture_cmd_output("git tag")
 
-    def should_push(self: Self) -> bool:
+    def should_push(self: "Self") -> bool:
         return "git push" in self.git_status
 
-    def gen(self: Self) -> str:
+    def gen(self: "Self") -> str:
         _version = get_current_version(verbose=False)
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
@@ -456,17 +467,17 @@ class GitTag(DryRun):
         return cmd
 
     @cached_property
-    def git_status(self: Self) -> str:
+    def git_status(self: "Self") -> str:
         return capture_cmd_output("git status")
 
-    def mark_tag(self: Self) -> bool:
+    def mark_tag(self: "Self") -> bool:
         if not re.search(r"working (tree|directory) clean", self.git_status):
             run_and_echo("git status")
             echo("ERROR: Please run git commit to make sure working tree is clean!")
             return False
         return bool(super().run())
 
-    def run(self: Self) -> None:
+    def run(self: "Self") -> None:
         if self.mark_tag() and not self.dry:
             echo("You may want to publish package:\n poetry publish --build")
 
@@ -481,7 +492,7 @@ def tag(
 
 
 class LintCode(DryRun):
-    def __init__(self: Self, args, check_only=False, _exit=False, dry=False) -> None:
+    def __init__(self: "Self", args, check_only=False, _exit=False, dry=False) -> None:
         self.args = args
         self.check_only = check_only
         super().__init__(_exit, dry)
@@ -491,7 +502,7 @@ class LintCode(DryRun):
         return check_call("ruff --version")
 
     @classmethod
-    def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
+    def to_cmd(cls: Type["Self"], paths=".", check_only=False) -> str:
         cmd = ""
         tools = ["ruff check --extend-select=I --fix", "ruff format", "mypy"]
         if check_only:
@@ -514,7 +525,7 @@ class LintCode(DryRun):
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
 
-    def gen(self: Self) -> str:
+    def gen(self: "Self") -> str:
         paths = " ".join(self.args) if self.args else "."
         return self.to_cmd(paths, self.check_only)
 
@@ -553,7 +564,9 @@ def only_check(
 
 
 class Sync(DryRun):
-    def __init__(self: Self, filename: str, extras: str, save: bool, dry=False) -> None:
+    def __init__(
+        self: "Self", filename: str, extras: str, save: bool, dry=False
+    ) -> None:
         self.filename = filename
         self.extras = extras
         self._save = save
