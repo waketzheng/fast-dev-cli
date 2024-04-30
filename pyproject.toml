@@ -39,7 +39,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-fast = "fast_dev_cli:cli"
+fast = "fast_dev_cli:cli.cli"
 
 [tool.ruff]
 target-version = "py311"
