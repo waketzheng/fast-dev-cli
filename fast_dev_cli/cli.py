@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Type
 try:
     from enum import StrEnum
 except ImportError:  # pragma: no cover
-    from strenum import StrEnum  # type:ignore[no-redef]
+    from strenum import StrEnum  # type:ignore[no-redef,assignment]
 
 if TYPE_CHECKING:  # pragma: no cover
     try:
