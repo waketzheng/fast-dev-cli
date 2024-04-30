@@ -1,12 +1,11 @@
 import importlib
 import sys
-from contextlib import chdir
 from pathlib import Path
 
 import pytest
 from click.core import Group
 
-from tests.utils import mock_sys_argv
+from .utils import chdir, mock_sys_argv
 
 
 def test_click(mocker):

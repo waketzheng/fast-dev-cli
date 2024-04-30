@@ -3,6 +3,14 @@ from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+try:
+    from contextlib import chdir  # type:ignore[attr-defined]
+except ImportError:
+    from contextlib_chdir import chdir
+
+
+__all__ = ("chdir", "mock_sys_argv", "capture_stdout", "temp_file")
+
 
 @contextmanager
 def mock_sys_argv(args: list[str]):

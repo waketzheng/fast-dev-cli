@@ -1,4 +1,4 @@
-from contextlib import chdir, redirect_stdout
+from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
@@ -17,6 +17,8 @@ from fast_dev_cli.cli import (
     get_current_version,
 )
 from tests.utils import mock_sys_argv
+
+from .utils import chdir
 
 
 def test_enum():
