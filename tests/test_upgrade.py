@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fast_dev_cli.cli import TOML_FILE, UpgradeDependencies, run_and_echo, upgrade
 
-from .utils import chdir
+from .utils import chdir, is_newer_version_python
 
 
 def test_parse_value():
@@ -75,10 +75,16 @@ def test_dev_flag(tmp_path: Path):
         project = tmp_path / "project"
         run_and_echo(f"poetry new {project.name}")
         with chdir(project):
+            if not is_newer_version_python:
+                p = Path("pyproject.toml")
+                content = p.read_text()
+                s = 'python = "^3.11"'
+                ss = s.replace("3.11", "3.10")
+                p.write_text(content.replace(s, ss))
             assert not UpgradeDependencies.should_with_dev()
-            run_and_echo("poetry add isort")
+            run_and_echo("poetry add pytest")
             assert not UpgradeDependencies.should_with_dev()
-            run_and_echo("poetry add --group=dev black")
+            run_and_echo("poetry add --group=dev typer")
             assert UpgradeDependencies.should_with_dev()
             text = project.joinpath(TOML_FILE).read_text()
             DevFlag = UpgradeDependencies.DevFlag

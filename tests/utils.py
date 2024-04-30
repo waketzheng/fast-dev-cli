@@ -1,15 +1,36 @@
+import os
 import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-try:
+if is_newer_version_python := sys.version_info >= (3, 11):
     from contextlib import chdir  # type:ignore[attr-defined]
-except ImportError:
-    from contextlib_chdir import chdir
+else:
+    from contextlib import AbstractContextManager
+
+    class chdir(AbstractContextManager):  # type:ignore[no-redef]
+        """Non thread-safe context manager to change the current working directory."""
+
+        def __init__(self, path):
+            self.path = path
+            self._old_cwd = []
+
+        def __enter__(self):
+            self._old_cwd.append(os.getcwd())
+            os.chdir(self.path)
+
+        def __exit__(self, *excinfo):
+            os.chdir(self._old_cwd.pop())
 
 
-__all__ = ("chdir", "mock_sys_argv", "capture_stdout", "temp_file")
+__all__ = (
+    "chdir",
+    "mock_sys_argv",
+    "capture_stdout",
+    "temp_file",
+    "is_newer_version_python",
+)
 
 
 @contextmanager

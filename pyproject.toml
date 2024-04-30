@@ -33,7 +33,6 @@ bumpversion = "^0.6.0"
 pytest-mock = "^3.14.0"
 type-extensions = "^0.1.2"
 strenum = "^0.4.15"
-contextlib-chdir = "^1.0.2"
 
 [build-system]
 requires = ["poetry-core"]
