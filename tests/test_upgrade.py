@@ -104,7 +104,7 @@ fastapi = {extras = ["all"], version = "*"}
 
 def test_get_args_hard(tmp_path: Path):
     assert UpgradeDependencies.get_args() == (
-        ['"strenum@latest"'],
+        [],
         [
             '"typer@latest"',
             '"ruff@latest"',
@@ -114,6 +114,7 @@ def test_get_args_hard(tmp_path: Path):
             '"bumpversion@latest"',
             '"pytest-mock@latest"',
             '"type-extensions@latest"',
+            '"strenum@latest"',
         ],
         [
             [
@@ -172,7 +173,7 @@ pytest = {version = "^4.0", platform = "linux"}
 
 
 def test_gen_cmd():
-    expected = 'poetry add "strenum@latest" && poetry add --group dev "typer@latest" "ruff@latest" "mypy@latest" "pytest@latest" "ipython@latest" "bumpversion@latest" "pytest-mock@latest" "type-extensions@latest" && poetry add --optional "ruff@latest" "mypy@latest" "bumpversion@latest" "pytest@latest" "typer@latest"'
+    expected = 'poetry add --group dev "typer@latest" "ruff@latest" "mypy@latest" "pytest@latest" "ipython@latest" "bumpversion@latest" "pytest-mock@latest" "type-extensions@latest" "strenum@latest" && poetry add --optional "ruff@latest" "mypy@latest" "bumpversion@latest" "pytest@latest" "typer@latest"'
     assert UpgradeDependencies.gen_cmd() == expected
     assert UpgradeDependencies().gen() == expected + " && poetry lock && poetry update"
     stream = StringIO()
