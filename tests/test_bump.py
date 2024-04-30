@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
+from strenum import StrEnum
 
 from fast_dev_cli.cli import (
     TOML_FILE,
@@ -16,6 +17,19 @@ from fast_dev_cli.cli import (
     get_current_version,
 )
 from tests.utils import mock_sys_argv
+
+
+def test_enum():
+    class A(StrEnum):
+        ABCD = "ABCD"
+        aBcD = "aBcD"
+        abcd = "abcd"
+        ab = "cd"
+
+    assert A.ab == "cd"
+    assert A.aBcD == "aBcD"
+    assert A.abcd == "abcd"
+    assert A.ABCD == "ABCD"
 
 
 def test_bump(

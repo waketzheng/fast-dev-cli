@@ -31,6 +31,7 @@ ipython = "^8.24.0"
 bumpversion = "^0.6.0"
 pytest-mock = "^3.14.0"
 type-extensions = "^0.1.2"
+strenum = "^0.4.15"
 
 [build-system]
 requires = ["poetry-core"]

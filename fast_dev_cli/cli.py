@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Type
 
 try:
     from enum import StrEnum
-except ImportError:
+except ImportError:  # pragma: no cover
     from strenum import StrEnum  # type:ignore[no-redef]
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     try:
         from typing import Self
     except ImportError:

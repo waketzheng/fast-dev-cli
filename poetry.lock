@@ -871,4 +871,4 @@ all = ["bumpversion", "coverage", "mypy", "pytest", "ruff", "typer"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f53cfacdffdc79998beb5234c2617c3b0ea72a752e22807f0127e2124ab3afaf"
+content-hash = "b345f9e9fc7c6b9e6eb60ece7b63089eacd91599261e406fa0333f27e622b637"
