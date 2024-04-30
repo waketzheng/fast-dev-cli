@@ -602,6 +602,8 @@ def test(
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     test_script = root / "scripts" / "test.sh"
+    if not isinstance(ignore_script, bool):
+        ignore_script = getattr(ignore_script, "default", False)
     if not ignore_script and _should_run_test_script(test_script):
         cmd = f"sh {test_script.relative_to(root)}"
         if cwd != root:
