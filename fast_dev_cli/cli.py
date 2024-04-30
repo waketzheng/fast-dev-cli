@@ -596,12 +596,13 @@ def _should_run_test_script(path: Path) -> bool:
 @cli.command()
 def test(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    ignore_script: bool = Option(False, "--ignore-script", "-i"),
 ) -> None:
     """Run unittest by pytest and report coverage"""
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     test_script = root / "scripts" / "test.sh"
-    if _should_run_test_script(test_script):
+    if not ignore_script and _should_run_test_script(test_script):
         cmd = f"sh {test_script.relative_to(root)}"
         if cwd != root:
             cmd = f"cd {root} && " + cmd

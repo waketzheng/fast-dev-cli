@@ -44,6 +44,12 @@ def test_run_script(mocker: MockerFixture, capsys):
     assert "sh scripts/test.sh" in capsys.readouterr().out
 
 
+def test_ignore_script(mocker: MockerFixture, capsys):
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=True)
+    test(dry=True, ignore_script=True)
+    assert "sh scripts/test.sh" not in capsys.readouterr().out
+
+
 def test_run_script_in_sub_directory(mocker: MockerFixture, capsys):
     parent = pathlib.Path(__file__).parent
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=True)
