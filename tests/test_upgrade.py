@@ -188,7 +188,7 @@ def test_gen_cmd():
     with redirect_stdout(stream):
         upgrade(dry=True)
     assert expected in stream.getvalue()
-    args = (
+    args: tuple = (
         ['"anyio@latest"'],
         [],
         [["--platform=linux", '"pytest@latest"', "--dev"]],

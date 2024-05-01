@@ -11,7 +11,7 @@ python = "^3.10"
 click = ">=7.1.1"  # Many package depends on click, so only limit min version
 strenum = {version = ">=0.4.15", python = "<3.11"}
 type-extensions = {version = ">=0.1.2", python = "<3.11"}
-coverage = {version = ">=6.5.0", optional = true}  # use >= to compare with coveralls
+coverage = {version = ">=6.5.0", optional = true}
 ruff = {version = "^0.4.2", optional = true}
 mypy = {version = "^1.10.0", optional = true}
 bumpversion = {version = "^0.6.0", optional = true}
@@ -23,7 +23,7 @@ all = ["ruff", "typer", "mypy", "bumpversion", "pytest", "coverage"]
 
 [tool.poetry.group.dev.dependencies]
 coveralls = {version = ">=4.0.0", python = ">=3.10,<3.13"}
-coverage = ">=6.5.0"
+coverage = ">=6.5.0"  # use >= to compare with coveralls
 typer = "^0.12.3"
 ruff = "^0.4.2"
 mypy = "^1.10.0"
@@ -41,17 +41,10 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 fast = "fast_dev_cli:cli.cli"
 
-[tool.ruff]
-target-version = "py311"
-
 [tool.mypy]
 pretty = true
 ignore_missing_imports = true
 check_untyped_defs = true
-
-[[tool.mypy.overrides]]
-module = ["tests.*"]
-check_untyped_defs = false
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["E501"]
