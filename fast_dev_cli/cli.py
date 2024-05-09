@@ -541,6 +541,8 @@ class LintCode(DryRun):
 def lint(files=None, dry=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
+    if files and files[0] == "lint":
+        files = files[1:]
     LintCode(files, dry=dry).run()
 
 
