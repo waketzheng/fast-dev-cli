@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.metadata
 import os
 import re
@@ -6,7 +8,7 @@ import sys
 from functools import cached_property
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import Type
+from typing import TYPE_CHECKING, Optional, Type
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -14,6 +16,9 @@ if sys.version_info >= (3, 11):
 else:  # pragma: no cover
     from strenum import StrEnum  # type:ignore[no-redef,assignment]
     from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from typer.models import OptionInfo
 
 
 __version__ = importlib.metadata.version(Path(__file__).parent.name)
@@ -120,11 +125,17 @@ def get_current_version(verbose=False) -> str:
     return capture_cmd_output(cmd)
 
 
+def _ensure_bool(value: bool | "OptionInfo") -> bool:
+    if not isinstance(value, bool):
+        value = getattr(value, "default", False)
+    return value
+
+
 def exit_if_run_failed(
     cmd: str, env=None, _exit=False, dry=False, **kw
 ) -> CompletedProcess:
     run_and_echo(cmd, dry=True)
-    if dry:
+    if _ensure_bool(dry):
         return CompletedProcess("", 0)
     if env is not None:
         env = {**os.environ, **env}
@@ -220,7 +231,7 @@ def bump_version(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Bump up version string in pyproject.toml"""
-    return BumpUp(commit, part.value, dry=dry).run()
+    return BumpUp(_ensure_bool(commit), part.value, dry=dry).run()
 
 
 def bump() -> None:
@@ -546,7 +557,7 @@ def make_style(
     """Run: ruff check/format to reformat code and then mypy to check"""
     if isinstance(files, str):
         files = [files]
-    if check_only:
+    if _ensure_bool(check_only):
         check(files, dry=dry)
     else:
         lint(files, dry=dry)
@@ -610,9 +621,7 @@ def test(
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     test_script = root / "scripts" / "test.sh"
-    if not isinstance(ignore_script, bool):
-        ignore_script = getattr(ignore_script, "default", False)
-    if not ignore_script and _should_run_test_script(test_script):
+    if not _ensure_bool(ignore_script) and _should_run_test_script(test_script):
         cmd = f"sh {test_script.relative_to(root)}"
         if cwd != root:
             cmd = f"cd {root} && " + cmd
@@ -631,6 +640,30 @@ def upload(
     """Shortcut for package publish"""
     cmd = "poetry publish --build"
     exit_if_run_failed(cmd, dry=dry)
+
+
+def dev(
+    port: int | None | "OptionInfo", host: str | None | "OptionInfo", dry=False
+) -> None:
+    cmd = "fastapi dev"
+    if (port := getattr(port, "default", port)) and port != 8000:
+        cmd += f" --port={port}"
+    if (host := getattr(host, "default", host)) and host not in (
+        "localhost",
+        "127.0.0.1",
+    ):
+        cmd += f" --host={host}"
+    exit_if_run_failed(cmd, dry=dry)
+
+
+@cli.command(name="dev")
+def runserver(
+    port: Optional[int] = Option(None, "-p", "--port"),
+    host: Optional[str] = Option(None, "-h", "--host"),
+    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+) -> None:
+    """Check code style without reformat"""
+    dev(port, host, dry=dry)
 
 
 if __name__ == "__main__":

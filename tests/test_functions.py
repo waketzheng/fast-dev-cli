@@ -9,6 +9,7 @@ import typer
 from fast_dev_cli.cli import (
     TOML_FILE,
     DryRun,
+    _ensure_bool,
     exit_if_run_failed,
     get_current_version,
     load_bool,
@@ -84,3 +85,13 @@ def test_run_shell():
             pass
 
         A().run()
+
+
+def test_ensure_bool():
+    assert _ensure_bool(True) is True
+    assert _ensure_bool(False) is False
+    opt = typer.Option(False, "--check-only", "-c")
+    assert opt
+    assert _ensure_bool(opt) is False
+    opt = typer.Option(True, "--check-only", "-c")
+    assert _ensure_bool(opt) is True
