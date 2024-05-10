@@ -42,7 +42,7 @@ except ModuleNotFoundError:
     from click.core import Group as _Group
     from click.exceptions import Exit
 
-    def Option(default, *shortcuts, help=None):  # type:ignore[no-redef]
+    def Option(default, *shortcuts, **kw):  # type:ignore[no-redef]
         return default
 
     def _command(self, *args, **kwargs):
@@ -231,7 +231,7 @@ def bump_version(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Bump up version string in pyproject.toml"""
-    return BumpUp(_ensure_bool(commit), part.value, dry=dry).run()
+    return BumpUp(_ensure_bool(commit), getattr(part, "value", part), dry=dry).run()
 
 
 def bump() -> None:
@@ -246,7 +246,8 @@ def bump() -> None:
     return BumpUp(commit, part, dry="--dry" in args).run()
 
 
-class EnvError(Exception): ...
+class EnvError(Exception):
+    """Raise this when the project is expected to be managed by poetry, but toml file not found."""
 
 
 class Project:
@@ -458,7 +459,8 @@ class GitTag(DryRun):
         self.message = message
         super().__init__(dry=dry)
 
-    def has_v_prefix(self: Self) -> bool:
+    @staticmethod
+    def has_v_prefix() -> bool:
         return "v" in capture_cmd_output("git tag")
 
     def should_push(self: Self) -> bool:
