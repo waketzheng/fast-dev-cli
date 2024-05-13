@@ -17,7 +17,7 @@ else:  # pragma: no cover
     from strenum import StrEnum  # type:ignore[no-redef,assignment]
     from typing_extensions import Self
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typer.models import OptionInfo
 
 
@@ -616,15 +616,6 @@ def _should_run_test_script(path: Path) -> bool:
     return path.exists()
 
 
-@cli.command(name="test")
-def coverage_test(
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
-    ignore_script: bool = Option(False, "--ignore-script", "-i"),
-) -> None:
-    """Run unittest by pytest and report coverage"""
-    return test(dry, ignore_script)
-
-
 def test(dry: bool, ignore_script=False) -> None:
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
@@ -639,6 +630,15 @@ def test(dry: bool, ignore_script=False) -> None:
             sep = " && "
             cmd = sep.join("poetry run " + i for i in cmd.split(sep))
     exit_if_run_failed(cmd, dry=dry)
+
+
+@cli.command(name="test")
+def coverage_test(
+    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    ignore_script: bool = Option(False, "--ignore-script", "-i"),
+) -> None:
+    """Run unittest by pytest and report coverage"""
+    return test(dry, ignore_script)
 
 
 @cli.command()
