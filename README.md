@@ -37,11 +37,10 @@ Python 3.10+
 
 <div class="termy">
 
-```console
-$ pip install "fast-dev-cli[all]"
----> 100%
-Successfully installed fast-dev-cli isort black ruff mypy typer bumpversion pytest coverage
+```bash
+pip install "fast-dev-cli[all]"
 ```
+*Will install: fast-dev-cli ruff mypy typer bumpversion pytest coverage*
 
 </div>
 
@@ -72,6 +71,6 @@ fast sync
 fast upgrade
 ```
 - Start a fastapi server in development mode
-```
+```bash
 fast dev
 ```
