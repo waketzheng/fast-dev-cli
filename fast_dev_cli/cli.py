@@ -98,6 +98,7 @@ def _run_shell(cmd: str, **kw) -> CompletedProcess:
 
 
 def run_and_echo(cmd: str, *, dry=False, verbose=True, **kw) -> int:
+    """Run shell command with subprocess and print it"""
     if verbose:
         echo(f"--> {cmd}")
     if dry:
@@ -120,8 +121,7 @@ def capture_cmd_output(command: list[str] | str, **kw) -> str:
 def get_current_version(verbose=False) -> str:
     cmd = ["poetry", "version", "-s"]
     if verbose:
-        command = " ".join(cmd)
-        echo(f"--> {command}")
+        echo(f"--> {' '.join(cmd)}")
     return capture_cmd_output(cmd)
 
 
@@ -670,9 +670,9 @@ def runserver(
     host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
-    """Check code style without reformat"""
+    """Start a fastapi server(only for fastapi>=0.111.0)"""
     dev(port, host, dry=dry)
 
 
-if __name__ == "__main__":
-    cli()  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
+    cli()

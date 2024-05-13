@@ -31,7 +31,7 @@
 
 ## Requirements
 
-Python 3.11+
+Python 3.10+
 
 ## Installation
 
@@ -70,4 +70,8 @@ fast sync
 - Upgrade main/dev dependencies to latest version
 ```bash
 fast upgrade
+```
+- Start a fastapi server in development mode
+```
+fast dev
 ```
