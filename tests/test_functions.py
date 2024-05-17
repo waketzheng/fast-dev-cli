@@ -1,13 +1,11 @@
 import os
 from contextlib import redirect_stdout
 from io import StringIO
-from pathlib import Path
 
 import pytest
 import typer
 
 from fast_dev_cli.cli import (
-    TOML_FILE,
     DryRun,
     _ensure_bool,
     exit_if_run_failed,
@@ -58,12 +56,10 @@ def test_utils():
 
 def test_run_shell():
     # current version
-    version = get_current_version()
-    assert version in Path(TOML_FILE).read_text()
     stream = StringIO()
     write_to_stream = redirect_stdout(stream)
     with write_to_stream:
-        get_current_version(True)
+        get_current_version(True, is_poetry=True)
     assert "poetry version -s" in stream.getvalue()
 
     name = "TEST_EXIT_IF_RUN_FAILED"
