@@ -18,8 +18,8 @@ def mock_skip_mypy(monkeypatch):
 
 
 SEP = " && "
-LINT_CMD = "ruff check --extend-select=I --fix . && ruff format . && mypy ."
-CHECK_CMD = "ruff check --extend-select=I . && ruff format --check . && mypy ."
+LINT_CMD = "ruff format --fix . && ruff check --extend-select=I . && mypy ."
+CHECK_CMD = "ruff format --check . && ruff check --extend-select=I . && mypy ."
 
 
 def test_check():
