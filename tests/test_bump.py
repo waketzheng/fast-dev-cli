@@ -34,6 +34,19 @@ def test_enum():
     assert A.ABCD == "ABCD"
 
 
+def test_bump_dry(mocker):
+    mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
+    version = get_current_version()
+    cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
+    suffix = " --commit && git push && git push --tags && git log -1"
+    patch_without_commit = cmd + " patch pyproject.toml --allow-dirty"
+    patch_with_commit = cmd + " patch pyproject.toml" + suffix
+    minor_with_commit = cmd + " minor pyproject.toml --tag" + suffix
+    assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
+    assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
+    assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+
+
 def test_bump(
     # Use pytest-mock to mock user input
     # https://github.com/pytest-dev/pytest-mock
@@ -45,9 +58,9 @@ def test_bump(
     version = get_current_version()
     cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
-    patch_without_commit = cmd + " patch pyproject.toml --allow-dirty"
-    patch_with_commit = cmd + " patch pyproject.toml" + suffix
-    minor_with_commit = cmd + " minor pyproject.toml --tag" + suffix
+    patch_without_commit = cmd + " patch fast_dev_cli/cli.py --allow-dirty"
+    patch_with_commit = cmd + " patch fast_dev_cli/cli.py" + suffix
+    minor_with_commit = cmd + " minor fast_dev_cli/cli.py --tag" + suffix
     stream = StringIO()
     with redirect_stdout(stream):
         assert (

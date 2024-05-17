@@ -179,12 +179,24 @@ class BumpUp(DryRun):
         major = "major"
 
     def __init__(
-        self: Self, commit: bool, part: str, filename=TOML_FILE, dry=False
+        self: Self, commit: bool, part: str, filename: str | None = None, dry=False
     ) -> None:
         self.commit = commit
         self.part = part
+        if filename is None:
+            filename = self.parse_filename()
         self.filename = filename
         super().__init__(dry=dry)
+
+    @staticmethod
+    def parse_filename() -> str:
+        if not Project.manage_by_poetry():
+            # version = { source = "file", path = "fast_dev_cli/cli.py" }
+            for line in Project.load_toml_text().splitlines():
+                if not line.startswith("version = "):
+                    continue
+                return line.split('path = "', 1)[-1].split('"')[0]
+        return TOML_FILE
 
     def get_part(self, s: str) -> str:
         choices: dict[str, str] = {}
