@@ -6,7 +6,6 @@ import pytest
 
 from fast_dev_cli.cli import (
     TOML_FILE,
-    EnvError,
     UpgradeDependencies,
     run_and_echo,
     upgrade,
@@ -199,8 +198,8 @@ def test_get_args_hard(tmp_poetry_project):
 def test_get_dev_dependencies(tmp_path: Path):
     try:
         UpgradeDependencies.get_args()
-    except EnvError:
-        pass
+    except Exception as e:
+        assert type(e).__name__ == "EnvError"
     dev_text = """
 [tool.poetry.dev-dependencies]
 anyio = "^4.0"
