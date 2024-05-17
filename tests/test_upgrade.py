@@ -2,7 +2,15 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from fast_dev_cli.cli import TOML_FILE, UpgradeDependencies, run_and_echo, upgrade
+import pytest
+
+from fast_dev_cli.cli import (
+    TOML_FILE,
+    EnvError,
+    UpgradeDependencies,
+    run_and_echo,
+    upgrade,
+)
 
 from .utils import chdir, is_newer_version_python
 
@@ -70,7 +78,7 @@ uvicorn = {version = "^0.23.2", platform = "linux", optional = true}
 
 
 def test_dev_flag(tmp_path: Path):
-    assert UpgradeDependencies.should_with_dev() is True
+    assert UpgradeDependencies.should_with_dev() is False
     with chdir(tmp_path):
         project = tmp_path / "project"
         run_and_echo(f"poetry new {project.name}")
@@ -110,7 +118,57 @@ fastapi = {extras = ["all"], version = "*"}
     ]
 
 
-def test_get_args_hard(tmp_path: Path):
+TOML_CONTENT = """
+[tool.poetry]
+name = "fast-dev-cli"
+version = "0.8.0"
+description = ""
+authors = ["Waket Zheng <waketzheng@gmail.com>"]
+readme = "README.md"
+packages = [{include = "fast_dev_cli"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+click = ">=7.1.1"  # Many package depends on click, so only limit min version
+strenum = {version = ">=0.4.15", python = "<3.11"}
+type-extensions = {version = ">=0.1.2", python = "<3.11"}
+coverage = {version = ">=6.5.0", optional = true}
+ruff = {version = "^0.4.4", optional = true}
+mypy = {version = "^1.10.0", optional = true}
+bumpversion = {version = "^0.6.0", optional = true}
+pytest = {version = "^8.2.0", optional = true}
+typer = {version = "^0.12.3", optional = true}
+
+[tool.poetry.extras]
+all = ["ruff", "typer", "mypy", "bumpversion", "pytest", "coverage"]
+
+[tool.poetry.group.dev.dependencies]
+coveralls = {version = ">=4.0.0", python = ">=3.10,<3.13"}
+coverage = ">=6.5.0"  # use >= to compare with coveralls
+typer = "^0.12.3"
+ruff = "^0.4.4"
+mypy = "^1.10.0"
+pytest = "^8.2.0"
+ipython = "^8.24.0"
+bumpversion = "^0.6.0"
+pytest-mock = "^3.14.0"
+type-extensions = "^0.1.2"
+strenum = "^0.4.15"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+"""
+
+
+@pytest.fixture
+def tmp_poetry_project(tmp_path: Path):
+    with chdir(tmp_path):
+        tmp_path.joinpath(TOML_FILE).write_text(TOML_CONTENT)
+        yield
+
+
+def test_get_args_hard(tmp_poetry_project):
     assert UpgradeDependencies.get_args() == (
         [],
         [
@@ -136,6 +194,11 @@ def test_get_args_hard(tmp_path: Path):
         ],
         "--group dev",
     )
+
+
+def test_get_dev_dependencies(tmp_path: Path):
+    with pytest.raises(EnvError):
+        UpgradeDependencies.get_args()
     dev_text = """
 [tool.poetry.dev-dependencies]
 anyio = "^4.0"
@@ -180,7 +243,7 @@ pytest = {version = "^4.0", platform = "linux"}
     )
 
 
-def test_gen_cmd():
+def test_gen_cmd(tmp_poetry_project):
     expected = 'poetry add --group dev "typer@latest" "ruff@latest" "mypy@latest" "pytest@latest" "ipython@latest" "bumpversion@latest" "pytest-mock@latest" "type-extensions@latest" "strenum@latest" && poetry add --optional "ruff@latest" "mypy@latest" "bumpversion@latest" "pytest@latest" "typer@latest"'
     assert UpgradeDependencies.gen_cmd() == expected
     assert UpgradeDependencies().gen() == expected + " && poetry lock && poetry update"
@@ -198,7 +261,10 @@ def test_gen_cmd():
         UpgradeDependencies.to_cmd(*args)
         == 'poetry add "anyio@latest" && poetry add --platform=linux "pytest@latest" --dev'
     )
-    args = (
+
+
+def test_args_to_cmd():
+    args: tuple = (
         [],
         ['"anyio@latest"'],
         [["--platform=linux", '"pytest@latest"', "--dev"]],
@@ -227,7 +293,7 @@ def test_gen_cmd():
     )
 
 
-def test_get_dir(mocker):
+def test_get_dir(mocker, tmp_path):
     me = Path(__file__)
     parent = me.parent
     root = parent.parent
@@ -235,6 +301,9 @@ def test_get_dir(mocker):
         UpgradeDependencies.get_work_dir() == UpgradeDependencies.get_root_dir() == root
     )
     with chdir(parent):
+        mocker.patch.object(
+            UpgradeDependencies, "python_exec_dir", return_value=tmp_path
+        )
         assert UpgradeDependencies.get_root_dir() == parent
         mocker.patch.object(UpgradeDependencies, "python_exec_dir", return_value=me)
         assert UpgradeDependencies.get_root_dir() == root

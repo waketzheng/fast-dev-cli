@@ -406,6 +406,10 @@ class UpgradeDependencies(Project, DryRun):
         if toml_text is None:
             toml_text = cls.load_toml_text()
         main_title = "[tool.poetry.dependencies]"
+        if main_title not in toml_text:
+            raise EnvError(
+                f"{main_title} not found! Make sure this is a poetry project."
+            )
         text = toml_text.split(main_title)[-1]
         dev_flag = "--group dev"
         new_flag, old_flag = cls.DevFlag.new, cls.DevFlag.old
