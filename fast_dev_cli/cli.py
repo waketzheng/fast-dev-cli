@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata as importlib_metadata
 import os
 import re
 import subprocess
@@ -122,7 +123,11 @@ def capture_cmd_output(command: list[str] | str, **kw) -> str:
     return r.stdout.strip().decode()
 
 
-def get_current_version(verbose=False) -> str:
+def get_current_version(
+    verbose=False, is_poetry=True, package_name=Path(__file__).parent.name
+) -> str:
+    if not is_poetry:
+        return importlib_metadata.version(package_name)
     cmd = ["poetry", "version", "-s"]
     if verbose:
         echo(f"--> {' '.join(cmd)}")
@@ -518,7 +523,7 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
         cmd = ""
-        tools = ["ruff check --extend-select=I --fix", "ruff format", "mypy"]
+        tools = ["ruff format", "ruff check --extend-select=I --fix", "mypy"]
         if check_only:
             tools[1] += " --check"
         if check_only or load_bool("NO_FIX"):
