@@ -83,7 +83,8 @@ def test_bump(
     assert patch_without_commit in stream.getvalue()
 
 
-def test_bump_with_poetry(tmp_poetry_project, tmp_path):
+def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
+    mocker.patch("builtins.input", return_value=" ")
     version = get_current_version()
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
     stream = StringIO()
