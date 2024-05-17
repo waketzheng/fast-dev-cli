@@ -34,14 +34,19 @@ def test_enum():
     assert A.ABCD == "ABCD"
 
 
+def _bump_commands(version: str, filename=TOML_FILE) -> tuple[str, str, str]:
+    cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
+    suffix = " --commit && git push && git push --tags && git log -1"
+    patch_without_commit = cmd + f" patch {filename} --allow-dirty"
+    patch_with_commit = cmd + f" patch {filename}" + suffix
+    minor_with_commit = cmd + f" minor {filename} --tag" + suffix
+    return patch_without_commit, patch_with_commit, minor_with_commit
+
+
 def test_bump_dry(mocker):
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     version = get_current_version()
-    cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
-    suffix = " --commit && git push && git push --tags && git log -1"
-    patch_without_commit = cmd + " patch pyproject.toml --allow-dirty"
-    patch_with_commit = cmd + " patch pyproject.toml" + suffix
-    minor_with_commit = cmd + " minor pyproject.toml --tag" + suffix
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
     assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
     assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
     assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
@@ -56,11 +61,9 @@ def test_bump(
     tmp_path: Path,
 ):
     version = get_current_version()
-    cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
-    suffix = " --commit && git push && git push --tags && git log -1"
-    patch_without_commit = cmd + " patch fast_dev_cli/cli.py --allow-dirty"
-    patch_with_commit = cmd + " patch fast_dev_cli/cli.py" + suffix
-    minor_with_commit = cmd + " minor fast_dev_cli/cli.py --tag" + suffix
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, "fast_dev_cli/cli.py"
+    )
     stream = StringIO()
     with redirect_stdout(stream):
         assert (
@@ -78,50 +81,51 @@ def test_bump(
     with redirect_stdout(stream):
         BumpUp(part="patch", commit=False, dry=True).run()
     assert patch_without_commit in stream.getvalue()
-    parent = Path(__file__).parent
-    content = parent.parent.joinpath(TOML_FILE).read_bytes()
-    with chdir(tmp_path):
-        tmp_path.joinpath(TOML_FILE).write_bytes(content)
-        stream = StringIO()
-        with redirect_stdout(stream):
-            BumpUp(part="patch", commit=False).run()
-        assert f"Current version(@{TOML_FILE}):" in stream.getvalue()
-        stream = StringIO()
-        with redirect_stdout(stream):
-            BumpUp(part="minor", commit=False).run()
-        assert "You may want to pin tag by `fast tag`" in stream.getvalue()
-        stream = StringIO()
-        new_version = get_current_version()
-        with redirect_stdout(stream):
-            bump_version(BumpUp.PartChoices.patch, commit=False, dry=True)
-        assert patch_without_commit.replace(version, new_version) in stream.getvalue()
-        stream = StringIO()
-        with redirect_stdout(stream), mock_sys_argv(["patch", "--dry"]):
-            bump()
-        assert patch_without_commit.replace(version, new_version) in stream.getvalue()
-        stream = StringIO()
-        with redirect_stdout(stream), mock_sys_argv(["patch", "--commit", "--dry"]):
-            bump()
-        assert patch_with_commit.replace(version, new_version) in stream.getvalue()
-        stream = StringIO()
-        with (
-            redirect_stdout(stream),
-            mock_sys_argv(["-c", "minor", "--commit", "--dry"]),
-        ):
-            bump()
-        assert minor_with_commit.replace(version, new_version) in stream.getvalue()
-        text = Project.load_toml_text()
-        assert new_version in text
-        d = tmp_path / "temp_directory"
-        d.mkdir()
-        with chdir(d):
-            work_dir = Project.get_work_dir()
-            work_dir2 = Project.get_work_dir(TOML_FILE)
-            assert Path.cwd() == d
-            sub = d / ("1/" * Project.path_depth)
-            sub.mkdir(parents=True, exist_ok=True)
-            with chdir(sub):
-                with pytest.raises(EnvError):
-                    Project.get_work_dir(TOML_FILE)
-                assert Project.get_work_dir(allow_cwd=True) == Path.cwd()
-        assert work_dir == work_dir2 == tmp_path
+
+
+def test_bump_with_poetry(tmp_poetry_project, tmp_path):
+    version = get_current_version()
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
+    stream = StringIO()
+    with redirect_stdout(stream):
+        BumpUp(part="patch", commit=False).run()
+    assert f"Current version(@{TOML_FILE}):" in stream.getvalue()
+    stream = StringIO()
+    with redirect_stdout(stream):
+        BumpUp(part="minor", commit=False).run()
+    assert "You may want to pin tag by `fast tag`" in stream.getvalue()
+    stream = StringIO()
+    new_version = get_current_version()
+    with redirect_stdout(stream):
+        bump_version(BumpUp.PartChoices.patch, commit=False, dry=True)
+    assert patch_without_commit.replace(version, new_version) in stream.getvalue()
+    stream = StringIO()
+    with redirect_stdout(stream), mock_sys_argv(["patch", "--dry"]):
+        bump()
+    assert patch_without_commit.replace(version, new_version) in stream.getvalue()
+    stream = StringIO()
+    with redirect_stdout(stream), mock_sys_argv(["patch", "--commit", "--dry"]):
+        bump()
+    assert patch_with_commit.replace(version, new_version) in stream.getvalue()
+    stream = StringIO()
+    with (
+        redirect_stdout(stream),
+        mock_sys_argv(["-c", "minor", "--commit", "--dry"]),
+    ):
+        bump()
+    assert minor_with_commit.replace(version, new_version) in stream.getvalue()
+    text = Project.load_toml_text()
+    assert new_version in text
+    d = tmp_path / "temp_directory"
+    d.mkdir()
+    with chdir(d):
+        work_dir = Project.get_work_dir()
+        work_dir2 = Project.get_work_dir(TOML_FILE)
+        assert Path.cwd() == d
+        sub = d / ("1/" * Project.path_depth)
+        sub.mkdir(parents=True, exist_ok=True)
+        with chdir(sub):
+            with pytest.raises(EnvError):
+                Project.get_work_dir(TOML_FILE)
+            assert Project.get_work_dir(allow_cwd=True) == Path.cwd()
+    assert work_dir == work_dir2 == tmp_path
