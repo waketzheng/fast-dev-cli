@@ -8,7 +8,7 @@ import sys
 from functools import cached_property
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Literal, Optional, Type
 
 import typer
 from typer import Exit, Option, echo, secho
@@ -266,6 +266,16 @@ class Project:
     def manage_by_poetry(cls: Type[Self]) -> bool:
         return "[tool.poetry]" in cls.load_toml_text()
 
+    @classmethod
+    def get_manage_tool(cls: Type[Self]) -> Literal["poetry", "pdm", ""]:
+        text = cls.load_toml_text()
+        if "[tool.poetry]" in text:
+            return "poetry"
+        elif "[tool.pdm]" in text:
+            return "pdm"
+        else:
+            return ""
+
     @staticmethod
     def python_exec_dir() -> Path:
         return Path(sys.executable).parent
@@ -516,7 +526,8 @@ class LintCode(DryRun):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
-        prefix = "poetry run "
+        pm = Project.get_manage_tool()
+        prefix = f"{pm} run "
         if is_venv():
             if cls.check_lint_tool_installed():
                 prefix = ""
@@ -621,7 +632,8 @@ def test(dry: bool, ignore_script=False) -> None:
         cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
         if not is_venv() or not check_call("coverage --version"):
             sep = " && "
-            cmd = sep.join("poetry run " + i for i in cmd.split(sep))
+            tool = Project.get_manage_tool()
+            cmd = sep.join(f"{tool} run " + i for i in cmd.split(sep))
     exit_if_run_failed(cmd, dry=dry)
 
 

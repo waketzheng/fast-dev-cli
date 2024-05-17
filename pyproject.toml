@@ -94,6 +94,13 @@ exclude_lines = [
 pretty = true
 ignore_missing_imports = true
 check_untyped_defs = true
+exclude = [
+    "^fabfile\\.py$",  # TOML's double-quoted strings require escaping backslashes
+    'two\.pyi$',  # but TOML's single-quoted strings do not
+    '^\.venv',
+    '\.bak',
+    '__pypackages__',
+]
 
 [tool.ruff.lint]
 extend-select = [

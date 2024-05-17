@@ -35,3 +35,4 @@ dev_requirements.txt
 
 # Pdm
 .pdm-python
+__pypackages__
