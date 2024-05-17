@@ -6,14 +6,15 @@ from fast_dev_cli.cli import capture_cmd_output, coverage_test
 from fast_dev_cli.cli import test as unitcase
 
 
-def test_test(mocker, capsys):
-    output = capture_cmd_output("python fast_dev_cli/cli.py test --dry")
+def test_cli_test(mocker, capsys):
+    output = capture_cmd_output("python fast_dev_cli/cli.py test --dry --ignore-script")
     assert (
         "coverage run -m pytest -s && " in output
         and 'coverage report --omit="tests/*" -m' in output
     )
 
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     unitcase(dry=True)
     assert (
         'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
@@ -23,6 +24,7 @@ def test_test(mocker, capsys):
 
 def test_test_with_poetry_run(mocker: MockerFixture, capsys):
     mocker.patch("fast_dev_cli.cli.check_call", return_value=False)
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     unitcase(dry=True)
     assert (
         '--> poetry run coverage run -m pytest -s && poetry run coverage report --omit="tests/*" -m'
@@ -30,7 +32,8 @@ def test_test_with_poetry_run(mocker: MockerFixture, capsys):
     )
 
 
-def test_test_no_in_venv(mocker: MockerFixture, capsys):
+def test_test_not_in_venv(mocker: MockerFixture, capsys):
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     unitcase(dry=True)
     assert (
@@ -61,13 +64,14 @@ def test_run_script_in_sub_directory(mocker: MockerFixture, capsys):
 
 
 def test_fast_test(mocker, capsys):
-    output = capture_cmd_output("fast test --dry")
+    output = capture_cmd_output("fast test --dry --ignore-script")
     assert (
         "coverage run -m pytest -s && " in output
         and 'coverage report --omit="tests/*" -m' in output
     )
 
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     coverage_test(dry=True)
     assert (
         'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
