@@ -38,9 +38,9 @@ Python 3.10+
 <div class="termy">
 
 ```bash
-pip install "fast-dev-cli[all]"
+pip install "fast-dev-cli"
 ```
-*Will install: fast-dev-cli ruff mypy typer bumpversion pytest coverage*
+*Will install: fast-dev-cli typer ruff mypy bumpversion pytest coverage*
 
 </div>
 

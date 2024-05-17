@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.metadata
 import os
 import re
 import subprocess
@@ -14,14 +13,19 @@ if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
 else:  # pragma: no cover
-    from strenum import StrEnum  # type:ignore[no-redef,assignment]
+    from enum import Enum
+
     from typing_extensions import Self
+
+    class StrEnum(str, Enum):
+        __str__ = str.__str__
+
 
 if TYPE_CHECKING:  # pragma: no cover
     from typer.models import OptionInfo
 
 
-__version__ = importlib.metadata.version(Path(__file__).parent.name)
+__version__ = "0.8.0"
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
@@ -247,7 +251,7 @@ def bump() -> None:
 
 
 class EnvError(Exception):
-    """Raise this when the project is expected to be managed by poetry, but toml file not found."""
+    """Raise when expected to be managed by poetry, but toml file not found."""
 
 
 class Project:
@@ -529,8 +533,8 @@ class LintCode(DryRun):
                 prefix = ""
             else:
                 if check_call("python -c 'import fast_dev_cli'"):
-                    command = 'python -m pip install -U "fast_dev_cli[all]"'
-                    tip = "You may need to run the following command to install lint tools"
+                    command = 'python -m pip install -U "fast_dev_cli"'
+                    tip = "You may need to run following command to install lint tools"
                     secho(f"{tip}:\n\n  {command}\n", fg="yellow")
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
