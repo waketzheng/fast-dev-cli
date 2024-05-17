@@ -18,7 +18,7 @@ def mock_skip_mypy(monkeypatch):
 
 
 SEP = " && "
-LINT_CMD = "ruff format --fix . && ruff check --extend-select=I . && mypy ."
+LINT_CMD = "ruff format . && ruff check --extend-select=I --fix . && mypy ."
 CHECK_CMD = "ruff format --check . && ruff check --extend-select=I . && mypy ."
 
 
@@ -29,18 +29,20 @@ def test_check():
 
 
 def test_lint_cmd():
-    command = capture_cmd_output("poetry run python fast_dev_cli/cli.py lint . --dry")
+    run = "pdm run "
+    lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
+    command = capture_cmd_output(f"{lint_cmd} . --dry")
     for cmd in LINT_CMD.split(SEP):
         assert cmd in command
     assert (
-        capture_cmd_output("poetry run python fast_dev_cli/cli.py lint --dry")
-        == capture_cmd_output("poetry run fast lint --dry")
+        capture_cmd_output(f"{lint_cmd} --dry")
+        == capture_cmd_output(f"{run}fast lint --dry")
         == command
     )
     assert (
-        capture_cmd_output("poetry run python fast_dev_cli/cli.py lint .")
-        == capture_cmd_output("poetry run python fast_dev_cli/cli.py lint")
-        == capture_cmd_output("poetry run fast lint")
+        capture_cmd_output(f"{lint_cmd} .")
+        == capture_cmd_output(f"{lint_cmd} lint")
+        == capture_cmd_output(f"{run}fast lint")
     )
 
 
@@ -76,7 +78,7 @@ def test_lint_func(mocker):
     assert LINT_CMD.replace(" .", " tests") in stream.getvalue()
 
 
-def test_lint_without_black_installed(mocker):
+def test_lint_without_ruff_installed(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     mocker.patch(
         "fast_dev_cli.cli.LintCode.check_lint_tool_installed", return_value=False
@@ -84,9 +86,10 @@ def test_lint_without_black_installed(mocker):
     with capture_stdout() as stream:
         lint(".", dry=True)
     output = stream.getvalue()
-    cmd = 'python -m pip install -U "fast_dev_cli[all]"'
-    tip = "You may need to run the following command to install lint tools"
-    assert cmd in output and tip in output
+    cmd = 'python -m pip install -U "fast_dev_cli"'
+    assert cmd in output
+    tip = "You may need to run following command to install lint tools"
+    assert tip in output
     assert f"{tip}:\n\n  {cmd}" in output
 
 

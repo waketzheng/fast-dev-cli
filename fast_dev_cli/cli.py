@@ -529,9 +529,9 @@ class LintCode(DryRun):
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I --fix", "mypy"]
         if check_only:
-            tools[1] += " --check"
+            tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):
-            tools[0] = tools[0].replace(" --fix", "")
+            tools[1] = tools[1].replace(" --fix", "")
         if load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
