@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
-from strenum import StrEnum
 
 from fast_dev_cli.cli import (
     TOML_FILE,
@@ -12,6 +11,7 @@ from fast_dev_cli.cli import (
     EnvError,
     Exit,
     Project,
+    StrEnum,
     bump,
     bump_version,
     get_current_version,

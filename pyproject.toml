@@ -58,7 +58,7 @@ source-includes = [
     "scripts/",
 ]
 [tool.pdm.dev-dependencies]
-dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]"]
+dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[standard,all]"]
 [tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project]
 name = "fastdevcli-slim"
 
