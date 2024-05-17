@@ -196,6 +196,7 @@ def test_get_args_hard(tmp_poetry_project):
 
 
 def test_get_dev_dependencies(tmp_path: Path):
+    assert UpgradeDependencies.manage_by_poetry() is False
     try:
         UpgradeDependencies.get_args()
     except Exception as e:
@@ -262,6 +263,7 @@ def test_gen_cmd(tmp_poetry_project):
         UpgradeDependencies.to_cmd(*args)
         == 'poetry add "anyio@latest" && poetry add --platform=linux "pytest@latest" --dev'
     )
+    assert UpgradeDependencies.manage_by_poetry() is True
 
 
 def test_args_to_cmd():

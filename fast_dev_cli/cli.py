@@ -124,8 +124,12 @@ def capture_cmd_output(command: list[str] | str, **kw) -> str:
 
 
 def get_current_version(
-    verbose=False, is_poetry=True, package_name=Path(__file__).parent.name
+    verbose=False,
+    is_poetry: bool | None = None,
+    package_name=Path(__file__).parent.name,
 ) -> str:
+    if is_poetry is None:
+        is_poetry = Project.manage_by_poetry()
     if not is_poetry:
         return importlib_metadata.version(package_name)
     cmd = ["poetry", "version", "-s"]
@@ -285,6 +289,10 @@ class Project:
     def load_toml_text(cls: Type[Self]) -> str:
         toml_file = cls.get_work_dir().resolve() / TOML_FILE  # to be optimize
         return toml_file.read_text("utf8")
+
+    @classmethod
+    def manage_by_poetry(cls: Type[Self]) -> bool:
+        return "[tool.poetry]" in cls.load_toml_text()
 
     @staticmethod
     def python_exec_dir() -> Path:
