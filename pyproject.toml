@@ -80,6 +80,7 @@ source = [
     "tests",
     "fast_dev_cli"
 ]
+omit = ['__pypackages__']
 context = '${CONTEXT}'
 
 [tool.coverage.report]
