@@ -10,6 +10,9 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from typing import TYPE_CHECKING, Optional, Type
 
+import typer
+from typer import Exit, Option, echo, secho
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
@@ -33,55 +36,12 @@ def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
 
-try:
-    import typer
-    from typer import Exit, Option, echo, secho
-
-    cli = typer.Typer()
-    if len(sys.argv) >= 2 and sys.argv[1] == "lint":
-        if not parse_files(sys.argv[2:]):
-            sys.argv.append(".")
-except ModuleNotFoundError:
-    import click
-    from click import echo, secho
-    from click.core import Group as _Group
-    from click.exceptions import Exit
-
-    def Option(default, *shortcuts, **kw):  # type:ignore[no-redef]
-        return default
-
-    def _command(self, *args, **kwargs):
-        from click.decorators import command
-
-        def decorator(f):
-            if kwargs.get("name") == "lint":
-                import functools
-
-                def auto_fill_args(func):
-                    @functools.wraps(func)
-                    def runner(*arguments: str, **kw):
-                        if "files" not in kw and not parse_files(arguments):
-                            arguments = (".",)
-                        return func(*arguments, **kw)
-
-                    return runner
-
-                f = auto_fill_args(f)
-                if sys.argv[2:]:
-                    f = click.argument("files", nargs=-1)(f)
-            cmd = command(*args, **kwargs)(f)
-            self.add_command(cmd)
-            return cmd
-
-        return decorator
-
-    _Group.command = _command  # type:ignore
-
-    @click.group()
-    def cli() -> None: ...  # pragma: no cover
-
+if len(sys.argv) >= 2 and sys.argv[1] == "lint":
+    if not parse_files(sys.argv[2:]):
+        sys.argv.append(".")
 
 TOML_FILE = "pyproject.toml"
+cli = typer.Typer()
 
 
 def load_bool(name: str, default=False) -> bool:
