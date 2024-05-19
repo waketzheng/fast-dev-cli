@@ -46,7 +46,7 @@ jobs:
       - name: build
         run: pdm build
       - name: Test with pytest
-        run: bash scripts/test.sh
+        run: pdm run coverage run -m pytest
       - name: Upload Coverage
         run: |
           pip3 install --upgrade coveralls
