@@ -2,7 +2,7 @@ import pathlib
 
 from pytest_mock import MockerFixture
 
-from fast_dev_cli.cli import capture_cmd_output, coverage_test
+from fast_dev_cli.cli import Project, capture_cmd_output, coverage_test
 from fast_dev_cli.cli import test as unitcase
 
 
@@ -32,13 +32,16 @@ def test_test_with_pdm_run(mocker: MockerFixture, capsys):
     )
 
 
-def test_test_with_poetry_run(mocker: MockerFixture, capsys):
+def test_test_with_poetry_or_pdm_run(mocker: MockerFixture, capsys):
     mocker.patch("fast_dev_cli.cli.check_call", return_value=False)
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     unitcase(dry=True)
+    command = "coverage"
+    if tool := Project.get_manage_tool():
+        command = tool + " run " + command
     assert (
-        '--> poetry run coverage run -m pytest -s && poetry run coverage report --omit="tests/*" -m'
+        '--> {0} run -m pytest -s && {0} report --omit="tests/*" -m'.format(command)
         in capsys.readouterr().out
     )
 
@@ -47,8 +50,11 @@ def test_test_not_in_venv(mocker: MockerFixture, capsys):
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=False)
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     unitcase(dry=True)
+    command = "coverage"
+    if tool := Project.get_manage_tool():
+        command = tool + " run " + command
     assert (
-        '--> poetry run coverage run -m pytest -s && poetry run coverage report --omit="tests/*" -m'
+        '--> {0} run -m pytest -s && {0} report --omit="tests/*" -m'.format(command)
         in capsys.readouterr().out
     )
 
