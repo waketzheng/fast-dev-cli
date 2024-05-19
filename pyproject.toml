@@ -74,13 +74,21 @@ all = [
 [tool.waketzheng._internal-slim-build.packages.fast-dev-cli.project.scripts]
 fast = "fast_dev_cli:cli.cli"
 
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
 [tool.coverage.run]
 parallel = true
 source = [
-    "tests",
     "fast_dev_cli"
 ]
-omit = ['__pypackages__']
+omit = [
+    "__pypackages__/*",
+    ".venv/*",
+    "venv*.bak/*"
+]
 context = '${CONTEXT}'
 
 [tool.coverage.report]
