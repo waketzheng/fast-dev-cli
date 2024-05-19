@@ -268,13 +268,16 @@ class Project:
 
     @classmethod
     def get_manage_tool(cls: Type[Self]) -> Literal["poetry", "pdm", ""]:
-        text = cls.load_toml_text()
-        if "[tool.poetry]" in text:
-            return "poetry"
-        elif "[tool.pdm]" in text:
-            return "pdm"
+        try:
+            text = cls.load_toml_text()
+        except EnvError:
+            pass
         else:
-            return ""
+            if "[tool.poetry]" in text:
+                return "poetry"
+            elif "[tool.pdm]" in text:
+                return "pdm"
+        return ""
 
     @staticmethod
     def python_exec_dir() -> Path:
@@ -526,16 +529,19 @@ class LintCode(DryRun):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
-        pm = Project.get_manage_tool()
-        prefix = f"{pm} run "
+        prefix = ""
+        should_run_by_tool = False
         if is_venv():
-            if cls.check_lint_tool_installed():
-                prefix = ""
-            else:
+            if not cls.check_lint_tool_installed():
+                should_run_by_tool = True
                 if check_call("python -c 'import fast_dev_cli'"):
                     command = 'python -m pip install -U "fast_dev_cli"'
                     tip = "You may need to run following command to install lint tools"
                     secho(f"{tip}:\n\n  {command}\n", fg="yellow")
+        else:
+            should_run_by_tool = True
+        if should_run_by_tool:
+            prefix = Project.get_manage_tool() + " run "
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
 
