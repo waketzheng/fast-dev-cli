@@ -2,7 +2,15 @@ from pathlib import Path
 
 import pytest
 
-from fast_dev_cli.cli import LintCode, capture_cmd_output, lint, make_style, only_check
+from fast_dev_cli.cli import (
+    TOML_FILE,
+    LintCode,
+    Project,
+    capture_cmd_output,
+    lint,
+    make_style,
+    only_check,
+)
 
 from .utils import capture_stdout, chdir, mock_sys_argv
 
@@ -117,3 +125,15 @@ def test_not_in_root(mocker):
             cmd = LintCode(".").gen()
         sub.rmdir()
         assert cmd == LINT_CMD
+
+
+def test_get_manage_tool(tmp_path):
+    with chdir(tmp_path):
+        try:
+            Project.get_manage_tool()
+        except Exception as e:
+            assert e.__class__.__name__ == "EnvError"
+        Path(TOML_FILE).write_text("[tool.poetry]")
+        assert Project.get_manage_tool() == "poetry"
+        Path(TOML_FILE).write_text("[tool.pdm]")
+        assert Project.get_manage_tool() == "pdm"

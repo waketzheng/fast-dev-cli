@@ -46,7 +46,9 @@ jobs:
       - name: build
         run: pdm build
       - name: Test with pytest
-        run: pdm run coverage run -m pytest
+        run: |
+          pdm run coverage run -m pytest
+          pdm run python -c "import os;from pathlib import Path;pp=list(Path().glob('.coverage.*'));pp and os.system('pdm run coverage combine .coverage*')"
       - name: Upload Coverage
         run: |
           pip3 install --upgrade coveralls
