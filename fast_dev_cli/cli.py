@@ -239,27 +239,33 @@ class Project:
     path_depth = 5
 
     @staticmethod
-    def work_dir(name: str, parent: Path, depth: int) -> Path | None:
+    def work_dir(name: str, parent: Path, depth: int, be_file=False) -> Path | None:
         for _ in range(depth):
-            if parent.joinpath(name).exists():
+            if (f := parent.joinpath(name)).exists():
+                if be_file:
+                    return f
                 return parent
             parent = parent.parent
         return None
 
     @classmethod
     def get_work_dir(
-        cls: Type[Self], name=TOML_FILE, cwd: Path | None = None, allow_cwd=False
+        cls: Type[Self],
+        name=TOML_FILE,
+        cwd: Path | None = None,
+        allow_cwd=False,
+        be_file=False,
     ) -> Path:
         cwd = cwd or Path.cwd()
-        if d := cls.work_dir(name, cwd, cls.path_depth):
+        if d := cls.work_dir(name, cwd, cls.path_depth, be_file):
             return d
         if allow_cwd:
             return cls.get_root_dir(cwd)
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
-    def load_toml_text(cls: Type[Self]) -> str:
-        toml_file = cls.get_work_dir().resolve() / TOML_FILE  # to be optimize
+    def load_toml_text(cls: Type[Self], name=TOML_FILE) -> str:
+        toml_file = cls.get_work_dir(name, be_file=True)
         return toml_file.read_text("utf8")
 
     @classmethod
