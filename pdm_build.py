@@ -12,7 +12,6 @@ def pdm_build_initialize(context: Context) -> None:
     config: Dict[str, Any] = context.config.data["tool"]["waketzheng"][
         "_internal-slim-build"
     ]["packages"][BUILD_PACKAGE]
-    print(f"{config = }")
     project_config: Dict[str, Any] = config["project"]
     # Get main optional dependencies, extras
     optional_dependencies: Dict[str, List[str]] = metadata.get(
