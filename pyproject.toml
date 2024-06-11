@@ -47,6 +47,7 @@ all = [
     "ipython >=8.24.0,<9",
     "pytest-mock >=3.14.0,<4",
     "coveralls >=4.0.1,<5",
+    "fast-dev-cli[standard]"
 ]
 
 
@@ -59,7 +60,7 @@ source-includes = [
     "scripts/",
 ]
 [tool.pdm.dev-dependencies]
-dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[standard,all]"]
+dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]"]
 [tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project]
 name = "fastdevcli-slim"
 

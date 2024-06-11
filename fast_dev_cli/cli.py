@@ -12,14 +12,12 @@ from typing import TYPE_CHECKING, Literal, Optional, Type
 
 import typer
 from typer import Exit, Option, echo, secho
+from typing_extensions import Annotated, Self
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-    from typing import Self
 else:  # pragma: no cover
     from enum import Enum
-
-    from typing_extensions import Self
 
     class StrEnum(str, Enum):
         __str__ = str.__str__
@@ -29,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typer.models import OptionInfo
 
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
@@ -683,11 +681,14 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
+    serve_port: Annotated[Optional[int], typer.Argument()] = None,
     port: Optional[int] = Option(None, "-p", "--port"),
     host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
+    if serve_port:
+        port = serve_port
     dev(port, host, dry=dry)
 
 
