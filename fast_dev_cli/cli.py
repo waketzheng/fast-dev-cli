@@ -666,11 +666,17 @@ def upload(
 
 
 def dev(
-    port: int | None | "OptionInfo", host: str | None | "OptionInfo", dry=False
+    port: str | int | None | "OptionInfo", host: str | None | "OptionInfo", dry=False
 ) -> None:
     cmd = "fastapi dev"
-    if (port := getattr(port, "default", port)) and port != 8000:
-        cmd += f" --port={port}"
+    if port := getattr(port, "default", port):
+        try:
+            port = int(port)  # type:ignore[arg-type]
+        except ValueError:
+            cmd += f" {port}"
+        else:
+            if port != 8000:
+                cmd += f" --{port=}"
     if (host := getattr(host, "default", host)) and host not in (
         "localhost",
         "127.0.0.1",
@@ -681,15 +687,16 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
-    serve_port: Annotated[Optional[int], typer.Argument()] = None,
+    file_or_port: Annotated[Optional[str], typer.Argument()] = None,
     port: Optional[int] = Option(None, "-p", "--port"),
     host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
-    if serve_port:
-        port = serve_port
-    dev(port, host, dry=dry)
+    if file_or_port:
+        dev(file_or_port, host, dry=dry)
+    else:
+        dev(port, host, dry=dry)
 
 
 if __name__ == "__main__":  # pragma: no cover
