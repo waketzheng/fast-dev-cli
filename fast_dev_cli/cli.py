@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typer.models import OptionInfo
 
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
@@ -666,17 +666,24 @@ def upload(
 
 
 def dev(
-    port: str | int | None | "OptionInfo", host: str | None | "OptionInfo", dry=False
+    port: int | None | "OptionInfo",
+    host: str | None | "OptionInfo",
+    file: Optional[str] = None,
+    dry=False,
 ) -> None:
     cmd = "fastapi dev"
-    if port := getattr(port, "default", port):
+    no_port_yet = True
+    if file is not None:
         try:
-            port = int(port)  # type:ignore[arg-type]
+            port = int(file)  # type:ignore[arg-type]
         except ValueError:
-            cmd += f" {port}"
+            cmd += f" {file}"
         else:
             if port != 8000:
                 cmd += f" --{port=}"
+                no_port_yet = False
+    if no_port_yet and (port := getattr(port, "default", port)) and str(port) != "8000":
+        cmd += f" --port={port}"
     if (host := getattr(host, "default", host)) and host not in (
         "localhost",
         "127.0.0.1",
@@ -694,7 +701,7 @@ def runserver(
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
     if file_or_port:
-        dev(file_or_port, host, dry=dry)
+        dev(port, host, file=file_or_port, dry=dry)
     else:
         dev(port, host, dry=dry)
 
