@@ -8,11 +8,14 @@ import sys
 from functools import cached_property
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import TYPE_CHECKING, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
 import typer
 from typer import Exit, Option, echo, secho
+from typer.models import OptionInfo
 from typing_extensions import Annotated, Self
+
+from . import __version__
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -21,13 +24,6 @@ else:  # pragma: no cover
 
     class StrEnum(str, Enum):
         __str__ = str.__str__
-
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typer.models import OptionInfo
-
-
-__version__ = "0.8.2"
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
@@ -96,7 +92,7 @@ def get_current_version(
     return capture_cmd_output(cmd)
 
 
-def _ensure_bool(value: bool | "OptionInfo") -> bool:
+def _ensure_bool(value: bool | OptionInfo) -> bool:
     if not isinstance(value, bool):
         value = getattr(value, "default", False)
     return value
@@ -202,7 +198,7 @@ class BumpUp(DryRun):
 @cli.command()
 def version() -> None:
     """Show the version of this tool"""
-    echo(__version__)
+    echo(f"Fast Dev Cli version: {__version__}")
 
 
 @cli.command(name="bump")
@@ -666,8 +662,8 @@ def upload(
 
 
 def dev(
-    port: int | None | "OptionInfo",
-    host: str | None | "OptionInfo",
+    port: int | None | OptionInfo,
+    host: str | None | OptionInfo,
     file: Optional[str] = None,
     dry=False,
 ) -> None:
@@ -706,5 +702,9 @@ def runserver(
         dev(port, host, dry=dry)
 
 
-if __name__ == "__main__":  # pragma: no cover
+def main() -> None:
     cli()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

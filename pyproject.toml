@@ -52,7 +52,7 @@ all = [
 
 
 [tool.pdm]
-version = { source = "file", path = "fast_dev_cli/cli.py" }
+version = { source = "file", path = "fast_dev_cli/__init__.py" }
 distribution = true
 
 [tool.pdm.build]
