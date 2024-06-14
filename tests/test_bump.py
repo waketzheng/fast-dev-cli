@@ -62,7 +62,7 @@ def test_bump(
 ):
     version = get_current_version()
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
-        version, "fast_dev_cli/cli.py"
+        version, "fast_dev_cli/__init__.py"
     )
     stream = StringIO()
     with redirect_stdout(stream):
