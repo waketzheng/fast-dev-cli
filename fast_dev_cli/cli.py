@@ -15,7 +15,10 @@ from typer import Exit, Option, echo, secho
 from typer.models import OptionInfo
 from typing_extensions import Annotated, Self
 
-from . import __version__
+try:
+    from . import __version__
+except ImportError:  # pragma: no cover
+    from fast_dev_cli import __version__
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
