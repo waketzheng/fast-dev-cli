@@ -29,6 +29,7 @@ else:  # pragma: no cover
         __str__ = str.__str__
 
 
+# TODO: use Optional Argument instead
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
