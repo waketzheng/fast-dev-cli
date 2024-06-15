@@ -13,7 +13,6 @@ from typing import Literal, Optional, Type
 import typer
 from typer import Exit, Option, echo, secho
 from typer.models import OptionInfo
-from typing_extensions import Annotated, Self
 
 try:
     from . import __version__
@@ -22,8 +21,11 @@ except ImportError:  # pragma: no cover
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+    from typing import Annotated, Self
 else:  # pragma: no cover
     from enum import Enum
+
+    from typing_extensions import Annotated, Self
 
     class StrEnum(str, Enum):
         __str__ = str.__str__
