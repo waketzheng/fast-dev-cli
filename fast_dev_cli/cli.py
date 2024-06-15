@@ -17,7 +17,9 @@ from typer.models import OptionInfo
 try:
     from . import __version__
 except ImportError:  # pragma: no cover
-    from fast_dev_cli import __version__
+    from importlib import import_module as _import
+
+    __version__ = _import(Path(__file__).parent.name).__version__
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
