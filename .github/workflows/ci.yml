@@ -50,7 +50,9 @@ jobs:
           pdm run coverage run -m pytest
           pdm run python -c "import os;from pathlib import Path;pp=list(Path().glob('.coverage.*'));pp and os.system('pdm run coverage combine .coverage*')"
       - name: Upload Coverage
-        run: pdm run coveralls --service=github
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}

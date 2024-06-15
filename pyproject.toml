@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Python project development tool."
 authors = [{name = "Waket Zheng", email = "waketzheng@gmail.com>"}]
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<4"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -29,7 +29,6 @@ classifiers = [
 
 dependencies = [
     "typer>=0.12.3,<0.13",
-    "typing-extensions>=4.8.0",
 ]
 
 [project.urls]
@@ -46,7 +45,6 @@ standard = [
 all = [
     "ipython >=8.24.0,<9",
     "pytest-mock >=3.14.0,<4",
-    "coveralls >=4.0.1,<5",
     "fast-dev-cli[standard]"
 ]
 
