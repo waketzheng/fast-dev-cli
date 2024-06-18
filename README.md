@@ -29,6 +29,8 @@
 
 **Source Code**: <a href="https://github.com/waketzheng/fast-dev-cli" target="_blank">https://github.com/waketzheng/fast-dev-cli</a>
 
+**English** | [中文](./README.zh.md)
+
 ## Requirements
 
 Python 3.10+
