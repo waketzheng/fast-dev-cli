@@ -7,3 +7,5 @@ set -x
 
 pdm run fast check || \
   echo -e "\033[1m Please run './scripts/format.sh' to auto-fix style issues \033[0m"
+
+pdm run bandit -r fast_dev_cli/

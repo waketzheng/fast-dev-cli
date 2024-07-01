@@ -3,11 +3,10 @@ from __future__ import annotations
 import importlib.metadata as importlib_metadata
 import os
 import re
-import subprocess
+import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from subprocess import CompletedProcess
 from typing import Literal, Optional, Type
 
 import typer
@@ -33,14 +32,9 @@ else:  # pragma: no cover
         __str__ = str.__str__
 
 
-# TODO: use Optional Argument instead
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
-
-if len(sys.argv) >= 2 and sys.argv[1] == "lint":
-    if not parse_files(sys.argv[2:]):
-        sys.argv.append(".")
 
 TOML_FILE = "pyproject.toml"
 cli = typer.Typer()
@@ -59,9 +53,10 @@ def is_venv() -> bool:
     )
 
 
-def _run_shell(cmd: str, **kw) -> CompletedProcess:
-    kw.setdefault("shell", True)
-    return subprocess.run(cmd, **kw)
+def _run_shell(cmd: list[str] | str, **kw) -> subprocess.CompletedProcess:
+    if isinstance(cmd, str):
+        kw.setdefault("shell", True)
+    return subprocess.run(cmd, **kw)  # nosec:B603
 
 
 def run_and_echo(cmd: str, *, dry=False, verbose=True, **kw) -> int:
@@ -81,7 +76,7 @@ def check_call(cmd: str) -> bool:
 def capture_cmd_output(command: list[str] | str, **kw) -> str:
     if isinstance(command, str) and not kw.get("shell"):
         command = command.split()
-    r = subprocess.run(command, capture_output=True, **kw)
+    r = _run_shell(command, capture_output=True, **kw)
     return r.stdout.strip().decode()
 
 
@@ -108,10 +103,10 @@ def _ensure_bool(value: bool | OptionInfo) -> bool:
 
 def exit_if_run_failed(
     cmd: str, env=None, _exit=False, dry=False, **kw
-) -> CompletedProcess:
+) -> subprocess.CompletedProcess:
     run_and_echo(cmd, dry=True)
     if _ensure_bool(dry):
-        return CompletedProcess("", 0)
+        return subprocess.CompletedProcess("", 0)
     if env is not None:
         env = {**os.environ, **env}
     r = _run_shell(cmd, env=env, **kw)
@@ -554,7 +549,7 @@ class LintCode(DryRun):
         return cmd
 
     def gen(self: Self) -> str:
-        paths = " ".join(self.args) if self.args else "."
+        paths = " ".join(map(str, self.args)) if self.args else "."
         return self.to_cmd(paths, self.check_only)
 
 
@@ -572,12 +567,14 @@ def check(files=None, dry=False) -> None:
 
 @cli.command(name="lint")
 def make_style(
-    files: list[str],
+    files: Annotated[Optional[list[Path]], typer.Argument()] = None,
     check_only: bool = Option(False, "--check-only", "-c"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
-    if isinstance(files, str):
+    if files is None:
+        files = [Path(".")]
+    elif isinstance(files, str):
         files = [files]
     if _ensure_bool(check_only):
         check(files, dry=dry)

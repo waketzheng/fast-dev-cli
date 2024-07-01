@@ -57,10 +57,10 @@ def test_lint_cmd():
 def test_make_style(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
-        make_style(["."], check_only=False, dry=True)
+        make_style([Path(".")], check_only=False, dry=True)
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
-        make_style(["."], check_only=True, dry=True)
+        make_style([Path(".")], check_only=True, dry=True)
     assert CHECK_CMD in stream.getvalue()
     with capture_stdout() as stream:
         only_check(dry=True)
