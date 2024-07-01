@@ -37,7 +37,7 @@ Homepage = "https://github.com/waketzheng/fast-dev-cli"
 [project.optional-dependencies]
 standard = [
     "coverage >=7.5.1,<8",
-    "ruff >=0.4.4,<0.5",
+    "ruff >=0.4.4,<0.6",
     "mypy >=1.10.0,<2",
     "bumpversion >=0.6.0,<0.7",
     "pytest >=8.2.0,<9",
@@ -71,6 +71,8 @@ all = [
     "pytest-mock >=3.14.0,<4",
 ]
 
+[tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project.scripts]
+fast = "fast_dev_cli:cli.main"
 [tool.waketzheng._internal-slim-build.packages.fast-dev-cli.project.scripts]
 fast = "fast_dev_cli:cli.main"
 

@@ -17,7 +17,7 @@ from typer.models import OptionInfo
 try:
     from . import __version__
 except ImportError:  # pragma: no cover
-    from importlib import import_module as _import
+    from importlib import import_module as _import  # For local unittest
 
     __version__ = _import(Path(__file__).parent.name).__version__
 
