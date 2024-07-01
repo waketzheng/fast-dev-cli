@@ -23,6 +23,9 @@
 <a href="https://github.com/python/mypy" target="_blank">
     <img src="https://img.shields.io/badge/mypy-100%25-green.svg" alt="Mypy Coverage">
 </a>
+<a href="https://github.com/PyCQA/bandit" target="_blank">
+    <img src="https://img.shields.io/badge/security-bandit-yellow.svg" alt="security: bandit">
+</a>
 </p>
 
 ---
