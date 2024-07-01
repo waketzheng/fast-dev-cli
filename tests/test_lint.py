@@ -49,7 +49,7 @@ def test_lint_cmd():
     )
     assert (
         capture_cmd_output(f"{lint_cmd} .")
-        == capture_cmd_output(f"{lint_cmd} lint")
+        == capture_cmd_output(f"{lint_cmd}")
         == capture_cmd_output(f"{run}fast lint")
     )
 
