@@ -92,7 +92,9 @@ def get_current_version(
     cmd = ["poetry", "version", "-s"]
     if verbose:
         echo(f"--> {' '.join(cmd)}")
-    return capture_cmd_output(cmd).strip().splitlines()[-1]
+    if out := capture_cmd_output(cmd).strip():
+        out = out.splitlines()[-1]
+    return out
 
 
 def _ensure_bool(value: bool | OptionInfo) -> bool:
