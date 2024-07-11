@@ -23,9 +23,12 @@ except ImportError:  # pragma: no cover
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Annotated, Self
+
+    import tomllib
 else:  # pragma: no cover
     from enum import Enum
 
+    import tomli as tomllib
     from typing_extensions import Annotated, Self
 
     class StrEnum(str, Enum):
@@ -93,7 +96,7 @@ def get_current_version(
     if verbose:
         echo(f"--> {' '.join(cmd)}")
     if out := capture_cmd_output(cmd).strip():
-        out = out.splitlines()[-1]
+        out = out.splitlines()[-1].strip().split()[-1]
     return out
 
 
@@ -149,12 +152,33 @@ class BumpUp(DryRun):
 
     @staticmethod
     def parse_filename() -> str:
+        toml_text = Project.load_toml_text()
         if not Project.manage_by_poetry():
             # version = { source = "file", path = "fast_dev_cli/cli.py" }
-            for line in Project.load_toml_text().splitlines():
+            for line in toml_text.splitlines():
                 if not line.startswith("version = "):
                     continue
                 return line.split('path = "', 1)[-1].split('"')[0]
+        context = tomllib.loads(toml_text)
+        if (poetry_item := context["tool"]["poetry"])["version"] == "0":
+            try:
+                package_item = poetry_item["packages"]
+            except KeyError:
+                packages = []
+            else:
+                packages = [j for i in package_item if (j := i.get("include"))]
+            # In case of managed by `poetry-version-plugin`
+            cwd = Path.cwd()
+            pattern = re.compile(r"__version__\s*=\s*['\"]")
+            ds = [cwd / i for i in packages] + [cwd / cwd.name.replace("-", "_"), cwd]
+            for d in ds:
+                if (init_file := d / "__init__.py").exists():
+                    if pattern.search(init_file.read_text()):
+                        break
+            else:
+                raise ParseError("Version file not found! Where are you now?")
+            return init_file.relative_to(cwd).as_posix()
+
         return TOML_FILE
 
     def get_part(self, s: str) -> str:

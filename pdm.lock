@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:9d398e969b9ace05edb33b2163bfbbb4a92a6f598317d5339d475d8bbb6afc81"
+content_hash = "sha256:698cffa249241122efbaf25bad49a62ab00216030715159f6abf70c3d94fec36"
 
 [[package]]
 name = "asttokens"
@@ -547,7 +547,7 @@ name = "tomli"
 version = "2.0.1"
 requires_python = ">=3.7"
 summary = "A lil' TOML parser"
-groups = ["dev"]
+groups = ["default", "dev"]
 marker = "python_version < \"3.11\""
 files = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
