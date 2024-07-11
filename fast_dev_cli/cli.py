@@ -160,9 +160,13 @@ class BumpUp(DryRun):
                     continue
                 return line.split('path = "', 1)[-1].split('"')[0]
         context = tomllib.loads(toml_text)
-        if (poetry_item := context["tool"]["poetry"])["version"] == "0":
+        try:
+            version_value = context["tool"]["poetry"]["version"]
+        except KeyError:
+            return TOML_FILE
+        if version_value == "0":
             try:
-                package_item = poetry_item["packages"]
+                package_item = context["tool"]["poetry"]["packages"]
             except KeyError:
                 packages = []
             else:
