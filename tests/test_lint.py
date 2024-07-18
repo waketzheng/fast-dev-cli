@@ -25,6 +25,21 @@ def mock_skip_mypy(monkeypatch):
     monkeypatch.setenv("SKIP_MYPY", "1")
 
 
+@pytest.fixture
+def mock_skip_mypy_0(monkeypatch):
+    monkeypatch.setenv("SKIP_MYPY", "0")
+
+
+@pytest.fixture
+def mock_ignore_missing_imports(monkeypatch):
+    monkeypatch.setenv("IGNORE_MISSING_IMPORTS", "1")
+
+
+@pytest.fixture
+def mock_ignore_missing_imports_0(monkeypatch):
+    monkeypatch.setenv("IGNORE_MISSING_IMPORTS", "0")
+
+
 SEP = " && "
 LINT_CMD = "ruff format . && ruff check --extend-select=I --fix . && mypy ."
 CHECK_CMD = "ruff format --check . && ruff check --extend-select=I . && mypy ."
@@ -110,6 +125,23 @@ def test_skip_mypy(mock_skip_mypy, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     cmds = LINT_CMD.split(SEP)
     assert LintCode(".").gen() == SEP.join(i for i in cmds if not i.startswith("mypy"))
+
+
+def test_skip_mypy_0(mock_skip_mypy_0, mocker):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    assert LintCode(".").gen() == LINT_CMD
+
+
+def test_ignore_missing_imports(mock_ignore_missing_imports, mocker):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    assert LintCode(".").gen() == LINT_CMD.replace(
+        "mypy ", "mypy --ignore-missing-imports "
+    )
+
+
+def test_ignore_missing_imports_0(mock_ignore_missing_imports_0, mocker):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    assert LintCode(".").gen() == LINT_CMD
 
 
 def test_not_in_root(mocker):

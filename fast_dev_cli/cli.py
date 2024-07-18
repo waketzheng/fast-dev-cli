@@ -561,6 +561,8 @@ class LintCode(DryRun):
         if load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
+        elif load_bool("IGNORE_MISSING_IMPORTS"):
+            tools[-1] += " --ignore-missing-imports"
         lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
         prefix = ""
         should_run_by_tool = False
