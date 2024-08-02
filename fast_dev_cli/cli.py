@@ -35,10 +35,6 @@ else:  # pragma: no cover
         __str__ = str.__str__
 
 
-def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
-    return [i for i in args if not i.startswith("-")]
-
-
 TOML_FILE = "pyproject.toml"
 cli = typer.Typer()
 
@@ -181,7 +177,7 @@ class BumpUp(DryRun):
                         break
             else:
                 raise ParseError("Version file not found! Where are you now?")
-            return init_file.relative_to(cwd).as_posix()
+            return os.path.relpath(init_file, cwd)
 
         return TOML_FILE
 
@@ -585,6 +581,10 @@ class LintCode(DryRun):
         return self.to_cmd(paths, self.check_only)
 
 
+def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
+    return [i for i in args if not i.startswith("-")]
+
+
 def lint(files=None, dry=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -668,7 +668,7 @@ def test(dry: bool, ignore_script=False) -> None:
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     test_script = root / "scripts" / "test.sh"
     if not _ensure_bool(ignore_script) and _should_run_test_script(test_script):
-        cmd = f"sh {test_script.relative_to(root)}"
+        cmd = f"sh {os.path.relpath(test_script, root)}"
         if cwd != root:
             cmd = f"cd {root} && " + cmd
     else:
