@@ -40,13 +40,8 @@ jobs:
           poetry self add poetry-version-plugin
           git config --global user.email "waketzheng@gmail.com"
           git config --global user.name "Waket Zheng"
-      - name: Install requirements
-        run: pdm install
-      - name: Check code style and Type Hint
-        run: |
-          bash scripts/check.sh
-      - name: build
-        run: pdm build
+      - name: Install requirements/Check code style and Type Hint
+        run: make check
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest

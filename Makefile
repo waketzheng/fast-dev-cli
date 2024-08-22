@@ -15,20 +15,25 @@ up:
 deps:
 	@pdm install --dev --with=all
 
-check: deps
+_check:
 	./scripts/check.sh
+check: deps _build _check
 
-lint: deps build
+_lint:
 	./scripts/format.sh
+lint: deps _build _lint
 
-test: deps
+_test:
 	./scripts/test.sh
+test: deps _test
 
-style: deps
+_style:
 	ruff format .
 	ruff check --fix .
+style: deps _style
 
-build: deps
+_build:
 	rm -fR dist/
 	pdm build
 	BUILD_PACKAGE=fastdevcli-slim pdm build
+build: deps _build
