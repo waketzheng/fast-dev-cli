@@ -376,13 +376,13 @@ class UpgradeDependencies(Project, DryRun):
     ) -> tuple[list[str], dict[str, list[str]]]:
         args: list[str] = []  # ['typer[all]', 'fastapi']
         specials: dict[str, list[str]] = {}  # {'--platform linux': ['gunicorn']}
-        for line in package_lines:
+        for no, line in enumerate(package_lines, 1):
             if not (m := line.strip()) or m.startswith("#"):
                 continue
             try:
                 package, version_info = m.split("=", 1)
             except ValueError as e:
-                raise ParseError(f"{m = }") from e
+                raise ParseError(f"Failed to separate by '='@line {no}: {m}") from e
             if (package := package.strip()).lower() == "python":
                 continue
             if cls.no_need_upgrade(version_info := version_info.strip(' "'), line):
@@ -567,8 +567,8 @@ class LintCode(DryRun):
                 should_run_by_tool = True
                 if check_call("python -c 'import fast_dev_cli'"):
                     command = 'python -m pip install -U "fast_dev_cli"'
-                    tip = "You may need to run following command to install lint tools"
-                    secho(f"{tip}:\n\n  {command}\n", fg="yellow")
+                    tip = "You may need to run following command to install lint tools:"
+                    secho(f"{tip}\n\n  {command}\n", fg="yellow")
         else:
             should_run_by_tool = True
         if should_run_by_tool:
@@ -713,7 +713,7 @@ def dev(
             cmd += f" {file}"
         else:
             if port != 8000:
-                cmd += f" --{port=}"
+                cmd += f" --port={port}"
                 no_port_yet = False
     if no_port_yet and (port := getattr(port, "default", port)) and str(port) != "8000":
         cmd += f" --port={port}"
