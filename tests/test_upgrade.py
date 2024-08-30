@@ -258,3 +258,23 @@ def test_get_dir(mocker, tmp_path):
         assert UpgradeDependencies.get_root_dir() == parent
         mocker.patch.object(UpgradeDependencies, "python_exec_dir", return_value=me)
         assert UpgradeDependencies.get_root_dir() == root
+
+
+def test_parse_complex_segment():
+    segment = """
+[tool.poetry.dependencies]
+torch = [
+    {version="*",platform="linux"},
+    {version="^1.2.0",platform=""},
+    {version=">=1.2.0",platform=""},
+]
+fastapi = "^0.112.2"
+
+[tool.isort]
+    """.strip()
+    assert UpgradeDependencies.get_args(segment) == (
+        ['"fastapi@latest"'],
+        [],
+        [],
+        "--dev",
+    )

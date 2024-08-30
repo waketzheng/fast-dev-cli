@@ -364,6 +364,9 @@ class UpgradeDependencies(Project, DryRun):
         if v == "*":
             echo(f"Skip wildcard line: {line}")
             return True
+        elif v == "[":
+            echo(f"Skip complex dependence: {line}")
+            return True
         elif v.startswith(">") or v.startswith("<") or v[0].isdigit():
             echo(f"Ignore bigger/smaller/equal: {line}")
             return True
@@ -376,7 +379,12 @@ class UpgradeDependencies(Project, DryRun):
         args: list[str] = []  # ['typer[all]', 'fastapi']
         specials: dict[str, list[str]] = {}  # {'--platform linux': ['gunicorn']}
         for no, line in enumerate(package_lines, 1):
-            if not (m := line.strip()) or m.startswith("#"):
+            if (
+                not (m := line.strip())
+                or m.startswith("#")
+                or m == "]"
+                or (m.startswith("{") and m.strip(",").endswith("}"))
+            ):
                 continue
             try:
                 package, version_info = m.split("=", 1)
