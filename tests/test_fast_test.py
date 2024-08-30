@@ -41,7 +41,7 @@ def test_test_with_poetry_or_pdm_run(mocker: MockerFixture, capsys):
     if tool := Project.get_manage_tool():
         command = tool + " run " + command
     assert (
-        '--> {0} run -m pytest -s && {0} report --omit="tests/*" -m'.format(command)
+        f'--> {command} run -m pytest -s && {command} report --omit="tests/*" -m'
         in capsys.readouterr().out
     )
 
@@ -54,7 +54,7 @@ def test_test_not_in_venv(mocker: MockerFixture, capsys):
     if tool := Project.get_manage_tool():
         command = tool + " run " + command
     assert (
-        '--> {0} run -m pytest -s && {0} report --omit="tests/*" -m'.format(command)
+        f'--> {command} run -m pytest -s && {command} report --omit="tests/*" -m'
         in capsys.readouterr().out
     )
 

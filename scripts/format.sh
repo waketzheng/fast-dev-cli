@@ -3,4 +3,4 @@ set -x
 
 [ -f ../pyproject.toml ] && cd ..
 
-pdm run fast lint
+SKIP_MYPY=1 pdm run fast lint

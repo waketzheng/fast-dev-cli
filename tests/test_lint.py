@@ -41,8 +41,9 @@ def mock_ignore_missing_imports_0(monkeypatch):
 
 
 SEP = " && "
-LINT_CMD = "ruff format . && ruff check --extend-select=I --fix . && mypy ."
-CHECK_CMD = "ruff format --check . && ruff check --extend-select=I . && mypy ."
+_CMD = "ruff format{} . && ruff check --extend-select=I,B,SIM{} . && mypy ."
+LINT_CMD = _CMD.format("", " --fix")
+CHECK_CMD = _CMD.format(" --check", "")
 
 
 def test_check():

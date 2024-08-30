@@ -20,7 +20,7 @@ _check:
 check: deps _build _check
 
 _lint:
-	./scripts/format.sh
+	pdm run fast lint
 lint: deps _build _lint
 
 _test:
@@ -28,8 +28,7 @@ _test:
 test: deps _test
 
 _style:
-	ruff format .
-	ruff check --fix .
+	SKIP_MYPY=1 pdm run fast lint
 style: deps _style
 
 _build:

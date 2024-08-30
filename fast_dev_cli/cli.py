@@ -172,9 +172,10 @@ class BumpUp(DryRun):
             pattern = re.compile(r"__version__\s*=\s*['\"]")
             ds = [cwd / i for i in packages] + [cwd / cwd.name.replace("-", "_"), cwd]
             for d in ds:
-                if (init_file := d / "__init__.py").exists():
-                    if pattern.search(init_file.read_text()):
-                        break
+                if (init_file := d / "__init__.py").exists() and pattern.search(
+                    init_file.read_text()
+                ):
+                    break
             else:
                 raise ParseError("Version file not found! Where are you now?")
             return os.path.relpath(init_file, cwd)
@@ -199,11 +200,9 @@ class BumpUp(DryRun):
         if self.part:
             part = self.get_part(self.part)
         else:
-            tip = "Which one?"
-            if a := input(tip).strip():
+            part = "patch"
+            if a := input("Which one?").strip():
                 part = self.get_part(a)
-            else:
-                part = "patch"
         self.part = part
         parse = r'--parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"'
         cmd = f'bumpversion {parse} --current-version="{_version}" {part} {filename}'
@@ -549,7 +548,7 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
         cmd = ""
-        tools = ["ruff format", "ruff check --extend-select=I --fix", "mypy"]
+        tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
         if check_only:
             tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):

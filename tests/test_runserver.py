@@ -4,49 +4,49 @@ from fast_dev_cli.cli import dev, run_and_echo, runserver
 def test_runserver(capsys):
     runserver(dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev"
     runserver(port=8000, dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev"
     runserver(port=9000, dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=9000" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=9000"
     runserver(host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0"
     runserver(port=9000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=9000 --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
 
 
 def test_dev(capsys):
     dev(None, None, dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev"
     dev(port=8000, host="", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev"
     dev(port=9000, host=None, dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=9000" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=9000"
     dev(8000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0"
     dev(port=9000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=9000 --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
     dev(8001, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=8001 --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=8001 --host=0.0.0.0"
     dev(None, file="8001", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev --port=8001 --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev --port=8001 --host=0.0.0.0"
     dev(None, file="main.py", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev main.py --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev main.py --host=0.0.0.0"
     dev(8001, file="main.py", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert "fastapi dev main.py --port=8001 --host=0.0.0.0" == out.replace("--> ", "")
+    assert out.replace("--> ", "") == "fastapi dev main.py --port=8001 --host=0.0.0.0"
 
 
 def test_fast_dev(tmp_path):

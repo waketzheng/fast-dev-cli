@@ -16,9 +16,8 @@ def test_tag():
         GitTag(message="", dry=True).run()
     assert "git tag -a" in stream.getvalue()
 
-    with temp_file("foo.txt"):
-        with capture_stdout() as stream:
-            GitTag(message="", dry=True).run()
+    with temp_file("foo.txt"), capture_stdout() as stream:
+        GitTag(message="", dry=True).run()
 
     assert "git status" in stream.getvalue()
     assert "ERROR" in stream.getvalue()
