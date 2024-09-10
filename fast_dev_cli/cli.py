@@ -159,8 +159,9 @@ class BumpUp(DryRun):
         If last commit message is startswith emoji,
         add a ⬆️ flag at the prefix of bump up commit message.
         """
-        out = cls.get_last_commit_message()
-        return emoji.is_emoji(out[0])
+        if out := cls.get_last_commit_message():
+            return emoji.is_emoji(out[0])
+        return False
 
     @staticmethod
     def parse_filename() -> str:
