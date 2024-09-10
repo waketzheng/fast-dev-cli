@@ -34,9 +34,13 @@ def test_enum():
     assert A.ABCD == "ABCD"
 
 
-def _bump_commands(version: str, filename=TOML_FILE) -> tuple[str, str, str]:
+def _bump_commands(
+    version: str, filename=TOML_FILE, emoji=False
+) -> tuple[str, str, str]:
     cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
+    if emoji:
+        suffix = suffix.replace("--commit", "--commit --commit-emoji=1")
     patch_without_commit = cmd + f" patch {filename} --allow-dirty"
     patch_with_commit = cmd + f" patch {filename}" + suffix
     minor_with_commit = cmd + f" minor {filename} --tag" + suffix
@@ -130,3 +134,18 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
                 Project.get_work_dir(TOML_FILE)
             assert Project.get_work_dir(allow_cwd=True) == Path.cwd()
     assert work_dir == work_dir2 == tmp_path
+
+
+def test_bump_with_emoji(mocker):
+    mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
+    version = get_current_version()
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, emoji=True
+    )
+    mocker.patch(
+        "fast_dev_cli.cli.BumpUp.get_last_commit_message",
+        return_value="📝 Update release notes",
+    )
+    assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
+    assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
+    assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit

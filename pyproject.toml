@@ -41,8 +41,9 @@ standard = [
     "coverage >=7.5.1,<8",
     "ruff >=0.4.4,<0.7",
     "mypy >=1.10.0,<2",
-    "bumpversion2 >=1.4.0,<2",
+    "bumpversion2 >=1.4.2,<2",
     "pytest >=8.2.0,<9",
+    "emoji >=2.12.1,<3",
 ]
 all = [
     "bandit>=1.7.9,<2",

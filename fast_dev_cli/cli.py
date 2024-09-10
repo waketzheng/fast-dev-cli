@@ -3,12 +3,14 @@ from __future__ import annotations
 import importlib.metadata as importlib_metadata
 import os
 import re
+import shlex
 import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
 from typing import Literal, Optional, Type
 
+import emoji
 import typer
 from typer import Exit, Option, echo, secho
 from typer.models import OptionInfo
@@ -74,7 +76,7 @@ def check_call(cmd: str) -> bool:
 
 def capture_cmd_output(command: list[str] | str, **kw) -> str:
     if isinstance(command, str) and not kw.get("shell"):
-        command = command.split()
+        command = shlex.split(command)
     r = _run_shell(command, capture_output=True, **kw)
     return r.stdout.strip().decode()
 
@@ -147,6 +149,20 @@ class BumpUp(DryRun):
         super().__init__(dry=dry)
 
     @staticmethod
+    def get_last_commit_message() -> str:
+        cmd = 'git show --pretty=format:"%s" -s HEAD'
+        return capture_cmd_output(cmd)
+
+    @classmethod
+    def should_add_emoji(cls) -> bool:
+        """
+        If last commit message is startswith emoji,
+        add a ⬆️ flag at the prefix of bump up commit message.
+        """
+        out = cls.get_last_commit_message()
+        return emoji.is_emoji(out[0])
+
+    @staticmethod
     def parse_filename() -> str:
         toml_text = Project.load_toml_text()
         if not Project.manage_by_poetry():
@@ -209,7 +225,10 @@ class BumpUp(DryRun):
         if self.commit:
             if part != "patch":
                 cmd += " --tag"
-            cmd += " --commit && git push && git push --tags && git log -1"
+            cmd += " --commit"
+            if self.should_add_emoji():
+                cmd += " --commit-emoji=1"
+            cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
         return cmd
