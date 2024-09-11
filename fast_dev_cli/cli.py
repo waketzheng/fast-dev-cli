@@ -600,6 +600,8 @@ class LintCode(DryRun):
             should_run_by_tool = True
         if should_run_by_tool:
             prefix = Project.get_manage_tool() + " run "
+        if paths == "." and tools[-1].startswith("mypy") and not load_bool("NO_DMYPY"):
+            tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
 

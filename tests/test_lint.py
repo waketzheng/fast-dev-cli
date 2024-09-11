@@ -31,6 +31,16 @@ def mock_skip_mypy_0(monkeypatch):
 
 
 @pytest.fixture
+def mock_no_dmypy(monkeypatch):
+    monkeypatch.setenv("NO_DMYPY", "1")
+
+
+@pytest.fixture
+def mock_no_dmypy_0(monkeypatch):
+    monkeypatch.setenv("NO_DMYPY", "0")
+
+
+@pytest.fixture
 def mock_ignore_missing_imports(monkeypatch):
     monkeypatch.setenv("IGNORE_MISSING_IMPORTS", "1")
 
@@ -46,13 +56,28 @@ LINT_CMD = _CMD.format("", " --fix")
 CHECK_CMD = _CMD.format(" --check", "")
 
 
-def test_check():
+def test_check(mock_no_dmypy):
     command = capture_cmd_output("fast check --dry")
     for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
 
 
-def test_lint_cmd():
+def test_fast_check():
+    _fast_check()
+
+
+def test_fast_check_0(mock_no_dmypy_0):
+    _fast_check()
+
+
+def _fast_check():
+    command = capture_cmd_output("fast check --dry")
+    expected = CHECK_CMD.replace("mypy", "dmypy run")
+    for cmd in expected.split(SEP):
+        assert cmd in command
+
+
+def test_lint_cmd(mock_no_dmypy):
     run = "pdm run "
     lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
     command = capture_cmd_output(f"{lint_cmd} . --dry")
@@ -70,7 +95,7 @@ def test_lint_cmd():
     )
 
 
-def test_make_style(mocker):
+def test_make_style(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
         make_style([Path(".")], check_only=False, dry=True)
@@ -83,7 +108,7 @@ def test_make_style(mocker):
     assert CHECK_CMD in stream.getvalue()
 
 
-def test_lint_class(mocker):
+def test_lint_class(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == LINT_CMD
     check = LintCode(".", check_only=True)
@@ -92,7 +117,7 @@ def test_lint_class(mocker):
     assert LintCode(".").gen() == LINT_CMD
 
 
-def test_lint_func(mocker):
+def test_lint_func(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
         lint(".", dry=True)
@@ -102,7 +127,7 @@ def test_lint_func(mocker):
     assert LINT_CMD.replace(" .", " tests") in stream.getvalue()
 
 
-def test_lint_without_ruff_installed(mocker):
+def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     mocker.patch(
         "fast_dev_cli.cli.LintCode.check_lint_tool_installed", return_value=False
@@ -117,7 +142,7 @@ def test_lint_without_ruff_installed(mocker):
     assert f"{tip}:\n\n  {cmd}" in output
 
 
-def test_no_fix(mock_no_fix, mocker):
+def test_no_fix(mock_no_fix, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == LINT_CMD.replace(" --fix", "")
 
@@ -128,24 +153,24 @@ def test_skip_mypy(mock_skip_mypy, mocker):
     assert LintCode(".").gen() == SEP.join(i for i in cmds if not i.startswith("mypy"))
 
 
-def test_skip_mypy_0(mock_skip_mypy_0, mocker):
+def test_skip_mypy_0(mock_skip_mypy_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == LINT_CMD
 
 
-def test_ignore_missing_imports(mock_ignore_missing_imports, mocker):
+def test_ignore_missing_imports(mock_ignore_missing_imports, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == LINT_CMD.replace(
         "mypy ", "mypy --ignore-missing-imports "
     )
 
 
-def test_ignore_missing_imports_0(mock_ignore_missing_imports_0, mocker):
+def test_ignore_missing_imports_0(mock_ignore_missing_imports_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     assert LintCode(".").gen() == LINT_CMD
 
 
-def test_not_in_root(mocker):
+def test_not_in_root(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     root = Path(__file__).parent.parent
     with chdir(root / "fast_dev_cli"):
