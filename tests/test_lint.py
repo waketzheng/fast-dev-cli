@@ -101,6 +101,13 @@ def test_dmypy_run(mocker):
     assert "dmypy run ." in command
 
 
+def test_lint_with_prefix(mocker):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
+    with capture_stdout() as stream:
+        make_style([Path(".")], check_only=False, dry=True)
+    assert "pdm run" in stream.getvalue()
+
+
 def test_make_style(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
