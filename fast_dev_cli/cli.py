@@ -573,6 +573,12 @@ class LintCode(DryRun):
     def check_lint_tool_installed() -> bool:
         return check_call("ruff --version")
 
+    @staticmethod
+    def prefer_dmypy(paths: str, tools: list[str]) -> bool:
+        return (
+            paths == "." and tools[-1].startswith("mypy") and not load_bool("NO_DMYPY")
+        )
+
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
         cmd = ""
@@ -600,7 +606,7 @@ class LintCode(DryRun):
             should_run_by_tool = True
         if should_run_by_tool:
             prefix = Project.get_manage_tool() + " run "
-        if paths == "." and tools[-1].startswith("mypy") and not load_bool("NO_DMYPY"):
+        if cls.prefer_dmypy(paths, tools):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
         return cmd
