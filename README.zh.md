@@ -33,8 +33,10 @@ pip install fastdevcli-slim
 1. 使用ruff对当前目录下的所有Python文件进行格式化/导入排序/删除多余import，如果没报错再用mypy进行静态检查
 ```bash
 fast lint
-# 相当于执行：ruff format . && ruff check --extend-select=I --fix . && mypy .
+# 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && dmypy run .
 ```
+- 注：dmypy run会启动一个后台进程来加速mypy检查
+
 2. 对单个文件进行格式化和静态检查
 ```bash
 fast lint /path/to/xxx.py
