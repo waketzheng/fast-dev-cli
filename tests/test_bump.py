@@ -1,3 +1,4 @@
+import subprocess
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -16,9 +17,8 @@ from fast_dev_cli.cli import (
     bump_version,
     get_current_version,
 )
-from tests.utils import mock_sys_argv
 
-from .utils import chdir
+from .utils import chdir, mock_sys_argv
 
 
 def test_enum():
@@ -136,16 +136,27 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     assert work_dir == work_dir2 == tmp_path
 
 
-def test_bump_with_emoji(mocker):
+def test_bump_with_emoji(mocker, tmp_path, capsys):
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     version = get_current_version()
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
         version, emoji=True
     )
+    last_commit = "📝 Update release notes"
     mocker.patch(
         "fast_dev_cli.cli.BumpUp.get_last_commit_message",
-        return_value="📝 Update release notes",
+        return_value=last_commit,
     )
     assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
     assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
     assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+    with chdir(tmp_path):
+        project = "foo"
+        subprocess.run(["poetry", "new", project])
+        with chdir(tmp_path / project):
+            subprocess.run(["git", "init"])
+            subprocess.run(["git", "add", "."])
+            subprocess.run(["git", "commit", "-m", repr(last_commit)])
+            subprocess.run(["fast", "bump", "patch", "--commit"])
+            out = capsys.readouterr().out.strip()
+            assert patch_with_commit in out
