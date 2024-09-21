@@ -40,7 +40,7 @@ def _bump_commands(
     cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
     if emoji:
-        suffix = suffix.replace("--commit", "--commit --commit-emoji=1")
+        suffix = suffix.replace("--commit", "--commit --message-emoji=1")
     patch_without_commit = cmd + f" patch {filename} --allow-dirty"
     patch_with_commit = cmd + f" patch {filename}" + suffix
     minor_with_commit = cmd + f" minor {filename} --tag" + suffix
