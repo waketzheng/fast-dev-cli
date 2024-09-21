@@ -544,7 +544,9 @@ class GitTag(DryRun):
         return capture_cmd_output("git status")
 
     def mark_tag(self: Self) -> bool:
-        if not re.search(r"working (tree|directory) clean", self.git_status):
+        if not re.search(r"working (tree|directory) clean", self.git_status) and (
+            "无文件要提交，干净的工作区" not in self.git_status
+        ):
             run_and_echo("git status")
             echo("ERROR: Please run git commit to make sure working tree is clean!")
             return False
