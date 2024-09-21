@@ -229,7 +229,8 @@ class BumpUp(DryRun):
             cmd += " --commit"
             if self.should_add_emoji():
                 cmd += " --message-emoji=1"
-            cmd += " && git push && git push --tags && git log -1"
+            if not load_bool("DONT_GIT_PUSH"):
+                cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
         return cmd

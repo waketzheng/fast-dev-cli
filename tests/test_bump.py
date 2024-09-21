@@ -136,7 +136,7 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     assert work_dir == work_dir2 == tmp_path
 
 
-def test_bump_with_emoji(mocker, tmp_path, capsys):
+def test_bump_with_emoji(mocker, tmp_path, capsys, monkeypatch):
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     version = get_current_version()
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
@@ -150,6 +150,8 @@ def test_bump_with_emoji(mocker, tmp_path, capsys):
     assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
     assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
     assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+    # real bump
+    monkeypatch.setenv("DONT_GIT_PUSH", "1")
     with chdir(tmp_path):
         project = "foo"
         subprocess.run(["poetry", "new", project])
