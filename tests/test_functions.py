@@ -16,7 +16,7 @@ from fast_dev_cli.cli import (
 )
 
 
-def test_utils():
+def test_utils(capsys):
     # parse files
     assert parse_files([]) == []
     assert parse_files(["-a", "--a"]) == []
@@ -52,6 +52,11 @@ def test_utils():
     assert load_bool(name) is True
     os.environ.pop(name)
     assert load_bool(name) is False
+    os.environ[name] = "yeah"
+    assert load_bool(name) is False
+    assert load_bool(name, True) is True
+    out = capsys.readouterr().out.strip()
+    assert "WARNING" in out
 
 
 def test_run_shell():

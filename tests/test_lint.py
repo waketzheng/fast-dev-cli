@@ -56,10 +56,18 @@ LINT_CMD = _CMD.format("", " --fix")
 CHECK_CMD = _CMD.format(" --check", "")
 
 
-def test_check(mock_no_dmypy):
+def test_check(mock_no_dmypy, monkeypatch):
     command = capture_cmd_output("fast check --dry")
     for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
+    command2 = capture_cmd_output("fast check --bandit --dry")
+    assert command2 == command + " && bandit -r fast_dev_cli"
+    monkeypatch.setenv("FASTDEVCLI_BANDIT", "1")
+    command3 = capture_cmd_output("fast check --dry")
+    assert command3 == command2
+    monkeypatch.setenv("FASTDEVCLI_BANDIT", "0")
+    command4 = capture_cmd_output("fast check --dry")
+    assert command4 == command
 
 
 def test_fast_check():

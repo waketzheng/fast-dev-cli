@@ -44,7 +44,12 @@ cli = typer.Typer()
 def load_bool(name: str, default=False) -> bool:
     if not (v := os.getenv(name)):
         return default
-    return v.lower() not in ("0", "false", "off", "no", "n")
+    if (lower := v.lower()) in ("0", "false", "f", "off", "no", "n"):
+        return False
+    elif lower in ("1", "true", "t", "on", "yes", "y"):
+        return True
+    secho(f"WARNING: can not convert value({v!r}) of {name} to bool!")
+    return default
 
 
 def is_venv() -> bool:
@@ -567,9 +572,12 @@ def tag(
 
 
 class LintCode(DryRun):
-    def __init__(self: Self, args, check_only=False, _exit=False, dry=False) -> None:
+    def __init__(
+        self: Self, args, check_only=False, _exit=False, dry=False, bandit=False
+    ) -> None:
         self.args = args
         self.check_only = check_only
+        self._bandit = bandit
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -579,11 +587,13 @@ class LintCode(DryRun):
     @staticmethod
     def prefer_dmypy(paths: str, tools: list[str]) -> bool:
         return (
-            paths == "." and tools[-1].startswith("mypy") and not load_bool("NO_DMYPY")
+            paths == "."
+            and any(t.startswith("mypy") for t in tools)
+            and not load_bool("NO_DMYPY")
         )
 
     @classmethod
-    def to_cmd(cls: Type[Self], paths=".", check_only=False) -> str:
+    def to_cmd(cls: Type[Self], paths=".", check_only=False, bandit=False) -> str:
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
         if check_only:
@@ -612,11 +622,24 @@ class LintCode(DryRun):
         if cls.prefer_dmypy(paths, tools):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
+        if bandit or load_bool("FASTDEVCLI_BANDIT"):
+            command = prefix + "bandit"
+            if paths == ".":  # fast check --bandit
+                command += " -r"
+                root = Project.get_work_dir(allow_cwd=True)
+                package_maybe = (root.name.replace("-", "_"), "src")
+                for name in package_maybe:
+                    if root.joinpath(name).is_dir():
+                        command += " " + name
+                        break
+                else:
+                    command += " ."
+                cmd += " && " + command
         return cmd
 
     def gen(self: Self) -> str:
         paths = " ".join(map(str, self.args)) if self.args else "."
-        return self.to_cmd(paths, self.check_only)
+        return self.to_cmd(paths, self.check_only, self._bandit)
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
@@ -631,8 +654,8 @@ def lint(files=None, dry=False) -> None:
     LintCode(files, dry=dry).run()
 
 
-def check(files=None, dry=False) -> None:
-    LintCode(files, check_only=True, _exit=True, dry=dry).run()
+def check(files=None, dry=False, bandit=False) -> None:
+    LintCode(files, check_only=True, _exit=True, dry=dry, bandit=bandit).run()
 
 
 @cli.command(name="lint")
@@ -654,10 +677,11 @@ def make_style(
 
 @cli.command(name="check")
 def only_check(
+    bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Check code style without reformat"""
-    check(dry=dry)
+    check(dry=dry, bandit=bandit)
 
 
 class Sync(DryRun):
