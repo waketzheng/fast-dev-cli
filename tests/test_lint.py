@@ -111,7 +111,13 @@ def test_lint_with_prefix(mocker):
 def test_make_style(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
+        make_style(check_only=False, dry=True)
+    assert LINT_CMD in stream.getvalue()
+    with capture_stdout() as stream:
         make_style([Path(".")], check_only=False, dry=True)
+    assert LINT_CMD in stream.getvalue()
+    with capture_stdout() as stream:
+        make_style(".", check_only=False, dry=True)  # type:ignore[arg-type]
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
         make_style([Path(".")], check_only=True, dry=True)
@@ -138,6 +144,10 @@ def test_lint_func(mocker, mock_no_dmypy):
     with mock_sys_argv(["tests"]), capture_stdout() as stream:
         lint(dry=True)
     assert LINT_CMD.replace(" .", " tests") in stream.getvalue()
+    with capture_stdout() as stream:
+        lint(["lint"], dry=True)
+    assert LINT_CMD in stream.getvalue()
+    assert LINT_CMD in capture_cmd_output("python -m fast_dev_cli lint --dry")
 
 
 def test_lint_without_ruff_installed(mocker, mock_no_dmypy):

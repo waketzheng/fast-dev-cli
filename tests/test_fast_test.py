@@ -2,7 +2,12 @@ import pathlib
 
 from pytest_mock import MockerFixture
 
-from fast_dev_cli.cli import Project, capture_cmd_output, coverage_test
+from fast_dev_cli.cli import (
+    Project,
+    _should_run_test_script,
+    capture_cmd_output,
+    coverage_test,
+)
 from fast_dev_cli.cli import test as unitcase
 
 
@@ -60,6 +65,7 @@ def test_test_not_in_venv(mocker: MockerFixture, capsys):
 
 
 def test_run_script(mocker: MockerFixture, capsys):
+    assert _should_run_test_script()
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=True)
     unitcase(dry=True)
     assert "sh scripts/test.sh" in capsys.readouterr().out

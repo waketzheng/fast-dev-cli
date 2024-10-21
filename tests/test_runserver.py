@@ -1,4 +1,5 @@
-from fast_dev_cli.cli import dev, run_and_echo, runserver
+import fast_dev_cli
+from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 
 
 def test_runserver(capsys):
@@ -17,6 +18,12 @@ def test_runserver(capsys):
     runserver(port=9000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
     assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
+    runserver("9000", host="0.0.0.0", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
+    runserver("app.py", host="0.0.0.0", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev app.py --host=0.0.0.0"
 
 
 def test_dev(capsys):
@@ -80,3 +87,9 @@ def test_run_by_module(tmp_path):
     assert "fastapi dev main.py --port=9000 --host=0.0.0.0" in out.read_text()
     run_and_echo(f"{fast} dev 9000 --host=0.0.0.0 --dry > {out}", verbose=False)
     assert "fastapi dev --port=9000 --host=0.0.0.0" in out.read_text()
+
+
+def test_main(mocker):
+    mocker.patch("fast_dev_cli.cli.cli")
+    main()
+    fast_dev_cli.cli.cli.assert_called_once()  # type:ignore[attr-defined]

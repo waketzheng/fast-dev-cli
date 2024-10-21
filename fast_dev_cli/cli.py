@@ -697,7 +697,7 @@ def sync(
     Sync(filename, extras, save, dry=dry).run()
 
 
-def _should_run_test_script(path: Path) -> bool:
+def _should_run_test_script(path: Path = Path("scripts/test.sh")) -> bool:
     return path.exists()
 
 
