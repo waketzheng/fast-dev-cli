@@ -25,7 +25,7 @@ _lint:
 lint: deps _build _lint
 
 _test:
-	./scripts/test.sh
+	./scripts/test.py
 test: deps _test
 
 _style:

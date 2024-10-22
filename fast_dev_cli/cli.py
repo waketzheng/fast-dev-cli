@@ -721,16 +721,21 @@ def sync(
     Sync(filename, extras, save, dry=dry).run()
 
 
-def _should_run_test_script(path: Path = Path("scripts/test.sh")) -> bool:
-    return path.exists()
+def _should_run_test_script(path: Path = Path("scripts")) -> Path | None:
+    for name in ("test.sh", "test.py"):
+        if (file := path / name).exists():
+            return file
+    return None
 
 
 def test(dry: bool, ignore_script=False) -> None:
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
-    test_script = root / "scripts" / "test.sh"
-    if not _ensure_bool(ignore_script) and _should_run_test_script(test_script):
-        cmd = f"sh {os.path.relpath(test_script, root)}"
+    script_dir = root / "scripts"
+    if not _ensure_bool(ignore_script) and (
+        test_script := _should_run_test_script(script_dir)
+    ):
+        cmd = f"{os.path.relpath(test_script, root)}"
         if cwd != root:
             cmd = f"cd {root} && " + cmd
     else:
