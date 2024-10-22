@@ -1,22 +1,23 @@
 help:
 	@echo  "FastDevCli development makefile"
 	@echo
-	@echo  "usage: make <target>"
+	@echo  "Usage: make <target>"
 	@echo  "Targets:"
 	@echo  "    up      Updates dev/test dependencies"
 	@echo  "    deps    Ensure dev/test dependencies are installed"
-	@echo  "    check	Checks that build is sane"
-	@echo  "    test	Runs all tests"
+	@echo  "    check   Checks that build is sane"
+	@echo  "    test    Runs all tests"
 	@echo  "    style   Auto-formats the code"
+	@echo  "    lint    Auto-formats the code and check type hints"
 
 up:
 	@pdm update
 
 deps:
-	@pdm install --dev --with=all
+	@pdm install
 
 _check:
-	./scripts/check.sh
+	./scripts/check.py
 check: deps _build _check
 
 _lint:
@@ -28,7 +29,7 @@ _test:
 test: deps _test
 
 _style:
-	SKIP_MYPY=1 pdm run fast lint
+	./scripts/format.py
 style: deps _style
 
 _build:
