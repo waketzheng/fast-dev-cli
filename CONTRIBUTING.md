@@ -38,5 +38,5 @@ python -m pip install -e .
 ```
 ## Test
 ```shell
-./scripts/unittest.py
+./scripts/test.py
 ```

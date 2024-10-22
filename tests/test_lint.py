@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from fast_dev_cli.cli import (
     lint,
     make_style,
     only_check,
+    run_and_echo,
 )
 
 from .utils import capture_stdout, chdir, mock_sys_argv
@@ -56,7 +58,7 @@ LINT_CMD = _CMD.format("", " --fix")
 CHECK_CMD = _CMD.format(" --check", "")
 
 
-def test_check(mock_no_dmypy, monkeypatch):
+def test_check(mock_no_dmypy, monkeypatch, mocker):
     command = capture_cmd_output("fast check --dry")
     for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
@@ -68,6 +70,16 @@ def test_check(mock_no_dmypy, monkeypatch):
     monkeypatch.setenv("FASTDEVCLI_BANDIT", "0")
     command4 = capture_cmd_output("fast check --dry")
     assert command4 == command
+
+
+def test_check_bandit(tmp_path):
+    package_path = tmp_path / "foo"
+    with chdir(tmp_path):
+        run_and_echo(f"poetry new {package_path.name}")
+    shutil.rmtree(package_path / package_path.name)
+    with chdir(package_path):
+        command = capture_cmd_output("fast check --bandit --dry")
+    assert "bandit -r ." in command
 
 
 def test_fast_check():

@@ -592,6 +592,15 @@ class LintCode(DryRun):
             and not load_bool("NO_DMYPY")
         )
 
+    @staticmethod
+    def get_package_name() -> str:
+        root = Project.get_work_dir(allow_cwd=True)
+        package_maybe = (root.name.replace("-", "_"), "src")
+        for name in package_maybe:
+            if root.joinpath(name).is_dir():
+                return name
+        return "."
+
     @classmethod
     def to_cmd(cls: Type[Self], paths=".", check_only=False, bandit=False) -> str:
         cmd = ""
@@ -625,15 +634,7 @@ class LintCode(DryRun):
         if bandit or load_bool("FASTDEVCLI_BANDIT"):
             command = prefix + "bandit"
             if paths == ".":  # fast check --bandit
-                command += " -r"
-                root = Project.get_work_dir(allow_cwd=True)
-                package_maybe = (root.name.replace("-", "_"), "src")
-                for name in package_maybe:
-                    if root.joinpath(name).is_dir():
-                        command += " " + name
-                        break
-                else:
-                    command += " ."
+                command += " -r " + cls.get_package_name()
                 cmd += " && " + command
         return cmd
 
