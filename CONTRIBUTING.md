@@ -1,45 +1,42 @@
 # Contributing
 
 ## Install pdm
-```bash
+```shell
 pipx install pdm
 ```
 - See more at:
 https://pdm-project.org/latest/#installation
 
-### Custom `pdm shell`:
-
-Copy and paste the following function to your ~/.bashrc file and restart your shell.
-```bash
-pdm() {
-  local command=$1
-
-  if [[ "$command" == "shell" ]]; then
-      eval $(pdm venv activate)
-  else
-      command pdm $@
-  fi
-}
-```
-Ref: https://pdm-project.org/latest/usage/venv/#activate-a-virtualenv
-
 ## Set up environment
-```bash
+```shell
 git clone git@github.com:waketzheng/fast-dev-cli.git
 cd fast-dev-cl
+```
+- Create virtual environment and install dependencies by pdm
+```shell
+# Create virtual environment
 pdm use 3
-pdm shell
-pdm install
+
+# Activate virtual environment
+source .venv/*/activate  # for Linux/MacOS/GitBash
+.venv\Scripts\activate  # For Windows
+
+# Install dependenices
+python -m ensurepip
+python -m pip install --upgrade pip
+pdm export --without-hashes -o dev_requirements.txt
+python -m pip install -r dev_requirements.txt
+python -m pip install -e .
 ```
 ## Lint code
-```bash
+```shell
 ./scripts/format.py
 ```
 ## Check
-```bash
+```shell
 ./scripts/check.py
 ```
 ## Test
-```bash
+```shell
 ./scripts/unittest.py
 ```

@@ -22,6 +22,7 @@ venv
 docs.zip
 archive.zip
 .env
+.dmypy.json
 
 # vim temporary files
 *~
@@ -37,4 +38,3 @@ dev_requirements.txt
 # Pdm
 .pdm-python
 __pypackages__
-.dmypy.json
