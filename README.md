@@ -43,9 +43,9 @@ Python 3.10+
 <div class="termy">
 
 ```bash
-pip install "fast-dev-cli"
+pip install fast-dev-cli
 ```
-*Will install: fast-dev-cli typer ruff mypy bumpversion pytest coverage*
+*Will install: fast-dev-cli emoji typer ruff mypy bumpversion2 pytest coverage*
 
 </div>
 

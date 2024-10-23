@@ -20,13 +20,13 @@ Python3.10及其以上版本
 ```bash
 pip install fast-dev-cli
 ```
-*会同时安装typer、ruff、mypy、pytest、coverage、bumpversion等日常开发工具包*
+*会同时安装emoji、typer、ruff、mypy、pytest、coverage、bumpversion2等日常开发工具包*
 
 - 最小化安装
 ```bash
 pip install fastdevcli-slim
 ```
-*只依赖typer(适用于只使用tag和sync/upload/upgrade命令的情况)*
+*只依赖typer/emoji(适用于只使用tag和sync/upload/upgrade命令的情况)*
 
 ## 使用
 ### 代码格式化
