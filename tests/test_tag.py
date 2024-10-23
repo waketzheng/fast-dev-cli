@@ -1,3 +1,4 @@
+import sys
 from contextlib import contextmanager
 
 from fast_dev_cli.cli import (
@@ -36,7 +37,12 @@ def test_echo_when_not_dry(mocker, capsys):
 
 @contextmanager
 def _clear_tags():
-    run_and_echo("git tag | xargs git tag -d")
+    if sys.platform == "win32":
+        for t in capture_cmd_output("git tag").splitlines():
+            if "v" in (tag := t.strip()):
+                run_and_echo(f"git tag -d {tag}")
+    else:
+        run_and_echo("git tag | xargs git tag -d")
     yield
     run_and_echo("git pull --tags")
 

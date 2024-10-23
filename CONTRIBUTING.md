@@ -38,5 +38,7 @@ python -m pip install -e .
 ```
 ## Test
 ```shell
+pipx install poetry
+pipx inject poetry poetry-version-plugin
 ./scripts/test.py
 ```
