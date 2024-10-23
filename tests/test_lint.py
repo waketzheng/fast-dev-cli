@@ -167,7 +167,7 @@ def test_lint_func(mocker, mock_no_dmypy):
     with capture_stdout() as stream:
         lint(["lint"], dry=True)
     assert LINT_CMD in stream.getvalue()
-    assert LINT_CMD in capture_cmd_output("python -m fast_dev_cli lint --dry")
+    assert LINT_CMD in capture_cmd_output("pdm run python -m fast_dev_cli lint --dry")
 
 
 def test_lint_without_ruff_installed(mocker, mock_no_dmypy):

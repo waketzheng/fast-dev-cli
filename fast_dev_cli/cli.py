@@ -620,7 +620,7 @@ class LintCode(DryRun):
         if is_venv():
             if not cls.check_lint_tool_installed():
                 should_run_by_tool = True
-                if check_call("python -c 'import fast_dev_cli'"):
+                if check_call('python -c "import fast_dev_cli"'):
                     command = 'python -m pip install -U "fast_dev_cli"'
                     tip = "You may need to run following command to install lint tools:"
                     secho(f"{tip}\n\n  {command}\n", fg="yellow")

@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import Generator
 
@@ -11,6 +12,8 @@ from fast_dev_cli.cli import (
     coverage_test,
 )
 from fast_dev_cli.cli import test as unitcase
+
+TEST_SCRIPT = os.path.join("scripts", "test.py")
 
 
 @pytest.fixture
@@ -77,14 +80,14 @@ def test_run_script(mocker: MockerFixture, capsys, script_path):
     assert _should_run_test_script()
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=script_path)
     unitcase(dry=True)
-    assert "scripts/test.py" in capsys.readouterr().out
+    assert TEST_SCRIPT in capsys.readouterr().out
     assert _should_run_test_script(pathlib.Path("not-exist")) is None
 
 
 def test_ignore_script(mocker: MockerFixture, capsys, script_path):
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=script_path)
     unitcase(dry=True, ignore_script=True)
-    assert "scripts/test.py" not in capsys.readouterr().out
+    assert TEST_SCRIPT not in capsys.readouterr().out
 
 
 def test_run_script_in_sub_directory(mocker: MockerFixture, capsys, script_path):
@@ -92,7 +95,7 @@ def test_run_script_in_sub_directory(mocker: MockerFixture, capsys, script_path)
     mocker.patch("pathlib.Path.cwd", return_value=script_path.parent)
     unitcase(dry=True)
     out = capsys.readouterr().out
-    assert f"cd {script_path.parent.parent} && scripts/test.py" in out
+    assert f"cd {script_path.parent.parent} && {TEST_SCRIPT}" in out
 
 
 def test_fast_test(mocker, capsys):
