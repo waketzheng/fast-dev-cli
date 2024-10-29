@@ -87,15 +87,51 @@ def capture_cmd_output(command: list[str] | str, **kw) -> str:
     return r.stdout.strip().decode()
 
 
+def _parse_version(line: str, pattern: re.Pattern) -> str:
+    return pattern.sub("", line).split("#")[0].strip(" '\"")
+
+
+def read_version_from_file(package_name: str, work_dir=None) -> str:
+    toml_text = Project.load_toml_text()
+    pattern = re.compile(r"version\s*=")
+    invalid = ("0", "0.0.0")
+    for line in toml_text.splitlines():
+        if pattern.match(line):
+            if (version := _parse_version(line, pattern)) in invalid:
+                break
+            return version
+    if work_dir is None:
+        work_dir = Project.get_work_dir()
+    package_dir = work_dir / package_name
+    init_file = package_dir / "__init__.py"
+    if not init_file.exists():
+        init_file = work_dir / "app" / init_file.name
+        if not init_file.exists():
+            secho("WARNING: __init__.py file does not exist!")
+            return "0.0.0"
+    pattern = re.compile(r"__version__\s*=")
+    for line in init_file.read_text().splitlines():
+        if pattern.match(line):
+            return _parse_version(line, pattern)
+    secho(f"WARNING: can not find '__version__' var in {init_file}!")
+    return "0.0.0"
+
+
 def get_current_version(
-    verbose=False,
-    is_poetry: bool | None = None,
-    package_name=Path(__file__).parent.name,
+    verbose=False, is_poetry: bool | None = None, package_name: str | None = None
 ) -> str:
     if is_poetry is None:
         is_poetry = Project.manage_by_poetry()
     if not is_poetry:
-        return importlib_metadata.version(package_name)
+        work_dir = None
+        if package_name is None:
+            work_dir = Project.get_work_dir()
+            package_name = re.sub(r"[- ]", "_", work_dir.name)
+        try:
+            return importlib_metadata.version(package_name)
+        except importlib_metadata.PackageNotFoundError:
+            return read_version_from_file(package_name, work_dir)
+
     cmd = ["poetry", "version", "-s"]
     if verbose:
         echo(f"--> {' '.join(cmd)}")

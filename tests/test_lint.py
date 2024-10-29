@@ -238,3 +238,5 @@ def test_get_manage_tool(tmp_path):
         assert Project.get_manage_tool() == "poetry"
         Path(TOML_FILE).write_text("[tool.pdm]")
         assert Project.get_manage_tool() == "pdm"
+        Path(TOML_FILE).write_text("[tool.uv]")
+        assert Project.get_manage_tool() == "uv"
