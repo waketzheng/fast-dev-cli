@@ -38,8 +38,11 @@ jobs:
           python -m pip install --upgrade pip pdm poetry
           poetry config virtualenvs.create false
           poetry self add poetry-version-plugin
+          poetry self add poetry-dynamic-versioning
           git config --global user.email "waketzheng@gmail.com"
           git config --global user.name "Waket Zheng"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install requirements/Check code style and Type Hint
         run: make check
       - name: Test with pytest

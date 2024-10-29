@@ -7,6 +7,7 @@
 - Support uv
 - Fix `get_current_version` error
 - Auto use pdm/uv to export for sync command
+- Support poetry-dynamic-versioning
 
 ## 0.10
 

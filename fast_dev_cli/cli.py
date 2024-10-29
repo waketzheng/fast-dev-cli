@@ -223,7 +223,7 @@ class BumpUp(DryRun):
             version_value = context["tool"]["poetry"]["version"]
         except KeyError:
             return TOML_FILE
-        if version_value == "0":
+        if version_value in ("0", "0.0.0"):
             try:
                 package_item = context["tool"]["poetry"]["packages"]
             except KeyError:
@@ -741,21 +741,22 @@ class Sync(DryRun):
                 raise EnvError("There project is not managed by uv/pdm/poetry!")
             return f"python -m pip install -r {self.filename}"
         prefix = "" if is_venv() else f"{tool} run "
-        ensurepip = ""
+        ensurepip = " {1}python -m ensurepip && {1}python -m pip install -U pip &&"
         match tool:
             case "uv":
                 export_cmd = "uv export --no-hashes --all-extras --frozen"
-                if not check_call(prefix + "python -m pip --version"):
-                    ensurepip = (
-                        " {1}python -m ensurepip && {1}python -m pip install -U pip &&"
-                    )
+                if check_call(prefix + "python -m pip --version"):
+                    ensurepip = ""
             case "poetry" | "pdm":
                 export_cmd = f"{tool} export --without-hashes --with=dev"
                 if tool == "poetry":
+                    ensurepip = ""
                     if not UpgradeDependencies.should_with_dev():
                         export_cmd = export_cmd.replace(" --with=dev", "")
                     if extras and isinstance(extras, str | list):
                         export_cmd += f" --{extras=}".replace("'", '"')
+                elif check_call(prefix + "python -m pip --version"):
+                    ensurepip = ""
         install_cmd = "{2} -o {0} &&%s {1}python -m pip install -r {0}" % ensurepip
         if should_remove and not save:
             install_cmd += " && rm -f {0}"
