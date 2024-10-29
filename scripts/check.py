@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
 import os
 import sys
 
@@ -16,4 +17,4 @@ cmd = "pdm run bandit -r {}".format(package_name)
 print("-->", cmd)
 if os.system(cmd) != 0:
     sys.exit(1)
-print("Done.")
+print("Done. ✨ 🍰 ✨")
