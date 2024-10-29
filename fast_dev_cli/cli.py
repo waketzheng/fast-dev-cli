@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, TypeAlias
 
 import emoji
 import typer
@@ -37,8 +37,9 @@ else:  # pragma: no cover
         __str__ = str.__str__
 
 
-TOML_FILE = "pyproject.toml"
 cli = typer.Typer()
+TOML_FILE = "pyproject.toml"
+ToolName: TypeAlias = Literal["poetry", "pdm", "uv", ""]
 
 
 def load_bool(name: str, default=False) -> bool:
@@ -321,16 +322,16 @@ class Project:
         return "[tool.poetry]" in cls.load_toml_text()
 
     @classmethod
-    def get_manage_tool(cls: Type[Self]) -> Literal["poetry", "pdm", ""]:
+    def get_manage_tool(cls: Type[Self]) -> ToolName:
         try:
             text = cls.load_toml_text()
         except EnvError:
             pass
         else:
-            if "[tool.poetry]" in text:
-                return "poetry"
-            elif "[tool.pdm]" in text:
-                return "pdm"
+            name: ToolName
+            for name in ("poetry", "pdm", "uv"):
+                if f"[tool.{name}]" in text:
+                    return name
         return ""
 
     @staticmethod
