@@ -736,18 +736,26 @@ class Sync(DryRun):
     def gen(self) -> str:
         extras, save = self.extras, self._save
         should_remove = not Path.cwd().joinpath(self.filename).exists()
-        prefix = "" if is_venv() else "poetry run "
-        install_cmd = (
-            "poetry export --with=dev --without-hashes -o {0}"
-            " && {1}pip install -r {0}"
-        )
-        if not UpgradeDependencies.should_with_dev():
-            install_cmd = install_cmd.replace(" --with=dev", "")
-        if extras and isinstance(extras, str | list):
-            install_cmd = install_cmd.replace("export", f"export --{extras=}")
+        if not (tool := Project.get_manage_tool()):
+            if should_remove or not is_venv():
+                raise EnvError("There project is not managed by uv/pdm/poetry!")
+            return f"python -m pip install -r {self.filename}"
+        prefix = "" if is_venv() else f"{tool} run "
+        match tool:
+            case "uv":
+                export_cmd = "uv export --no-hashes --all-extras --frozen"
+            case "pdm":
+                export_cmd = "pdm export --without-hashes --with=dev"
+            case "poetry":
+                export_cmd = "poetry export --without-hashes"
+                if UpgradeDependencies.should_with_dev():
+                    export_cmd += " --with=dev"
+                if extras and isinstance(extras, str | list):
+                    export_cmd += f" --{extras=}".replace("'", '"')
+        install_cmd = "{2} -o {0} && {1}pip install -r {0}"
         if should_remove and not save:
             install_cmd += " && rm -f {0}"
-        return install_cmd.format(self.filename, prefix)
+        return install_cmd.format(self.filename, prefix, export_cmd)
 
 
 @cli.command()

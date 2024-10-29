@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 0.11
+
+### [0.11.0](../../releases/tag/v0.10.0) - 2024-10-29
+
+- Support uv
+- Fix `get_current_version` error
+- Auto use pdm/uv to export for sync command
+
 ## 0.10
 
 ### [0.10.1](../../releases/tag/v0.10.1) - 2024-10-23
