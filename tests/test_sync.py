@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from fast_dev_cli.cli import TOML_FILE, EnvError, Sync, sync
+from fast_dev_cli.cli import TOML_FILE, EnvError, Sync, run_and_echo, sync
 
 from .utils import chdir, temp_file
 
@@ -35,7 +35,7 @@ def test_sync_not_in_venv(mocker, capsys):
         cmd = Sync("req.txt", "all", save=False, dry=True).gen()
     assert (
         cmd
-        == 'poetry export --without-hashes --extras="all" -o req.txt && poetry run pip install -r req.txt && rm -f req.txt'
+        == 'poetry export --without-hashes --extras="all" -o req.txt && poetry run python -m pip install -r req.txt && rm -f req.txt'
     )
     sync(extras="all", save=False, dry=True)
     assert "pip install -r" in capsys.readouterr().out
@@ -44,7 +44,7 @@ def test_sync_not_in_venv(mocker, capsys):
     )
     assert (
         Sync("req.txt", "", True, dry=True).gen()
-        == "pdm export --without-hashes --with=dev -o req.txt && pdm run pip install -r req.txt"
+        == "pdm export --without-hashes --with=dev -o req.txt && pdm run python -m pip install -r req.txt"
     )
 
 
@@ -55,14 +55,14 @@ def test_sync(mocker):
         cmd = Sync("req.txt", "all", save=False, dry=True).gen()
     assert (
         cmd
-        == 'poetry export --without-hashes --extras="all" -o req.txt && pip install -r req.txt && rm -f req.txt'
+        == 'poetry export --without-hashes --extras="all" -o req.txt && python -m pip install -r req.txt && rm -f req.txt'
     )
     mocker.patch(
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
     )
     assert (
         Sync("req.txt", "", True, dry=True).gen()
-        == "pdm export --without-hashes --with=dev -o req.txt && pip install -r req.txt"
+        == "pdm export --without-hashes --with=dev -o req.txt && python -m pip install -r req.txt"
     )
 
 
@@ -190,7 +190,12 @@ def test_sync_uv(mocker, tmp_path):
         toml.with_name("uv.lock").write_text(UV_LOCK_EXAMPLE)
         assert (
             Sync("req.txt", "", True, dry=True).gen()
-            == "uv export --no-hashes --all-extras --frozen -o req.txt && uv run pip install -r req.txt"
+            == "uv export --no-hashes --all-extras --frozen -o req.txt && uv run python -m ensurepip && uv run python -m pip install -U pip && uv run python -m pip install -r req.txt"
+        )
+        run_and_echo("uv run python -m ensurepip")
+        assert (
+            Sync("req.txt", "", True, dry=True).gen()
+            == "uv export --no-hashes --all-extras --frozen -o req.txt && uv run python -m pip install -r req.txt"
         )
 
 
