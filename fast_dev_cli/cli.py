@@ -91,13 +91,17 @@ def _parse_version(line: str, pattern: re.Pattern) -> str:
     return pattern.sub("", line).split("#")[0].strip(" '\"")
 
 
-def read_version_from_file(package_name: str, work_dir=None) -> str:
-    toml_text = Project.load_toml_text()
+def read_version_from_file(
+    package_name: str, work_dir=None, toml_text: str | None = None
+) -> str:
+    if toml_text is None:
+        toml_text = Project.load_toml_text()
     pattern = re.compile(r"version\s*=")
     invalid = ("0", "0.0.0")
     for line in toml_text.splitlines():
         if pattern.match(line):
-            if (version := _parse_version(line, pattern)) in invalid:
+            version = _parse_version(line, pattern)
+            if version.startswith("{") or version in invalid:
                 break
             return version
     if work_dir is None:
