@@ -107,12 +107,13 @@ def read_version_from_file(
     if work_dir is None:
         work_dir = Project.get_work_dir()
     package_dir = work_dir / package_name
-    init_file = package_dir / "__init__.py"
-    if not init_file.exists():
-        init_file = work_dir / "app" / init_file.name
-        if not init_file.exists():
-            secho("WARNING: __init__.py file does not exist!")
-            return "0.0.0"
+    if (
+        not (init_file := package_dir / "__init__.py").exists()
+        and not (init_file := work_dir / "src" / package_name / init_file.name).exists()
+        and not (init_file := work_dir / "app" / init_file.name).exists()
+    ):
+        secho("WARNING: __init__.py file does not exist!")
+        return "0.0.0"
     pattern = re.compile(r"__version__\s*=")
     for line in init_file.read_text().splitlines():
         if pattern.match(line):

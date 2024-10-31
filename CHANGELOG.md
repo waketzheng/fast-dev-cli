@@ -2,6 +2,10 @@
 
 ## 0.11
 
+### [0.11.1](Unreleased)
+
+- Support src/package structure for fast bump and fast tag
+
 ### [0.11.0](../../releases/tag/v0.10.0) - 2024-10-29
 
 - Support uv
