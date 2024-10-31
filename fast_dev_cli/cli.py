@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, Type, TypeAlias
+from typing import Literal, Optional, Type, TypeAlias, get_args
 
 import emoji
 import typer
@@ -231,7 +231,7 @@ class BumpUp(DryRun):
                 packages = []
             else:
                 packages = [j for i in package_item if (j := i.get("include"))]
-            # In case of managed by `poetry-version-plugin`
+            # In case of managed by `poetry-plugin-version`
             cwd = Path.cwd()
             pattern = re.compile(r"__version__\s*=\s*['\"]")
             ds = [cwd / i for i in packages] + [cwd / cwd.name.replace("-", "_"), cwd]
@@ -370,7 +370,7 @@ class Project:
             pass
         else:
             name: ToolName
-            for name in ("poetry", "pdm", "uv"):
+            for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
                     return name
         return ""
@@ -812,12 +812,26 @@ def coverage_test(
     return test(dry, ignore_script)
 
 
+class Publish:
+    class CommandEnum(StrEnum):
+        poetry = "poetry publish --build"
+        pdm = "pdm publish"
+        uv = "uv build && uv publish"
+        twine = "python -m build && twine upload"
+
+    @classmethod
+    def gen(cls) -> str:
+        if (tool := Project.get_manage_tool()) and tool in get_args(ToolName):
+            return cls.CommandEnum[tool]
+        return cls.CommandEnum.twine
+
+
 @cli.command()
 def upload(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Shortcut for package publish"""
-    cmd = "poetry publish --build"
+    cmd = Publish.gen()
     exit_if_run_failed(cmd, dry=dry)
 
 

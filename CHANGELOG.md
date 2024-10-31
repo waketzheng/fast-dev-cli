@@ -5,6 +5,7 @@
 ### [0.11.1](Unreleased)
 
 - Support src/package structure for fast bump and fast tag
+- Support publish by pdm/uv/twine for `fast upload`
 
 ### [0.11.0](../../releases/tag/v0.10.0) - 2024-10-29
 

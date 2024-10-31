@@ -18,7 +18,7 @@ from .utils import chdir
 
 CONF = """
 
-[tool.poetry-version-plugin]
+[tool.poetry-plugin-version]
 source = "init"
 """
 CONF_2 = """
