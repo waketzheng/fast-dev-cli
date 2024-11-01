@@ -61,7 +61,10 @@ fast check
 ```
 - Bump up version in pyproject.toml
 ```bash
-fast bump
+fast bump patch  # 0.1.0 -> 0.1.1
+fast bump minor  # 0.1.0 -> 0.2.0
+fast bump major  # 0.1.0 -> 1.0.0
+fast bump <part> --commit # bump version and run `git commit`
 ```
 - Run unittest and report coverage
 ```bash
@@ -71,7 +74,7 @@ fast test
 ```bash
 fast sync
 ```
-- Upgrade main/dev dependencies to latest version
+- Upgrade main/dev dependencies to latest version (only for poetry project)
 ```bash
 fast upgrade
 ```
@@ -79,3 +82,8 @@ fast upgrade
 ```bash
 fast dev
 ```
+- Publish to pypi
+```bash
+fast upload
+```
+*Note: all command support the `--dry` option*

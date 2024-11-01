@@ -12,7 +12,7 @@
 
 Python3.10及其以上版本
 
-*主要是因为3.8/3.9还要import typing.Union，太啰嗦了，而且日常工作基本都是3.11以上，所以直接从3.10开始了*
+*注：如需在3.8/3.9中使用，下载源码、删除所有类型注解、然后从源码安装即可*
 
 ## 安装
 
@@ -68,6 +68,11 @@ fast bump minor
 ```bash
 fast bump major
 ```
+- 升级版本并提交commit
+```bash
+fast bump <part> --commit
+```
+
 ### 执行单元测试，并打印覆盖率
 ```bash
 fast test
@@ -103,6 +108,13 @@ fast dev file_with_app.py
 ```bash
 fast dev my_app.py --port=9000 --host=0.0.0.0
 ```
+
+### 发布软件包到pypi
+
+```bash
+fast upload
+```
+**注：所有命令均支持`--dry`参数，即只打印命令，不实际执行**
 
 ## 许可证
 

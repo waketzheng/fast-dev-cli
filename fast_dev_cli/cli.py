@@ -743,21 +743,20 @@ class Sync(DryRun):
             return f"python -m pip install -r {self.filename}"
         prefix = "" if is_venv() else f"{tool} run "
         ensurepip = " {1}python -m ensurepip && {1}python -m pip install -U pip &&"
-        match tool:
-            case "uv":
-                export_cmd = "uv export --no-hashes --all-extras --frozen"
-                if check_call(prefix + "python -m pip --version"):
-                    ensurepip = ""
-            case "poetry" | "pdm":
-                export_cmd = f"{tool} export --without-hashes --with=dev"
-                if tool == "poetry":
-                    ensurepip = ""
-                    if not UpgradeDependencies.should_with_dev():
-                        export_cmd = export_cmd.replace(" --with=dev", "")
-                    if extras and isinstance(extras, str | list):
-                        export_cmd += f" --{extras=}".replace("'", '"')
-                elif check_call(prefix + "python -m pip --version"):
-                    ensurepip = ""
+        if tool == "uv":
+            export_cmd = "uv export --no-hashes --all-extras --frozen"
+            if check_call(prefix + "python -m pip --version"):
+                ensurepip = ""
+        elif tool in ("poetry", "pdm"):
+            export_cmd = f"{tool} export --without-hashes --with=dev"
+            if tool == "poetry":
+                ensurepip = ""
+                if not UpgradeDependencies.should_with_dev():
+                    export_cmd = export_cmd.replace(" --with=dev", "")
+                if extras and isinstance(extras, str | list):
+                    export_cmd += f" --{extras=}".replace("'", '"')
+            elif check_call(prefix + "python -m pip --version"):
+                ensurepip = ""
         install_cmd = "{2} -o {0} &&%s {1}python -m pip install -r {0}" % ensurepip
         if should_remove and not save:
             install_cmd += " && rm -f {0}"

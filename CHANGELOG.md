@@ -2,12 +2,12 @@
 
 ## 0.11
 
-### [0.11.1](Unreleased)
+### [0.11.1](../../releases/tag/v0.11.1) - 2024-11-01
 
 - Support src/package structure for fast bump and fast tag
 - Support publish by pdm/uv/twine for `fast upload`
 
-### [0.11.0](../../releases/tag/v0.10.0) - 2024-10-29
+### [0.11.0](../../releases/tag/v0.11.0) - 2024-10-29
 
 - Support uv
 - Fix `get_current_version` error
