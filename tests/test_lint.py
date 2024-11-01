@@ -75,11 +75,24 @@ def test_check(mock_no_dmypy, monkeypatch, mocker):
 def test_check_bandit(tmp_path):
     package_path = tmp_path / "foo"
     with chdir(tmp_path):
+        assert LintCode.get_package_name() == "."
         run_and_echo(f"poetry new {package_path.name}")
     shutil.rmtree(package_path / package_path.name)
     with chdir(package_path):
         command = capture_cmd_output("fast check --bandit --dry")
     assert "bandit -r ." in command
+
+
+def test_check_skip_mypy(mock_skip_mypy_0, mocker, capsys):
+    cmd = "fast check --skip-mypy --dry"
+    cmd2 = "fast lint --check-only --skip-mypy --dry"
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    command = capture_cmd_output(cmd)
+    command2 = capture_cmd_output(cmd2)
+    expected = "--> " + SEP.join(
+        filter(lambda i: not i.startswith("mypy"), CHECK_CMD.split(SEP))
+    )
+    assert command == command2 == expected
 
 
 def test_fast_check():
@@ -128,7 +141,7 @@ def test_lint_with_prefix(mocker):
     assert "pdm run" in stream.getvalue()
 
 
-def test_make_style(mocker, mock_no_dmypy):
+def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
         make_style(check_only=False, dry=True)
@@ -194,6 +207,23 @@ def test_skip_mypy(mock_skip_mypy, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     cmds = LINT_CMD.split(SEP)
     assert LintCode(".").gen() == SEP.join(i for i in cmds if not i.startswith("mypy"))
+
+
+def test_skip_mypy_option(mock_skip_mypy_0, mocker):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    cmds = LINT_CMD.split(SEP)
+    assert LintCode(".", skip_mypy=True).gen() == SEP.join(
+        i for i in cmds if not i.startswith("mypy")
+    )
+
+
+def test_skip_mypy_fast_lint(mock_skip_mypy_0, mocker, capsys):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    command = capture_cmd_output("fast lint --skip-mypy --dry")
+    cmds = LINT_CMD.split(SEP)
+    assert command.replace("--> ", "") == SEP.join(
+        i for i in cmds if not i.startswith("mypy")
+    )
 
 
 def test_skip_mypy_0(mock_skip_mypy_0, mocker, mock_no_dmypy):

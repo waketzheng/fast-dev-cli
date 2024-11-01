@@ -4,6 +4,7 @@
 
 ### [0.11.1](../../releases/tag/v0.11.1) - 2024-11-01
 
+- Support `--skip-mypy` for lint/check command
 - Support src/package structure for fast bump and fast tag
 - Support publish by pdm/uv/twine for `fast upload`
 

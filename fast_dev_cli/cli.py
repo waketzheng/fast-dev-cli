@@ -615,11 +615,18 @@ def tag(
 
 class LintCode(DryRun):
     def __init__(
-        self: Self, args, check_only=False, _exit=False, dry=False, bandit=False
+        self: Self,
+        args,
+        check_only=False,
+        _exit=False,
+        dry=False,
+        bandit=False,
+        skip_mypy=False,
     ) -> None:
         self.args = args
         self.check_only = check_only
         self._bandit = bandit
+        self._skip_mypy = skip_mypy
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -644,14 +651,16 @@ class LintCode(DryRun):
         return "."
 
     @classmethod
-    def to_cmd(cls: Type[Self], paths=".", check_only=False, bandit=False) -> str:
+    def to_cmd(
+        cls: Type[Self], paths=".", check_only=False, bandit=False, skip_mypy=False
+    ) -> str:
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
         if check_only:
             tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):
             tools[1] = tools[1].replace(" --fix", "")
-        if load_bool("SKIP_MYPY"):
+        if skip_mypy or load_bool("SKIP_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         elif load_bool("IGNORE_MISSING_IMPORTS"):
@@ -682,29 +691,32 @@ class LintCode(DryRun):
 
     def gen(self: Self) -> str:
         paths = " ".join(map(str, self.args)) if self.args else "."
-        return self.to_cmd(paths, self.check_only, self._bandit)
+        return self.to_cmd(paths, self.check_only, self._bandit, self._skip_mypy)
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
 
-def lint(files=None, dry=False) -> None:
+def lint(files=None, dry=False, skip_mypy=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     if files and files[0] == "lint":
         files = files[1:]
-    LintCode(files, dry=dry).run()
+    LintCode(files, dry=dry, skip_mypy=skip_mypy).run()
 
 
-def check(files=None, dry=False, bandit=False) -> None:
-    LintCode(files, check_only=True, _exit=True, dry=dry, bandit=bandit).run()
+def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
+    LintCode(
+        files, check_only=True, _exit=True, dry=dry, bandit=bandit, skip_mypy=skip_mypy
+    ).run()
 
 
 @cli.command(name="lint")
 def make_style(
     files: Annotated[Optional[list[Path]], typer.Argument()] = None,
     check_only: bool = Option(False, "--check-only", "-c"),
+    skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
@@ -712,19 +724,21 @@ def make_style(
         files = [Path(".")]
     elif isinstance(files, str):
         files = [files]
+    skip = _ensure_bool(skip_mypy)
     if _ensure_bool(check_only):
-        check(files, dry=dry)
+        check(files, dry=dry, skip_mypy=skip)
     else:
-        lint(files, dry=dry)
+        lint(files, dry=dry, skip_mypy=skip)
 
 
 @cli.command(name="check")
 def only_check(
     bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
+    skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Check code style without reformat"""
-    check(dry=dry, bandit=bandit)
+    check(dry=dry, bandit=bandit, skip_mypy=_ensure_bool(skip_mypy))
 
 
 class Sync(DryRun):
