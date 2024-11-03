@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 import os
-import shlex
-import subprocess
 import sys
-from pathlib import Path
 
-work_dir = Path(__file__).parent.resolve().parent
-if Path.cwd() != work_dir:
-    os.chdir(str(work_dir))
+parent = os.path.abspath(os.path.dirname(__file__))
+work_dir = os.path.dirname(parent)
+if os.getcwd() != work_dir:
+    os.chdir(work_dir)
 
-cmd = "pdm run fast lint"
-r = subprocess.run(shlex.split(cmd), env=dict(os.environ, SKIP_MYPY="1"))
-sys.exit(None if r.returncode == 0 else 1)
+cmd = "pdm run fast lint --skip-mypy"
+if os.system(cmd) != 0:
+    sys.exit(1)
