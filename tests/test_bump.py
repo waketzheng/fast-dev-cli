@@ -166,5 +166,5 @@ def test_bump_with_emoji(mocker, tmp_path, monkeypatch):
             subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
             subprocess.run(["fast", "bump", "patch", "--commit"])
             out = capture_cmd_output(["git", "log"])
-    new_commit = "⬆️ Bump version: 0.1.0 → 0.1.1"
+    new_commit = "⬆️  Bump version: 0.1.0 → 0.1.1"
     assert new_commit in out

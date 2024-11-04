@@ -2,6 +2,12 @@
 
 ## 0.11
 
+### [0.11.2](../../releases/tag/v0.11.2) - 2024-11-04
+
+- Refactor check script to make it easy to change tool
+- Default to add one more space after bump up emoji
+- Suppport py2 for format script
+
 ### [0.11.1](../../releases/tag/v0.11.1) - 2024-11-01
 
 - Support `--skip-mypy` for lint/check command
