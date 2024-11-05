@@ -213,16 +213,28 @@ class BumpUp(DryRun):
     @staticmethod
     def parse_filename() -> str:
         toml_text = Project.load_toml_text()
-        if not Project.manage_by_poetry():
-            # version = { source = "file", path = "fast_dev_cli/cli.py" }
-            for line in toml_text.splitlines():
-                if not line.startswith("version = "):
-                    continue
-                return line.split('path = "', 1)[-1].split('"')[0]
         context = tomllib.loads(toml_text)
+        try:
+            ver = context["project"]["version"]
+        except KeyError:
+            pass
+        else:
+            if isinstance(ver, str) and re.match(r"\d+\.\d+\.\d+", ver):
+                return TOML_FILE
         try:
             version_value = context["tool"]["poetry"]["version"]
         except KeyError:
+            if not Project.manage_by_poetry():
+                # version = { source = "file", path = "fast_dev_cli/__init__.py" }
+                v_key = "version = "
+                p_key = 'path = "'
+                for line in toml_text.splitlines():
+                    if not line.startswith(v_key):
+                        continue
+                    if p_key in (value := line.split(v_key, 1)[-1].split("#")[0]):
+                        filename = value.split(p_key, 1)[-1].split('"')[0]
+                        if Project.get_work_dir().joinpath(filename).exists():
+                            return filename
             return TOML_FILE
         if version_value in ("0", "0.0.0"):
             try:
