@@ -1,3 +1,4 @@
+import os
 import subprocess
 from contextlib import redirect_stdout
 from io import StringIO
@@ -168,3 +169,15 @@ def test_bump_with_emoji(mocker, tmp_path, monkeypatch):
             out = capture_cmd_output(["git", "log"])
     new_commit = "⬆️  Bump version: 0.1.0 → 0.1.1"
     assert new_commit in out
+
+
+def test_bump_with_uv(tmp_path):
+    project_dir = tmp_path / "helloworld"
+    project_dir.mkdir()
+    with chdir(project_dir):
+        subprocess.run(["uv", "init"])
+        command = BumpUp(part="patch", commit=False).gen()
+        assert "pyproject.toml" in command
+        Path(TOML_FILE).write_text("[project]" + os.linesep + 'version = "0.1.0"')
+        command = BumpUp(part="patch", commit=True).gen()
+        assert TOML_FILE in command
