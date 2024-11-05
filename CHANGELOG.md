@@ -2,6 +2,10 @@
 
 ## 0.11
 
+### [0.11.3](../../releases/tag/v0.11.3) - 2024-11-05
+
+- Fix bump version error in uv project
+
 ### [0.11.2](../../releases/tag/v0.11.2) - 2024-11-04
 
 - Refactor check script to make it easy to change tool
