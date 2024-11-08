@@ -20,11 +20,14 @@
 <a href="https://github.com/python/mypy" target="_blank">
     <img src="https://img.shields.io/badge/mypy-100%25-brightgreen.svg" alt="Mypy Coverage">
 </a>
-<a href="https://github.com/PyCQA/bandit" target="_blank">
-    <img src="https://img.shields.io/badge/security-bandit-orange.svg" alt="security: bandit">
-</a>
 <a href="https://github.com/astral-sh/ruff" target="_blank">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+</a>
+<a href="https://pdm-project.org/en/latest/" target="_blank">
+    <img src="https://img.shields.io/badge/pdm-managed-blueviolet" alt="pdm-managed">
+</a>
+<a href="https://github.com/PyCQA/bandit" target="_blank">
+    <img src="https://img.shields.io/badge/security-bandit-orange.svg" alt="security: bandit">
 </a>
 </p>
 
