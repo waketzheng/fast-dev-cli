@@ -13,7 +13,7 @@ from typing import Literal, Optional, Type, get_args
 import emoji
 import typer
 from typer import Exit, Option, echo, secho
-from typer.models import OptionInfo
+from typer.models import ArgumentInfo, OptionInfo
 
 try:
     from . import __version__
@@ -863,14 +863,14 @@ def upload(
 def dev(
     port: int | None | OptionInfo,
     host: str | None | OptionInfo,
-    file: Optional[str] = None,
+    file: str | None | ArgumentInfo = None,
     dry=False,
 ) -> None:
     cmd = "fastapi dev"
     no_port_yet = True
     if file is not None:
         try:
-            port = int(file)  # type:ignore[arg-type]
+            port = int(str(file))  # type:ignore[arg-type]
         except ValueError:
             cmd += f" {file}"
         else:
@@ -889,13 +889,13 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
-    file_or_port: Annotated[Optional[str], typer.Argument()] = None,
+    file_or_port: Optional[str] = typer.Argument(default=None),
     port: Optional[int] = Option(None, "-p", "--port"),
     host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
-    if file_or_port:
+    if getattr(file_or_port, "default", file_or_port):
         dev(port, host, file=file_or_port, dry=dry)
     else:
         dev(port, host, dry=dry)
