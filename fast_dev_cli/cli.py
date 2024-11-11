@@ -24,14 +24,14 @@ except ImportError:  # pragma: no cover
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-    from typing import Annotated, Self
+    from typing import Self
 
     import tomllib
 else:  # pragma: no cover
     from enum import Enum
 
     import tomli as tomllib
-    from typing_extensions import Annotated, Self
+    from typing_extensions import Self
 
     class StrEnum(str, Enum):
         __str__ = str.__str__
@@ -726,13 +726,13 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
 
 @cli.command(name="lint")
 def make_style(
-    files: Annotated[Optional[list[Path]], typer.Argument()] = None,
+    files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
-    if files is None:
+    if getattr(files, "default", files) is None:
         files = [Path(".")]
     elif isinstance(files, str):
         files = [files]
