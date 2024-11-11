@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, Type, TypeAlias, get_args
+from typing import Literal, Optional, Type, get_args
 
 import emoji
 import typer
@@ -39,7 +39,7 @@ else:  # pragma: no cover
 
 cli = typer.Typer()
 TOML_FILE = "pyproject.toml"
-ToolName: TypeAlias = Literal["poetry", "pdm", "uv", ""]
+ToolName = Literal["poetry", "pdm", "uv", ""]
 
 
 def load_bool(name: str, default=False) -> bool:
