@@ -1,0 +1,19 @@
+
+[tool.poetry]
+name = "foo"
+version = "0.1.0"
+description = ""
+authors = []
+readme = ""
+
+[tool.poetry.dependencies]
+python = "^3.11"
+click = ">=7.1.1"
+anyio = {version = "^4.0", optional = true}
+
+[tool.poetry.extras]
+all = ["anyio"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
