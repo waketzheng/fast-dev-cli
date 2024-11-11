@@ -40,5 +40,6 @@ python -m pip install -e .
 ```shell
 pipx install poetry
 pipx inject poetry poetry-version-plugin
+# or: pdm run python -m pip install poetry poetry-version-plugin
 ./scripts/test.py
 ```
