@@ -22,7 +22,7 @@ except ImportError:  # pragma: no cover
 
     __version__ = _import(Path(__file__).parent.name).__version__
 
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # pragma: no cover
     from enum import StrEnum
     from typing import Self
 
