@@ -4,7 +4,7 @@ from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-if is_newer_version_python := sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):
     from contextlib import chdir  # type:ignore[attr-defined]
 else:
     from contextlib import AbstractContextManager
@@ -29,7 +29,6 @@ __all__ = (
     "mock_sys_argv",
     "capture_stdout",
     "temp_file",
-    "is_newer_version_python",
 )
 
 
