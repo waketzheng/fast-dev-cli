@@ -39,7 +39,7 @@ python -m pip install -e .
 ## Test
 ```shell
 pipx install poetry
-pipx inject poetry poetry-version-plugin
+pipx inject poetry poetry-plugin-version
 # or: pdm run python -m pip install poetry poetry-version-plugin
 ./scripts/test.py
 ```
