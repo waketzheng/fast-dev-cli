@@ -8,12 +8,12 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, Type, TypeAlias, get_args
+from typing import Literal, Optional, Type, get_args
 
 import emoji
 import typer
 from typer import Exit, Option, echo, secho
-from typer.models import OptionInfo
+from typer.models import ArgumentInfo, OptionInfo
 
 try:
     from . import __version__
@@ -22,16 +22,16 @@ except ImportError:  # pragma: no cover
 
     __version__ = _import(Path(__file__).parent.name).__version__
 
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # pragma: no cover
     from enum import StrEnum
-    from typing import Annotated, Self
+    from typing import Self
 
     import tomllib
 else:  # pragma: no cover
     from enum import Enum
 
     import tomli as tomllib
-    from typing_extensions import Annotated, Self
+    from typing_extensions import Self
 
     class StrEnum(str, Enum):
         __str__ = str.__str__
@@ -39,7 +39,7 @@ else:  # pragma: no cover
 
 cli = typer.Typer()
 TOML_FILE = "pyproject.toml"
-ToolName: TypeAlias = Literal["poetry", "pdm", "uv", ""]
+ToolName = Literal["poetry", "pdm", "uv", ""]
 
 
 def load_bool(name: str, default=False) -> bool:
@@ -726,13 +726,13 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
 
 @cli.command(name="lint")
 def make_style(
-    files: Annotated[Optional[list[Path]], typer.Argument()] = None,
+    files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
-    if files is None:
+    if getattr(files, "default", files) is None:
         files = [Path(".")]
     elif isinstance(files, str):
         files = [files]
@@ -779,7 +779,7 @@ class Sync(DryRun):
                 ensurepip = ""
                 if not UpgradeDependencies.should_with_dev():
                     export_cmd = export_cmd.replace(" --with=dev", "")
-                if extras and isinstance(extras, str | list):
+                if extras and isinstance(extras, (str, list)):
                     export_cmd += f" --{extras=}".replace("'", '"')
             elif check_call(prefix + "python -m pip --version"):
                 ensurepip = ""
@@ -863,14 +863,14 @@ def upload(
 def dev(
     port: int | None | OptionInfo,
     host: str | None | OptionInfo,
-    file: Optional[str] = None,
+    file: str | None | ArgumentInfo = None,
     dry=False,
 ) -> None:
     cmd = "fastapi dev"
     no_port_yet = True
     if file is not None:
         try:
-            port = int(file)  # type:ignore[arg-type]
+            port = int(str(file))  # type:ignore[arg-type]
         except ValueError:
             cmd += f" {file}"
         else:
@@ -889,13 +889,13 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
-    file_or_port: Annotated[Optional[str], typer.Argument()] = None,
+    file_or_port: Optional[str] = typer.Argument(default=None),
     port: Optional[int] = Option(None, "-p", "--port"),
     host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
-    if file_or_port:
+    if getattr(file_or_port, "default", file_or_port):
         dev(port, host, file=file_or_port, dry=dry)
     else:
         dev(port, host, dry=dry)

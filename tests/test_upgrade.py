@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import re
+import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -9,7 +13,7 @@ from fast_dev_cli.cli import (
     upgrade,
 )
 
-from .utils import chdir, is_newer_version_python
+from .utils import chdir
 
 
 def test_parse_value():
@@ -80,12 +84,12 @@ def test_dev_flag(tmp_path: Path):
         project = tmp_path / "project"
         run_and_echo(f"poetry new {project.name}")
         with chdir(project):
-            if not is_newer_version_python:
+            if sys.version_info < (3, 13):
                 p = Path("pyproject.toml")
                 content = p.read_text()
-                s = 'python = "^3.11"'
-                ss = s.replace("3.11", "3.10")
-                p.write_text(content.replace(s, ss))
+                pattern = r'(python = "\^3)\.\d+"'
+                new_content = re.sub(pattern, r'\1.9"', content)
+                p.write_text(new_content)
             assert not UpgradeDependencies.should_with_dev()
             run_and_echo("poetry add pytest")
             assert not UpgradeDependencies.should_with_dev()

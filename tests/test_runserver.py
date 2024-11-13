@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import fast_dev_cli
 from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 

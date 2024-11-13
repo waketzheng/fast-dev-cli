@@ -2,6 +2,10 @@
 
 ## 0.11
 
+### [0.11.4](../../releases/tag/v0.11.4) - 2024-11-13
+
+- Support python3.9
+
 ### [0.11.3](../../releases/tag/v0.11.3) - 2024-11-05
 
 - Fix bump version error in uv project

@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Python project development tool."
 authors = [{name = "Waket Zheng", email = "waketzheng@gmail.com>"}]
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.9,<4"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -17,6 +17,7 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -47,7 +48,6 @@ standard = [
 ]
 all = [
     "bandit>=1.7.9,<2",
-    "ipython >=8.24.0,<9",
     "pytest-mock >=3.14.0,<4",
     "fast-dev-cli[standard]"
 ]
@@ -70,10 +70,7 @@ name = "fastdevcli-slim"
 include-optional-dependencies = ["standard"]
 
 [tool.waketzheng._internal-slim-build.packages.fast-dev-cli.project.optional-dependencies]
-all = [
-    "ipython >=8.24.0,<9",
-    "pytest-mock >=3.14.0,<4",
-]
+include-optional-dependencies = ["all"]
 
 [tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project.scripts]
 fast = "fast_dev_cli:cli.main"
@@ -111,6 +108,7 @@ omit = [
 
 [tool.mypy]
 pretty = true
+python_version = "3.9"
 ignore_missing_imports = true
 check_untyped_defs = true
 exclude = [
