@@ -41,7 +41,7 @@ Homepage = "https://github.com/waketzheng/fast-dev-cli"
 [project.optional-dependencies]
 standard = [
     "coverage >=7.5.1,<8",
-    "ruff >=0.4.4,<0.8",
+    "ruff >=0.4.4,<0.9",
     "mypy >=1.10.0,<2",
     "bumpversion2 >=1.4.3,<2",
     "pytest >=8.2.0,<9",
