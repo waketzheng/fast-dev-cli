@@ -689,8 +689,8 @@ class LintCode(DryRun):
                     secho(f"{tip}\n\n  {command}\n", fg="yellow")
         else:
             should_run_by_tool = True
-        if should_run_by_tool:
-            prefix = Project.get_manage_tool() + " run "
+        if should_run_by_tool and (manage_tool := Project.get_manage_tool()):
+            prefix = manage_tool + " run "
         if cls.prefer_dmypy(paths, tools):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
