@@ -7,6 +7,7 @@ import typer
 
 from fast_dev_cli.cli import (
     DryRun,
+    ShellCommandError,
     _ensure_bool,
     exit_if_run_failed,
     get_current_version,
@@ -61,11 +62,14 @@ def test_utils(capsys):
 
 def test_run_shell():
     # current version
-    stream = StringIO()
-    write_to_stream = redirect_stdout(stream)
-    with write_to_stream:
+    with pytest.raises(ShellCommandError):
         get_current_version(True, is_poetry=True)
-    assert "poetry version -s" in stream.getvalue()
+    # TODO: add [tool.poetry] to pyproject.toml
+    # stream = StringIO()
+    # write_to_stream = redirect_stdout(stream)
+    # with write_to_stream:
+    #     get_current_version(True, is_poetry=True)
+    # assert "poetry version -s" in stream.getvalue()
 
     name = "TEST_EXIT_IF_RUN_FAILED"
     value = "foo"

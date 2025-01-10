@@ -1,9 +1,12 @@
 import re
 from pathlib import Path
 
+import pytest
+
 from fast_dev_cli import __version__
 from fast_dev_cli.cli import (
     TOML_FILE,
+    ShellCommandError,
     _parse_version,
     get_current_version,
     read_version_from_file,
@@ -17,8 +20,9 @@ def test_version(capsys):
     version()
     assert get_current_version(is_poetry=False) in capsys.readouterr().out
     assert get_current_version(is_poetry=False) == __version__
-    assert get_current_version(is_poetry=True) == ""
     assert get_current_version() == __version__
+    with pytest.raises(ShellCommandError):
+        get_current_version(is_poetry=True)
 
 
 def test_read_version(tmp_path: Path, capsys):

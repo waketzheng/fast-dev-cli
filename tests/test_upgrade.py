@@ -162,6 +162,7 @@ anyio = "^4.0"
         run_and_echo(f"poetry new {project.name}")
         with chdir(project):
             with project.joinpath(TOML_FILE).open("a") as f:
+                f.write('\n[tool.poetry.dependencies]\nsix="*"')
                 f.write(dev_text)
             assert UpgradeDependencies.get_args() == (
                 [],
