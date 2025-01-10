@@ -372,7 +372,7 @@ class Project:
 
     @classmethod
     def manage_by_poetry(cls: Type[Self]) -> bool:
-        return "[tool.poetry]" in cls.load_toml_text()
+        return cls.get_manage_tool() == "poetry"
 
     @classmethod
     def get_manage_tool(cls: Type[Self]) -> ToolName | None:
@@ -384,6 +384,9 @@ class Project:
             for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
                     return name
+            if 'build-backend = "poetry.core.masonry.api"' in text:
+                # Poetry 2.0 default to not include the '[tool.poetry]' section
+                return "poetry"
         return None
 
     @staticmethod
