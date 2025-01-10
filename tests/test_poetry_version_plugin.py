@@ -11,6 +11,7 @@ from fast_dev_cli.cli import (
     TOML_FILE,
     BumpUp,
     ParseError,
+    poetry_module_name,
     run_and_echo,
 )
 
@@ -33,7 +34,7 @@ def _prepare_package(
     package_path: Path, define_include=False, mark="0"
 ) -> Generator[Path, None, None]:
     toml_file = package_path / TOML_FILE
-    package_name = package_path.name.replace(" ", "_")
+    package_name = poetry_module_name(package_path.name)
     init_file = package_path / package_name / "__init__.py"
     a, b = 'version = "0.1.0"', f'version = "{mark}"'
     if define_include:
@@ -45,8 +46,13 @@ def _prepare_package(
     with chdir(package_path):
         run_and_echo(f'poetry init --python="^{py_version}" --no-interaction')
         text = toml_file.read_text().replace(a, b)
+        if " " in package_path.name:
+            text = text.replace(
+                f'name = "{package_path.name}"', f'name = "{package_name}"'
+            )
         toml_file.write_text(text + CONF)
-        shutil.move(package_path.name, package_name)
+        if package_path.name != package_name:
+            shutil.move(package_path.name, package_name)
         init_file.write_text('__version__ = "0.0.1"\n')
         yield init_file
 

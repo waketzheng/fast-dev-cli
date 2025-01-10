@@ -45,6 +45,7 @@ standard = [
     "mypy >=1.10.0,<2",
     "bumpversion2 >=1.4.3,<2",
     "pytest >=8.2.0,<9",
+    "packaging>=20.5",
 ]
 all = [
     "bandit>=1.7.9,<2",

@@ -5,7 +5,7 @@
 groups = ["default", "all", "dev", "standard"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:7f134c53b3adf10e77698c3d8ec5df288a71b1504af8e92530af7620d6bf4192"
+content_hash = "sha256:81253c773ef178c750bea49f6d12eab091fd90fd71b4a3d0a940d2fb0ec5012f"
 
 [[metadata.targets]]
 requires_python = "~=3.9"
@@ -144,6 +144,10 @@ summary = "Emoji for Python"
 groups = ["default", "dev"]
 dependencies = [
     "typing-extensions>=4.7.0; python_version < \"3.9\"",
+]
+files = [
+    {file = "emoji-2.14.0-py3-none-any.whl", hash = "sha256:fcc936bf374b1aec67dda5303ae99710ba88cc9cdce2d1a71c5f2204e6d78799"},
+    {file = "emoji-2.14.0.tar.gz", hash = "sha256:f68ac28915a2221667cddb3e6c589303c3c6954c6c5af6fefaec7f9bdf72fdca"},
 ]
 
 [[package]]
@@ -308,6 +312,10 @@ dependencies = [
     "packaging",
     "pluggy<2,>=1.5",
     "tomli>=1; python_version < \"3.11\"",
+]
+files = [
+    {file = "pytest-8.3.4-py3-none-any.whl", hash = "sha256:50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6"},
+    {file = "pytest-8.3.4.tar.gz", hash = "sha256:965370d062bce11e73868e0335abac31b4d3de0e82f4007408d242b4f8610761"},
 ]
 
 [[package]]
