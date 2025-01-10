@@ -39,7 +39,7 @@ else:  # pragma: no cover
 
 cli = typer.Typer()
 TOML_FILE = "pyproject.toml"
-ToolName = Literal["poetry", "pdm", "uv", ""]
+ToolName = Literal["poetry", "pdm", "uv"]
 
 
 def load_bool(name: str, default=False) -> bool:
@@ -375,17 +375,16 @@ class Project:
         return "[tool.poetry]" in cls.load_toml_text()
 
     @classmethod
-    def get_manage_tool(cls: Type[Self]) -> ToolName:
+    def get_manage_tool(cls: Type[Self]) -> ToolName | None:
         try:
             text = cls.load_toml_text()
         except EnvError:
             pass
         else:
-            name: ToolName
             for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
                     return name
-        return ""
+        return None
 
     @staticmethod
     def python_exec_dir() -> Path:
@@ -823,8 +822,8 @@ def test(dry: bool, ignore_script=False) -> None:
         cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
         if not is_venv() or not check_call("coverage --version"):
             sep = " && "
-            tool = Project.get_manage_tool()
-            cmd = sep.join(f"{tool} run " + i for i in cmd.split(sep))
+            prefix = f"{tool} run " if (tool := Project.get_manage_tool()) else ""
+            cmd = sep.join(prefix + i for i in cmd.split(sep))
     exit_if_run_failed(cmd, dry=dry)
 
 
@@ -846,7 +845,7 @@ class Publish:
 
     @classmethod
     def gen(cls) -> str:
-        if (tool := Project.get_manage_tool()) and tool in get_args(ToolName):
+        if tool := Project.get_manage_tool():
             return cls.CommandEnum[tool]
         return cls.CommandEnum.twine
 
