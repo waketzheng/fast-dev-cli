@@ -2,7 +2,7 @@
 
 ## 0.11
 
-### [0.11.6](../../releases/tag/v0.11.6) - 2025-01-10
+### [0.11.6](../../releases/tag/v0.11.6) - 2025-01-12
 
 - Limit ruff version constraint to `<1`
 
