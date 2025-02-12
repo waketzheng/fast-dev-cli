@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, Type, get_args
+from typing import Literal, get_args
 
 import emoji
 import typer
@@ -359,6 +359,10 @@ class Project:
     path_depth = 5
 
     @staticmethod
+    def is_poetry_v2(text: str) -> bool:
+        return 'build-backend = "poetry' in text
+
+    @staticmethod
     def work_dir(name: str, parent: Path, depth: int, be_file=False) -> Path | None:
         for _ in range(depth):
             if (f := parent.joinpath(name)).exists():
@@ -370,7 +374,7 @@ class Project:
 
     @classmethod
     def get_work_dir(
-        cls: Type[Self],
+        cls: type[Self],
         name=TOML_FILE,
         cwd: Path | None = None,
         allow_cwd=False,
@@ -384,16 +388,16 @@ class Project:
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
-    def load_toml_text(cls: Type[Self], name=TOML_FILE) -> str:
+    def load_toml_text(cls: type[Self], name=TOML_FILE) -> str:
         toml_file = cls.get_work_dir(name, be_file=True)
         return toml_file.read_text("utf8")
 
     @classmethod
-    def manage_by_poetry(cls: Type[Self]) -> bool:
+    def manage_by_poetry(cls: type[Self]) -> bool:
         return cls.get_manage_tool() == "poetry"
 
     @classmethod
-    def get_manage_tool(cls: Type[Self]) -> ToolName | None:
+    def get_manage_tool(cls: type[Self]) -> ToolName | None:
         try:
             text = cls.load_toml_text()
         except EnvError:
@@ -402,8 +406,8 @@ class Project:
             for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
                     return name
-            if 'build-backend = "poetry.core.masonry.api"' in text:
-                # Poetry 2.0 default to not include the '[tool.poetry]' section
+            # Poetry 2.0 default to not include the '[tool.poetry]' section
+            if cls.is_poetry_v2(text):
                 return "poetry"
         return None
 
@@ -412,7 +416,7 @@ class Project:
         return Path(sys.executable).parent
 
     @classmethod
-    def get_root_dir(cls: Type[Self], cwd: Path | None = None) -> Path:
+    def get_root_dir(cls: type[Self], cwd: Path | None = None) -> Path:
         root = cwd or Path.cwd()
         venv_parent = cls.python_exec_dir().parent.parent
         if root.is_relative_to(venv_parent):
@@ -423,7 +427,7 @@ class Project:
 class ParseError(Exception):
     """Raise this if parse dependence line error"""
 
-    ...
+    pass
 
 
 class UpgradeDependencies(Project, DryRun):
@@ -474,7 +478,7 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def build_args(
-        cls: Type[Self], package_lines: list[str]
+        cls: type[Self], package_lines: list[str]
     ) -> tuple[list[str], dict[str, list[str]]]:
         args: list[str] = []  # ['typer[all]', 'fastapi']
         specials: dict[str, list[str]] = {}  # {'--platform linux': ['gunicorn']}
@@ -513,7 +517,7 @@ class UpgradeDependencies(Project, DryRun):
         return args, specials
 
     @classmethod
-    def should_with_dev(cls: Type[Self]) -> bool:
+    def should_with_dev(cls: type[Self]) -> bool:
         text = cls.load_toml_text()
         return cls.DevFlag.new in text or cls.DevFlag.old in text
 
@@ -530,12 +534,14 @@ class UpgradeDependencies(Project, DryRun):
 
     @classmethod
     def get_args(
-        cls: Type[Self], toml_text: str | None = None
+        cls: type[Self], toml_text: str | None = None
     ) -> tuple[list[str], list[str], list[list[str]], str]:
         if toml_text is None:
             toml_text = cls.load_toml_text()
         main_title = "[tool.poetry.dependencies]"
-        if main_title not in toml_text:
+        if (no_main_deps := main_title not in toml_text) and not cls.is_poetry_v2(
+            toml_text
+        ):
             raise EnvError(
                 f"{main_title} not found! Make sure this is a poetry project."
             )
@@ -551,7 +557,8 @@ class UpgradeDependencies(Project, DryRun):
         except ValueError:
             dev_toml = ""
             main_toml = text
-        mains, devs = cls.parse_item(main_toml), cls.parse_item(dev_toml)
+        mains = [] if no_main_deps else cls.parse_item(main_toml)
+        devs = cls.parse_item(dev_toml)
         prod_packs, specials = cls.build_args(mains)
         if specials:
             others.extend([[k] + v for k, v in specials.items()])
@@ -561,7 +568,7 @@ class UpgradeDependencies(Project, DryRun):
         return prod_packs, dev_packs, others, dev_flag
 
     @classmethod
-    def gen_cmd(cls: Type[Self]) -> str:
+    def gen_cmd(cls: type[Self]) -> str:
         main_args, dev_args, others, dev_flags = cls.get_args()
         return cls.to_cmd(main_args, dev_args, others, dev_flags)
 
@@ -593,7 +600,12 @@ def upgrade(
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
-    UpgradeDependencies(dry=dry).run()
+    if (tool := Project.get_manage_tool()) == "uv":
+        exit_if_run_failed("uv lock --upgrade && uv sync", dry=dry)
+    elif tool == "pdm":
+        exit_if_run_failed("pdm update && pdm install", dry=dry)
+    else:
+        UpgradeDependencies(dry=dry).run()
 
 
 class GitTag(DryRun):
@@ -684,7 +696,7 @@ class LintCode(DryRun):
 
     @classmethod
     def to_cmd(
-        cls: Type[Self], paths=".", check_only=False, bandit=False, skip_mypy=False
+        cls: type[Self], paths=".", check_only=False, bandit=False, skip_mypy=False
     ) -> str:
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
@@ -697,7 +709,9 @@ class LintCode(DryRun):
             tools = tools[:-1]
         elif load_bool("IGNORE_MISSING_IMPORTS"):
             tools[-1] += " --ignore-missing-imports"
-        lint_them = " && ".join("{0}{%d} {1}" % i for i in range(2, len(tools) + 2))
+        lint_them = " && ".join(
+            "{0}{" + str(i) + "} {1}" for i in range(2, len(tools) + 2)
+        )
         prefix = ""
         should_run_by_tool = False
         if is_venv():
@@ -746,7 +760,7 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
 
 @cli.command(name="lint")
 def make_style(
-    files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
+    files: list[Path] | None = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
@@ -803,7 +817,9 @@ class Sync(DryRun):
                     export_cmd += f" --{extras=}".replace("'", '"')
             elif check_call(prefix + "python -m pip --version"):
                 ensurepip = ""
-        install_cmd = "{2} -o {0} &&%s {1}python -m pip install -r {0}" % ensurepip
+        install_cmd = (
+            f"{{2}} -o {{0}} &&{ensurepip} {{1}}python -m pip install -r {{0}}"
+        )
         if should_remove and not save:
             install_cmd += " && rm -f {0}"
         return install_cmd.format(self.filename, prefix, export_cmd)
@@ -909,9 +925,9 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
-    file_or_port: Optional[str] = typer.Argument(default=None),
-    port: Optional[int] = Option(None, "-p", "--port"),
-    host: Optional[str] = Option(None, "-h", "--host"),
+    file_or_port: str | None = typer.Argument(default=None),
+    port: int | None = Option(None, "-p", "--port"),
+    host: str | None = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""

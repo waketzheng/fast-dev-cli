@@ -127,8 +127,10 @@ extend-select = [
     "F",  # pyflakes
     "I",  # isort
     "B",  # flake8-bugbear
-    "C4",  # flake8-comprehensions
+    "C4", # flake8-comprehensions
+    "UP", # https://docs.astral.sh/ruff/rules/#pyupgrade-up
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["E501"]
+"scripts/*.py" = ["UP009","UP032"]

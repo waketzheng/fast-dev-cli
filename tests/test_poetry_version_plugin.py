@@ -1,9 +1,9 @@
 import os
 import shutil
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -38,11 +38,11 @@ def _prepare_package(
     init_file = package_path / package_name / "__init__.py"
     a, b = 'version = "0.1.0"', f'version = "{mark}"'
     if define_include:
-        b += '\npackages = [{include = "%s"}]' % package_name
+        b += f'\npackages = [{{include = "{package_name}"}}]'
     with chdir(package_path.parent):
         run_and_echo(f'poetry new "{package_path.name}"')
     toml_file.unlink()
-    py_version = "{0}.{1}".format(*sys.version_info)
+    py_version = "{}.{}".format(*sys.version_info)
     with chdir(package_path):
         run_and_echo(f'poetry init --python="^{py_version}" --no-interaction')
         text = toml_file.read_text().replace(a, b)
