@@ -33,10 +33,6 @@ version = "1.4.3"
 requires_python = "<4.0,>=3.8"
 summary = ""
 groups = ["dev", "standard"]
-files = [
-    {file = "bumpversion2-1.4.3-py3-none-any.whl", hash = "sha256:ed0a608c9bca4ebd57e546c925c6e66d8763fbb45b2ee971e0006a65fa7e02e7"},
-    {file = "bumpversion2-1.4.3.tar.gz", hash = "sha256:7dbc3914d775dce7035822d97cd190b2478206a1e02eeb033daf3ffe35e36a51"},
-]
 
 [[package]]
 name = "click"
@@ -509,10 +505,6 @@ dependencies = [
     "rich>=10.11.0",
     "shellingham>=1.3.0",
     "typing-extensions>=3.7.4.3",
-]
-files = [
-    {file = "typer-0.15.1-py3-none-any.whl", hash = "sha256:7994fb7b8155b64d3402518560648446072864beefd44aa2dc36972a5972e847"},
-    {file = "typer-0.15.1.tar.gz", hash = "sha256:a0588c0a7fa68a1978a069818657778f86abe6ff5ea6abf472f940a08bfe4f0a"},
 ]
 
 [[package]]
