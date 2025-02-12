@@ -37,3 +37,13 @@ _build:
 	pdm build
 	BUILD_PACKAGE=fastdevcli-slim pdm build
 build: deps _build
+
+venv:
+	@echo "--> pdm venv create ${version}"
+	@pdm venv create $(version)
+
+venv39:
+	@pdm venv create 3.9
+
+venv313:
+	$(MAKE) venv version=3.13

@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, get_args
+from typing import Literal, Optional, get_args
 
 import emoji
 import typer
@@ -760,7 +760,7 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
 
 @cli.command(name="lint")
 def make_style(
-    files: list[Path] | None = typer.Argument(default=None),  # noqa:B008
+    files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
@@ -925,9 +925,9 @@ def dev(
 
 @cli.command(name="dev")
 def runserver(
-    file_or_port: str | None = typer.Argument(default=None),
-    port: int | None = Option(None, "-p", "--port"),
-    host: str | None = Option(None, "-h", "--host"),
+    file_or_port: Optional[str] = typer.Argument(default=None),
+    port: Optional[int] = Option(None, "-p", "--port"),
+    host: Optional[str] = Option(None, "-h", "--host"),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
