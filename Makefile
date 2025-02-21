@@ -11,10 +11,10 @@ help:
 	@echo  "    lint    Auto-formats the code and check type hints"
 
 up:
-	@pdm update
+	@pdm update --verbose
 
 deps:
-	@pdm install
+	@pdm install --verbose
 
 _check:
 	./scripts/check.py
@@ -38,6 +38,8 @@ _build:
 	BUILD_PACKAGE=fastdevcli-slim pdm build
 build: deps _build
 
+# Usage::
+#   make venv version=3.12
 venv:
 	@echo "--> pdm venv create ${version}"
 	@pdm venv create $(version)
