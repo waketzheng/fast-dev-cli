@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.12
+
+### [0.12.0](../../releases/tag/v0.12.0) - 2025-02-21
+
+- Remove upper limit for python version
+- Fix bump version error with src layout
+
 ## 0.11
 
 ### [0.11.6](../../releases/tag/v0.11.6) - 2025-01-12

@@ -41,6 +41,10 @@ def _prepare_package(
         b += f'\npackages = [{{include = "{package_name}"}}]'
     with chdir(package_path.parent):
         run_and_echo(f'poetry new "{package_path.name}"')
+    src_dir = package_path / "src"
+    if is_src_layout := src_dir.exists():
+        # poetry v2 default to use src/<package_name> layout
+        init_file = src_dir / package_name / init_file.name
     toml_file.unlink()
     py_version = "{}.{}".format(*sys.version_info)
     with chdir(package_path):
@@ -52,7 +56,10 @@ def _prepare_package(
             )
         toml_file.write_text(text + CONF)
         if package_path.name != package_name:
-            shutil.move(package_path.name, package_name)
+            if is_src_layout:
+                shutil.move(src_dir / package_path.name, src_dir / package_name)
+            else:
+                shutil.move(package_path.name, package_name)
         init_file.write_text('__version__ = "0.0.1"\n')
         yield init_file
 

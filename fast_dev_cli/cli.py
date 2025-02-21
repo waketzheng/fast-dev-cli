@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, get_args
+from typing import Literal, Optional, get_args  # Optional is required by typers
 
 import emoji
 import typer
@@ -127,7 +127,7 @@ def read_version_from_file(
         secho("WARNING: __init__.py file does not exist!")
         return "0.0.0"
     pattern = re.compile(r"__version__\s*=")
-    for line in init_file.read_text().splitlines():
+    for line in init_file.read_text("utf-8").splitlines():
         if pattern.match(line):
             return _parse_version(line, pattern)
     secho(f"WARNING: can not find '__version__' var in {init_file}!")
@@ -264,11 +264,15 @@ class BumpUp(DryRun):
             # In case of managed by `poetry-plugin-version`
             cwd = Path.cwd()
             pattern = re.compile(r"__version__\s*=\s*['\"]")
-            ds = [cwd / i for i in packages] + [cwd / poetry_module_name(cwd.name), cwd]
+            ds: list[Path] = []
+            for package_name in packages:
+                ds.append(cwd / package_name)
+                ds.append(cwd / "src" / package_name)
+            module_name = poetry_module_name(cwd.name)
+            ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
             for d in ds:
-                if (init_file := d / "__init__.py").exists() and pattern.search(
-                    init_file.read_text()
-                ):
+                init_file = d / "__init__.py"
+                if init_file.exists() and pattern.search(init_file.read_text("utf8")):
                     break
             else:
                 raise ParseError("Version file not found! Where are you now?")
