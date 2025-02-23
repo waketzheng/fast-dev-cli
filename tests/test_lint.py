@@ -79,7 +79,10 @@ def test_check_bandit(tmp_path):
     with chdir(tmp_path):
         assert LintCode.get_package_name() == "."
         run_and_echo(f"poetry new {package_path.name}")
-    shutil.rmtree(package_path / package_path.name)
+    src_dir = package_path / "src"
+    if not src_dir.exists():  # For poetry<2.1
+        src_dir = src_dir.parent / package_path.name
+    shutil.rmtree(src_dir)
     with chdir(package_path):
         command = capture_cmd_output("fast check --bandit --dry")
     assert "bandit -r ." in command
