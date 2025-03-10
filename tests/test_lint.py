@@ -110,8 +110,7 @@ def test_fast_check_0(mock_no_dmypy_0):
 
 def _fast_check():
     command = capture_cmd_output("fast check --dry")
-    expected = CHECK_CMD.replace("mypy", "dmypy run")
-    for cmd in expected.split(SEP):
+    for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
 
 
