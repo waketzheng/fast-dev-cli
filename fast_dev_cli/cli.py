@@ -686,7 +686,7 @@ class LintCode(DryRun):
         return (
             paths == "."
             and any(t.startswith("mypy") for t in tools)
-            and not load_bool("NO_DMYPY")
+            and load_bool("FASTDEVCLI_DMYPY")
         )
 
     @staticmethod
