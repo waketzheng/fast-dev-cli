@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://fastdevcli.waketzheng.top/img/logo-margin/logo-teal.png" alt="FastDevCli">
+  <img src="https://raw.githubusercontent.com/waketzheng/fast-dev-cli/main/img/logo-teal.png" alt="FastDevCli">
 </p>
 <p align="center">
     <em>Toolkit for python code lint/test/bump ...</em>
@@ -40,6 +40,11 @@
 ## Requirements
 
 Python 3.9+
+
+## Features
+
+- Support poetry/pdm/uv
+- Support Windows/MacOS/Linux
 
 ## Installation
 

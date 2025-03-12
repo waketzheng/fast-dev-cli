@@ -4,7 +4,7 @@
 
 经常会需要执行`ruff format xxx.py && ruff check --fix xxx.py && mypy xxx.py`
 一开始是使用lint.sh脚本来简化操作，实际使用中发现不够灵活，于是诞生了这个工具库。
-由于Pycharm/Vscode用的少，平时一般在终端和服务器码代码，所以fast lint命令极大地方便了我对代码规范的追求。
+支持使用poetry、pdm、uv来管理依赖的项目，同时支持Windows、MacOS、Linux等操作系统。
 
 [English](./README.md) | **中文**
 
@@ -16,26 +16,25 @@ Python3.9及其以上版本
 
 ## 安装
 
-- 全量安装
+- 全局安装
+```bash
+pipx install fastdevcli-slim
+```
+*只依赖typer/emoji*
+
+- 项目中安装
 ```bash
 pip install fast-dev-cli
 ```
 *会同时安装emoji、typer、ruff、mypy、pytest、coverage、bumpversion2等日常开发工具包*
-
-- 最小化安装
-```bash
-pip install fastdevcli-slim
-```
-*只依赖typer/emoji(适用于只使用tag和sync/upload/upgrade命令的情况)*
 
 ## 使用
 ### 代码格式化
 1. 使用ruff对当前目录下的所有Python文件进行格式化/导入排序/删除多余import，如果没报错再用mypy进行静态检查
 ```bash
 fast lint
-# 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && dmypy run .
+# 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && mypy run .
 ```
-- 注：dmypy run会启动一个后台进程来加速mypy检查
 
 2. 对单个文件进行格式化和静态检查
 ```bash
@@ -90,7 +89,7 @@ poetry update有时只会升级依赖包的小版本，如：sqlmodel==0.0.18 ->
 fast upgrade
 ```
 
-### 启动fastapi调试服务（只适用于fastapi>=0.111.0）
+### 启动fastapi调试服务（需安装fastapi-cli包）
 - 默认使用8000端口和127.0.0.1主机
 ```bash
 fast dev
