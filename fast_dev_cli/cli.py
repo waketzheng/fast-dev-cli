@@ -96,7 +96,7 @@ def capture_cmd_output(command: list[str] | str, *, raises=False, **kw) -> str:
     r = _run_shell(command, capture_output=True, encoding="utf-8", **kw)
     if raises and r.returncode != 0:
         raise ShellCommandError(r.stderr)
-    return r.stdout.strip()
+    return r.stdout.strip() or r.stderr
 
 
 def _parse_version(line: str, pattern: re.Pattern) -> str:
@@ -670,11 +670,13 @@ class LintCode(DryRun):
         dry=False,
         bandit=False,
         skip_mypy=False,
+        dmypy=False,
     ) -> None:
         self.args = args
         self.check_only = check_only
         self._bandit = bandit
         self._skip_mypy = skip_mypy
+        self._use_dmypy = dmypy
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -682,11 +684,11 @@ class LintCode(DryRun):
         return check_call("ruff --version")
 
     @staticmethod
-    def prefer_dmypy(paths: str, tools: list[str]) -> bool:
+    def prefer_dmypy(paths: str, tools: list[str], use_dmypy=False) -> bool:
         return (
             paths == "."
             and any(t.startswith("mypy") for t in tools)
-            and load_bool("FASTDEVCLI_DMYPY")
+            and (use_dmypy or load_bool("FASTDEVCLI_DMYPY"))
         )
 
     @staticmethod
@@ -700,7 +702,12 @@ class LintCode(DryRun):
 
     @classmethod
     def to_cmd(
-        cls: type[Self], paths=".", check_only=False, bandit=False, skip_mypy=False
+        cls: type[Self],
+        paths=".",
+        check_only=False,
+        bandit=False,
+        skip_mypy=False,
+        use_dmypy=False,
     ) -> str:
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
@@ -729,7 +736,7 @@ class LintCode(DryRun):
             should_run_by_tool = True
         if should_run_by_tool and (manage_tool := Project.get_manage_tool()):
             prefix = manage_tool + " run "
-        if cls.prefer_dmypy(paths, tools):
+        if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
         if bandit or load_bool("FASTDEVCLI_BANDIT"):
@@ -741,24 +748,32 @@ class LintCode(DryRun):
 
     def gen(self: Self) -> str:
         paths = " ".join(map(str, self.args)) if self.args else "."
-        return self.to_cmd(paths, self.check_only, self._bandit, self._skip_mypy)
+        return self.to_cmd(
+            paths, self.check_only, self._bandit, self._skip_mypy, self._use_dmypy
+        )
 
 
 def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
 
-def lint(files=None, dry=False, skip_mypy=False) -> None:
+def lint(files=None, dry=False, skip_mypy=False, dmypy=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     if files and files[0] == "lint":
         files = files[1:]
-    LintCode(files, dry=dry, skip_mypy=skip_mypy).run()
+    LintCode(files, dry=dry, skip_mypy=skip_mypy, dmypy=dmypy).run()
 
 
-def check(files=None, dry=False, bandit=False, skip_mypy=False) -> None:
+def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> None:
     LintCode(
-        files, check_only=True, _exit=True, dry=dry, bandit=bandit, skip_mypy=skip_mypy
+        files,
+        check_only=True,
+        _exit=True,
+        dry=dry,
+        bandit=bandit,
+        skip_mypy=skip_mypy,
+        dmypy=dmypy,
     ).run()
 
 
@@ -767,6 +782,9 @@ def make_style(
     files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
+    use_dmypy: bool = Option(
+        False, "--dmypy", help="Use `dmypy run` instead of `mypy`"
+    ),
     dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
@@ -775,10 +793,11 @@ def make_style(
     elif isinstance(files, str):
         files = [files]
     skip = _ensure_bool(skip_mypy)
+    dmypy = _ensure_bool(use_dmypy)
     if _ensure_bool(check_only):
-        check(files, dry=dry, skip_mypy=skip)
+        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy)
     else:
-        lint(files, dry=dry, skip_mypy=skip)
+        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy)
 
 
 @cli.command(name="check")

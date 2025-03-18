@@ -132,9 +132,14 @@ def test_lint_cmd(mock_no_dmypy):
     )
 
 
-def test_dmypy_run(mocker):
-    mocker.patch("fast_dev_cli.cli.LintCode.prefer_dmypy", return_value=True)
-    command = capture_cmd_output("fast lint --dry .")
+def test_with_dmypy():
+    command = capture_cmd_output("fast lint --dmypy --dry .")
+    assert "dmypy run ." in command
+
+
+def test_dmypy_run(monkeypatch):
+    monkeypatch.setenv("FASTDEVCLI_DMYPY", "1")
+    command = capture_cmd_output("python -m fast_dev_cli lint --dry .")
     assert "dmypy run ." in command
 
 
