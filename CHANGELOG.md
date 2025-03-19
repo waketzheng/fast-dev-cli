@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.13
+
+### [0.13.0](../../releases/tag/v0.13.0) - 2025-03-19
+
+#### Changed
+- Prefer to use `mypy` instead of `dmypy run`
+
 ## 0.12
 
 ### [0.12.0](../../releases/tag/v0.12.0) - 2025-02-21
