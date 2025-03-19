@@ -1,4 +1,3 @@
-import os
 import shutil
 import sys
 from collections.abc import Generator
@@ -64,14 +63,15 @@ def _prepare_package(
         yield init_file
 
 
-def _build_bump_cmd(init_file: Path) -> str:
-    relative_path = os.path.join(init_file.parent.name, init_file.name)
+def _build_bump_cmd(init_file: Path, project_path: Path) -> str:
+    relative_path = init_file.relative_to(project_path).as_posix()
     return rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="0.0.1" patch {relative_path} --allow-dirty'
 
 
 def test_version_plugin(tmp_path: Path) -> None:
-    with _prepare_package(tmp_path / "helloworld") as init_file:
-        command = _build_bump_cmd(init_file)
+    project_path = tmp_path / "helloworld"
+    with _prepare_package(project_path) as init_file:
+        command = _build_bump_cmd(init_file, project_path)
         assert BumpUp(part="patch", commit=False, dry=True).gen() == command
         run_and_echo("poetry run fast bump patch")
         assert init_file.read_text() == '__version__ = "0.0.2"\n'
@@ -81,8 +81,9 @@ def test_version_plugin(tmp_path: Path) -> None:
 
 
 def test_version_plugin_2(tmp_path: Path) -> None:
-    with _prepare_package(tmp_path / "helloworld", mark="0.0.0") as init_file:
-        command = _build_bump_cmd(init_file)
+    project_path = tmp_path / "helloworld"
+    with _prepare_package(project_path, mark="0.0.0") as init_file:
+        command = _build_bump_cmd(init_file, project_path)
         assert BumpUp(part="patch", commit=False, dry=True).gen() == command
         run_and_echo("poetry run fast bump patch")
         assert init_file.read_text() == '__version__ = "0.0.2"\n'
@@ -92,16 +93,18 @@ def test_version_plugin_2(tmp_path: Path) -> None:
 
 
 def test_version_plugin_include_defined(tmp_path: Path) -> None:
-    with _prepare_package(tmp_path / "hello world", True) as init_file:
-        command = _build_bump_cmd(init_file)
+    project_path = tmp_path / "hello world"
+    with _prepare_package(project_path, True) as init_file:
+        command = _build_bump_cmd(init_file, project_path)
         assert BumpUp(part="patch", commit=False, dry=True).gen() == command
         run_and_echo("poetry run fast bump patch")
         assert init_file.read_text() == '__version__ = "0.0.2"\n'
 
 
 def test_version_plugin_include_defined_2(tmp_path: Path) -> None:
-    with _prepare_package(tmp_path / "hello world", True, mark="0.0.0") as init_file:
-        command = _build_bump_cmd(init_file)
+    project_path = tmp_path / "hello world"
+    with _prepare_package(project_path, True, mark="0.0.0") as init_file:
+        command = _build_bump_cmd(init_file, project_path)
         assert BumpUp(part="patch", commit=False, dry=True).gen() == command
         run_and_echo("poetry run fast bump patch")
         assert init_file.read_text() == '__version__ = "0.0.2"\n'
