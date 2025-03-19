@@ -260,14 +260,20 @@ class BumpUp(DryRun):
             except KeyError:
                 packages = []
             else:
-                packages = [j for i in package_item if (j := i.get("include"))]
+                packages = [
+                    (j, i.get("from", ""))
+                    for i in package_item
+                    if (j := i.get("include"))
+                ]
             # In case of managed by `poetry-plugin-version`
             cwd = Path.cwd()
             pattern = re.compile(r"__version__\s*=\s*['\"]")
             ds: list[Path] = []
-            for package_name in packages:
+            for package_name, source_dir in packages:
                 ds.append(cwd / package_name)
                 ds.append(cwd / "src" / package_name)
+                if source_dir and source_dir != "src":
+                    ds.append(cwd / source_dir / package_name)
             module_name = poetry_module_name(cwd.name)
             ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
             for d in ds:
