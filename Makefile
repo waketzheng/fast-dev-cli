@@ -33,7 +33,6 @@ _style:
 style: deps _style
 
 _build:
-	rm -fR dist/
 	pdm build
 	BUILD_PACKAGE=fastdevcli-slim pdm build
 build: deps _build
@@ -41,11 +40,10 @@ build: deps _build
 # Usage::
 #   make venv version=3.12
 venv:
-	@echo "--> pdm venv create ${version}"
-	@pdm venv create $(version)
+	pdm venv create $(version)
 
 venv39:
-	@pdm venv create 3.9
+	pdm venv create 3.9
 
 venv313:
 	$(MAKE) venv version=3.13
