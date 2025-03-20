@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 0.14
+
+### [0.14.0](../../releases/tag/v0.14.0) - 2025-03-20
+
+#### Changed
+- Move 'ruff' from dependencies of fast-dev-cli to "fast-dev-cli[all]"
+- Pin ruff to ">=0.11.0"
+
 ## 0.13
 
 ### [0.13.0](../../releases/tag/v0.13.0) - 2025-03-19
