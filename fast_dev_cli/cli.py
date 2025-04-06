@@ -714,11 +714,11 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(
         cls: type[Self],
-        paths=".",
-        check_only=False,
-        bandit=False,
-        skip_mypy=False,
-        use_dmypy=False,
+        paths: str = ".",
+        check_only: bool = False,
+        bandit: bool = False,
+        skip_mypy: bool = False,
+        use_dmypy: bool = False,
     ) -> str:
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
@@ -752,9 +752,14 @@ class LintCode(DryRun):
         cmd += lint_them.format(prefix, paths, *tools)
         if bandit or load_bool("FASTDEVCLI_BANDIT"):
             command = prefix + "bandit"
-            if paths == ".":  # fast check --bandit
-                command += " -r " + cls.get_package_name()
-                cmd += " && " + command
+            if Path("pyproject.toml").exists():
+                toml_text = Project.load_toml_text()
+                if "[tool.bandit" in toml_text:
+                    command += " -c pyproject.toml"
+            if paths == "." and " -c " not in command:
+                paths = cls.get_package_name()
+            command += f" -r {paths}"
+            cmd += " && " + command
         return cmd
 
     def gen(self: Self) -> str:

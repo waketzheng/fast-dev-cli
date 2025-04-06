@@ -135,3 +135,6 @@ extend-select = [
 "test_*.py" = ["E501"]
 "scripts/*.py" = ["UP009","UP032"]
 "fast_dev_cli/cli.py" = ["UP007"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "scripts", "examples", ".venv"]
