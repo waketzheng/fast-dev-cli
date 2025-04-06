@@ -43,6 +43,11 @@ jobs:
           git config --global user.email "waketzheng@gmail.com"
           git config --global user.name "Waket Zheng"
           python -m pipx install -e .
+          python -m pipx ensurepath
+          python -c 'from pathlib impor Path;p=Path.home()/".local/bin";p.exists() or p.mkdir(parents=True)'
+          which pipx
+          which fast
+          ln -s `which fast` $HOME/.local/bin/fast
       - name: Install uv
         uses: astral-sh/setup-uv@v3
       - name: Install requirements/Check code style and Type Hint
