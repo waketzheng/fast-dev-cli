@@ -2,10 +2,15 @@
 
 ## 0.14
 
+### [0.14.1](../../releases/tag/v0.14.1) - 2025-04-06
+
+#### Added
+- Support `fast lint --bandit`
+
 ### [0.14.0](../../releases/tag/v0.14.0) - 2025-03-20
 
 #### Changed
-- Move 'ruff' from dependencies of fast-dev-cli to "fast-dev-cli[all]"
+- Move 'ruff' from dependencies of fast-dev-cli to "fastdevcli-slim[all]"
 - Pin ruff to ">=0.11.0"
 
 ## 0.13
