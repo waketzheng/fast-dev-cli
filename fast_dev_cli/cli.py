@@ -258,7 +258,12 @@ class BumpUp(DryRun):
             try:
                 package_item = context["tool"]["poetry"]["packages"]
             except KeyError:
-                packages = []
+                try:
+                    project_name = context["project"]["name"]
+                except KeyError:
+                    packages = []
+                else:
+                    packages = [(poetry_module_name(project_name), "")]
             else:
                 packages = [
                     (j, i.get("from", ""))
@@ -721,7 +726,7 @@ class LintCode(DryRun):
             tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):
             tools[1] = tools[1].replace(" --fix", "")
-        if skip_mypy or load_bool("SKIP_MYPY"):
+        if skip_mypy or load_bool("SKIP_MYPY") or load_bool("FASTDEVCLI_NO_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         elif load_bool("IGNORE_MISSING_IMPORTS"):
@@ -731,11 +736,11 @@ class LintCode(DryRun):
         )
         prefix = ""
         should_run_by_tool = False
-        if is_venv():
+        if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(".local/bin"):
             if not cls.check_lint_tool_installed():
                 should_run_by_tool = True
                 if check_call('python -c "import fast_dev_cli"'):
-                    command = 'python -m pip install -U "fast_dev_cli"'
+                    command = 'python -m pip install -U "fast-dev-cli"'
                     tip = "You may need to run following command to install lint tools:"
                     secho(f"{tip}\n\n  {command}\n", fg="yellow")
         else:
@@ -763,12 +768,12 @@ def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
 
-def lint(files=None, dry=False, skip_mypy=False, dmypy=False) -> None:
+def lint(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     if files and files[0] == "lint":
         files = files[1:]
-    LintCode(files, dry=dry, skip_mypy=skip_mypy, dmypy=dmypy).run()
+    LintCode(files, dry=dry, skip_mypy=skip_mypy, bandit=bandit, dmypy=dmypy).run()
 
 
 def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> None:
@@ -787,6 +792,7 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> 
 def make_style(
     files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
+    bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     use_dmypy: bool = Option(
         False, "--dmypy", help="Use `dmypy run` instead of `mypy`"
@@ -800,10 +806,11 @@ def make_style(
         files = [files]
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
+    bandit = _ensure_bool(bandit)
     if _ensure_bool(check_only):
-        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy)
+        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit)
     else:
-        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy)
+        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit)
 
 
 @cli.command(name="check")
