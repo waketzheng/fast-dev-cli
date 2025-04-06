@@ -16,7 +16,8 @@ repos:
 
   - repo: local
     hooks:
-      - id: check
-        name: check by ruff/mypy
-        entry: ./scripts/check.py
-        language: python
+      - id: format
+        name: check and reformat by ruff/mypy/bandit
+        entry: pdm run fast lint --bandit
+        language: system
+        types: [python]
