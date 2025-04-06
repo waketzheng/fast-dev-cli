@@ -132,6 +132,14 @@ def test_lint_cmd(mock_no_dmypy):
     )
 
 
+def test_lint_by_global_fast():
+    run = "pdm run "
+    fast = Path.home() / ".local" / "bin" / "fast"
+    command = capture_cmd_output(f"{fast} lint --dry")
+    for cmd in command.split(SEP):
+        assert run in cmd
+
+
 def test_with_dmypy():
     command = capture_cmd_output("fast lint --dmypy --dry .")
     assert "dmypy run ." in command
