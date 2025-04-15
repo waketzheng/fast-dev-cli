@@ -172,6 +172,7 @@ def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
         subprocess.run(["git", "add", "."])
         subprocess.run(["git", "config", "user.name", "sb"])
         subprocess.run(["git", "config", "user.email", "sb@foo.com"])
+        assert BumpUp.should_add_emoji() is False
         subprocess.run(["git", "commit", "-m", last_commit])
         monkeypatch.setenv("DONT_GIT_PUSH", "1")
         command = BumpUp(part="patch", commit=True).gen()
@@ -180,6 +181,11 @@ def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
         subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
         subprocess.run(["fast", "bump", "patch", "--commit"])
         out = capture_cmd_output(["git", "log"])
+        assert BumpUp.should_add_emoji()
+        Path("a.txt").touch()
+        subprocess.run(["git", "add", "."])
+        subprocess.run(["git", "commit", "-m", "no emoji"])
+        assert BumpUp.should_add_emoji() is False
     new_commit = "⬆️  Bump version: 0.1.0 → 0.1.1"
     assert new_commit in out
 
