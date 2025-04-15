@@ -38,6 +38,7 @@ else:  # pragma: no cover
 
 
 cli = typer.Typer()
+DryOption = Option(False, "--dry", help="Only print, not really run shell command")
 TOML_FILE = "pyproject.toml"
 ToolName = Literal["poetry", "pdm", "uv"]
 
@@ -348,7 +349,7 @@ def bump_version(
     commit: bool = Option(
         False, "--commit", "-c", help="Whether run `git commit` after version changed"
     ),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Bump up version string in pyproject.toml"""
     return BumpUp(_ensure_bool(commit), getattr(part, "value", part), dry=dry).run()
@@ -612,7 +613,7 @@ class UpgradeDependencies(Project, DryRun):
 
 @cli.command()
 def upgrade(
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
     if (tool := Project.get_manage_tool()) == "uv":
@@ -666,7 +667,7 @@ class GitTag(DryRun):
 @cli.command()
 def tag(
     message: str = Option("", "-m", "--message"),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Run shell command: git tag -a <current-version-in-pyproject.toml> -m {message}"""
     GitTag(message, dry=dry).run()
@@ -802,7 +803,7 @@ def make_style(
     use_dmypy: bool = Option(
         False, "--dmypy", help="Use `dmypy run` instead of `mypy`"
     ),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -822,7 +823,7 @@ def make_style(
 def only_check(
     bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Check code style without reformat"""
     check(dry=dry, bandit=bandit, skip_mypy=_ensure_bool(skip_mypy))
@@ -873,7 +874,7 @@ def sync(
     save: bool = Option(
         False, "--save", "-s", help="Whether save the requirement file"
     ),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Export dependencies by poetry to a txt file then install by pip."""
     Sync(filename, extras, save, dry=dry).run()
@@ -907,7 +908,7 @@ def test(dry: bool, ignore_script=False) -> None:
 
 @cli.command(name="test")
 def coverage_test(
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
     ignore_script: bool = Option(False, "--ignore-script", "-i"),
 ) -> None:
     """Run unittest by pytest and report coverage"""
@@ -930,7 +931,7 @@ class Publish:
 
 @cli.command()
 def upload(
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Shortcut for package publish"""
     cmd = Publish.gen()
@@ -969,7 +970,7 @@ def runserver(
     file_or_port: Optional[str] = typer.Argument(default=None),
     port: Optional[int] = Option(None, "-p", "--port"),
     host: Optional[str] = Option(None, "-h", "--host"),
-    dry: bool = Option(False, "--dry", help="Only print, not really run shell command"),
+    dry: bool = DryOption,
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
     if getattr(file_or_port, "default", file_or_port):
