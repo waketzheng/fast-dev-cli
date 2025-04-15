@@ -721,6 +721,8 @@ class LintCode(DryRun):
         skip_mypy: bool = False,
         use_dmypy: bool = False,
     ) -> str:
+        if paths != "." and all(i.endswith(".html") for i in paths.split()):
+            return f"prettier -w {paths}"
         cmd = ""
         tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
         if check_only:

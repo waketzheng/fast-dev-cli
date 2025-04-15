@@ -133,6 +133,15 @@ def test_lint_cmd(mock_no_dmypy):
     )
 
 
+def test_lint_html():
+    run = "pdm run "
+    lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
+    command = capture_cmd_output(f"{lint_cmd} index.html --dry")
+    assert "prettier -w index.html" in command
+    command = capture_cmd_output(f"{lint_cmd} index.html flv.html --dry")
+    assert "prettier -w index.html flv.html" in command
+
+
 def test_lint_by_global_fast():
     run = "pdm run "
     fast = Path.home() / ".local" / "bin" / "fast"
