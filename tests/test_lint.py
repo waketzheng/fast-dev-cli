@@ -65,7 +65,7 @@ def test_check(mock_no_dmypy, monkeypatch, mocker):
     for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
     command2 = capture_cmd_output("fast check --bandit --dry")
-    assert command2 == command + " && bandit -r fast_dev_cli"
+    assert command2 == command + " && bandit -c pyproject.toml -r ."
     monkeypatch.setenv("FASTDEVCLI_BANDIT", "1")
     command3 = capture_cmd_output("fast check --dry")
     assert command3 == command2
@@ -84,6 +84,7 @@ def test_check_bandit(tmp_path):
         src_dir = src_dir.parent / package_path.name
     shutil.rmtree(src_dir)
     with chdir(package_path):
+        assert LintCode.get_package_name() == "."
         command = capture_cmd_output("fast check --bandit --dry")
     assert "bandit -r ." in command
 
