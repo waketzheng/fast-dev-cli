@@ -17,10 +17,11 @@ from fast_dev_cli.cli import (
     StrEnum,
     bump,
     bump_version,
+    capture_cmd_output,
     get_current_version,
 )
 
-from .utils import chdir, mock_sys_argv
+from .utils import chdir, mock_sys_argv, prepare_poetry_project
 
 
 def test_enum():
@@ -53,12 +54,14 @@ def test_bump_dry(mocker):
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     with pytest.raises(ShellCommandError):
         get_current_version()
-    # TODO:
-    # version = get_current_version()
-    # patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
-    # assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
-    # assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
-    # assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+    mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=False)
+    version = get_current_version()
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, filename="fast_dev_cli/__init__.py"
+    )
+    assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
+    assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
+    assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
 
 
 def test_bump(
@@ -145,36 +148,40 @@ def test_bump_with_emoji(mocker, tmp_path, monkeypatch):
     mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=True)
     with pytest.raises(ShellCommandError):
         get_current_version()
-    # TODO:
-    # version = get_current_version()
-    # patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
-    #     version, emoji=True
-    # )
-    # last_commit = "📝 Update release notes"
-    # mocker.patch(
-    #     "fast_dev_cli.cli.BumpUp.get_last_commit_message",
-    #     return_value=last_commit,
-    # )
-    # assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
-    # assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
-    # assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+    mocker.patch("fast_dev_cli.cli.Project.manage_by_poetry", return_value=False)
+    version = get_current_version()
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, filename="fast_dev_cli/__init__.py", emoji=True
+    )
+    last_commit = "📝 Update release notes"
+    mocker.patch(
+        "fast_dev_cli.cli.BumpUp.get_last_commit_message",
+        return_value=last_commit,
+    )
+    assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
+    assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
+    assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+
+
+def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
     # real bump
-    # with chdir(tmp_path):
-    #     project = "foo"
-    #     subprocess.run(["poetry", "new", project])
-    #     with chdir(tmp_path / project):
-    #         subprocess.run(["git", "init"])
-    #         subprocess.run(["git", "add", "."])
-    #         subprocess.run(["git", "commit", "-m", last_commit])
-    #         monkeypatch.setenv("DONT_GIT_PUSH", "1")
-    #         command = BumpUp(part="patch", commit=True).gen()
-    #         expected = patch_with_commit.split("&&")[0].strip().replace('""', '"0.1.0"')
-    #         assert expected == command
-    #         subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
-    #         subprocess.run(["fast", "bump", "patch", "--commit"])
-    #         out = capture_cmd_output(["git", "log"])
-    # new_commit = "⬆️  Bump version: 0.1.0 → 0.1.1"
-    # assert new_commit in out
+    last_commit = "📝 Update release notes"
+    _, patch_with_commit, __ = _bump_commands("0.1.0", emoji=True)
+    with prepare_poetry_project(tmp_path):
+        subprocess.run(["git", "init"])
+        subprocess.run(["git", "add", "."])
+        subprocess.run(["git", "config", "user.name", "sb"])
+        subprocess.run(["git", "config", "user.email", "sb@foo.com"])
+        subprocess.run(["git", "commit", "-m", last_commit])
+        monkeypatch.setenv("DONT_GIT_PUSH", "1")
+        command = BumpUp(part="patch", commit=True).gen()
+        expected = patch_with_commit.split("&&")[0].strip().replace('""', '"0.1.0"')
+        assert expected == command
+        subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
+        subprocess.run(["fast", "bump", "patch", "--commit"])
+        out = capture_cmd_output(["git", "log"])
+    new_commit = "⬆️  Bump version: 0.1.0 → 0.1.1"
+    assert new_commit in out
 
 
 def test_bump_with_uv(tmp_path):

@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
@@ -66,3 +67,12 @@ def temp_file(name: str, text=""):
     yield
     if path.exists():
         path.unlink()
+
+
+@contextmanager
+def prepare_poetry_project(tmp_path: Path):
+    with chdir(tmp_path):
+        project = "foo"
+        subprocess.run(["poetry", "new", project])
+        with chdir(tmp_path / project):
+            yield

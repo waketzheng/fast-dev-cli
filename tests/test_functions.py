@@ -1,6 +1,7 @@
 import os
 from contextlib import redirect_stdout
 from io import StringIO
+from pathlib import Path
 
 import pytest
 import typer
@@ -15,6 +16,8 @@ from fast_dev_cli.cli import (
     parse_files,
     run_and_echo,
 )
+
+from .utils import prepare_poetry_project
 
 
 def test_utils(capsys):
@@ -64,12 +67,6 @@ def test_run_shell():
     # current version
     with pytest.raises(ShellCommandError):
         get_current_version(True, is_poetry=True)
-    # TODO: add [tool.poetry] to pyproject.toml
-    # stream = StringIO()
-    # write_to_stream = redirect_stdout(stream)
-    # with write_to_stream:
-    #     get_current_version(True, is_poetry=True)
-    # assert "poetry version -s" in stream.getvalue()
 
     name = "TEST_EXIT_IF_RUN_FAILED"
     value = "foo"
@@ -90,6 +87,15 @@ def test_run_shell():
             pass
 
         A().run()
+
+
+def test_get_version_in_poetry_project(tmp_path: Path):
+    with prepare_poetry_project(tmp_path):
+        stream = StringIO()
+        write_to_stream = redirect_stdout(stream)
+        with write_to_stream:
+            get_current_version(True, is_poetry=True)
+    assert "poetry version -s" in stream.getvalue()
 
 
 def test_ensure_bool():
