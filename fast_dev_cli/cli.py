@@ -8,7 +8,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, get_args  # Optional is required by typers
+from typing import Literal, Optional, cast, get_args  # Optional is required by typers
 
 import emoji
 import typer
@@ -459,6 +459,10 @@ class ParseError(Exception):
 
 
 class UpgradeDependencies(Project, DryRun):
+    def __init__(self: Self, _exit=False, dry=False, tool: ToolName = "poetry") -> None:
+        super().__init__(_exit, dry)
+        self._tool = tool
+
     class DevFlag(StrEnum):
         new = "[tool.poetry.group.dev.dependencies]"
         old = "[tool.poetry.dev-dependencies]"
@@ -620,6 +624,10 @@ class UpgradeDependencies(Project, DryRun):
         return _upgrade
 
     def gen(self: Self) -> str:
+        if self._tool == "uv":
+            return "uv lock --upgrade --verbose && uv sync --frozen"
+        elif self._tool == "pdm":
+            return "pdm update --verbose && pdm install"
         return self.gen_cmd() + " && poetry lock && poetry update"
 
 
@@ -631,12 +639,8 @@ def upgrade(
     """Upgrade dependencies in pyproject.toml to latest versions"""
     if not (tool := _ensure_str(tool)) or tool == ToolOption.default:
         tool = Project.get_manage_tool() or "uv"
-    if tool == "uv":
-        exit_if_run_failed("uv lock --upgrade --verbose && uv sync --frozen", dry=dry)
-    elif tool == "pdm":
-        exit_if_run_failed("pdm update --verbose && pdm install", dry=dry)
-    elif tool == "poetry":
-        UpgradeDependencies(dry=dry).run()
+    if tool in get_args(ToolName):
+        UpgradeDependencies(dry=dry, tool=cast(ToolName, tool)).run()
     else:
         secho(f"Unknown tool {tool!r}", fg=typer.colors.YELLOW)
         raise typer.Exit(1)
