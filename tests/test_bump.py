@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from contextlib import redirect_stdout
 from io import StringIO
@@ -200,3 +201,25 @@ def test_bump_with_uv(tmp_path):
         Path(TOML_FILE).write_text("[project]" + os.linesep + 'version = "0.1.0"')
         command = BumpUp(part="patch", commit=True).gen()
         assert TOML_FILE in command
+
+
+def test_parse_filename(tmp_path):
+    pyproject = """
+[tool.poetry]
+version = "0"
+    """
+    project_dir = tmp_path / "helloworld"
+    project_dir.mkdir()
+    with chdir(project_dir):
+        toml_file = project_dir.joinpath(TOML_FILE)
+        toml_file.write_text(pyproject)
+        src_dir = project_dir / project_dir.name
+        src_dir.mkdir()
+        init_file = src_dir / "__init__.py"
+        init_file.write_text('__version__ = "0.1.0"')
+        another_dir = project_dir / "hello"
+        another_dir.mkdir()
+        shutil.copy(init_file, another_dir / init_file.name)
+        assert BumpUp.parse_filename() == "helloworld/__init__.py"
+        toml_file.write_text(pyproject.strip() + '\npackages=[{include="hello"}]')
+        assert BumpUp.parse_filename() == "hello/__init__.py"
