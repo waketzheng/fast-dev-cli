@@ -6,6 +6,10 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+import pytest
+import typer
+
+import fast_dev_cli
 from fast_dev_cli.cli import (
     TOML_FILE,
     UpgradeDependencies,
@@ -300,10 +304,16 @@ def test_upgrade_pdm_project():
     assert expected in capture_cmd_output("pdm run " + cmd)
 
 
-def test_upgrade_unknown_tool():
+def test_upgrade_unknown_tool(mocker):
     cmd = "fast upgrade --tool=hatch --dry"
     expected = "Unknown tool 'hatch'"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
     assert run_and_echo(cmd, verbose=False) == 1
     assert run_and_echo("pdm run " + cmd, verbose=False) == 1
+    mocker.patch("fast_dev_cli.cli.secho")
+    with pytest.raises(typer.Exit):
+        upgrade(tool="pipenv")
+    fast_dev_cli.cli.secho.assert_called_once_with(  # type:ignore
+        "Unknown tool 'pipenv'", fg=typer.colors.YELLOW
+    )

@@ -156,6 +156,8 @@ def test_lint_html():
     cmd = "fast lint index.html flv.html --dry"
     assert "prettier -w index.html flv.html" in capture_cmd_output(cmd)
     assert "prettier -w index.html flv.html" in capture_cmd_output("pdm run " + cmd)
+    assert LintCode.to_cmd("index.html") == "prettier -w index.html"
+    assert LintCode.to_cmd("index.html flv.html") == "prettier -w index.html flv.html"
 
 
 def test_lint_by_global_fast():
