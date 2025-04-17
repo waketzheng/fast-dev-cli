@@ -82,11 +82,21 @@ def test_check_bandit(tmp_path):
     src_dir = package_path / "src"
     if not src_dir.exists():  # For poetry<2.1
         src_dir = src_dir.parent / package_path.name
+    with chdir(package_path):
+        package_name = src_dir.name
+        assert f"bandit -r {package_name}" in LintCode.to_cmd(bandit=True)
+        toml_file = Path(TOML_FILE)
+        content = toml_file.read_text()
+        toml_file.write_text(content + '\n[tool.bandit]\nexclude_dirs = ["tests"]')
+        assert f"bandit -c {TOML_FILE} -r ." in LintCode.to_cmd(bandit=True)
     shutil.rmtree(src_dir)
     with chdir(package_path):
         assert LintCode.get_package_name() == "."
         command = capture_cmd_output("fast check --bandit --dry")
-    assert "bandit -r ." in command
+        assert f"bandit -c {TOML_FILE} -r ." in command
+        toml_file.write_text(content)
+        command = capture_cmd_output("fast check --bandit --dry")
+        assert "bandit -r ." in command
 
 
 def test_check_skip_mypy(mock_skip_mypy_0, mocker, capsys):
@@ -160,6 +170,10 @@ def test_with_dmypy():
     cmd = "fast lint --dmypy --dry ."
     assert "dmypy run ." in capture_cmd_output(cmd)
     assert "dmypy run ." in capture_cmd_output("pdm run " + cmd)
+    command = LintCode.to_cmd(use_dmypy=True, tool="pdm")
+    assert "dmypy run ." in command
+    command = LintCode.to_cmd(use_dmypy=False, tool="pdm")
+    assert "dmypy run ." not in command
 
 
 def test_dmypy_run(monkeypatch):
