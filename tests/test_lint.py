@@ -140,6 +140,12 @@ def test_lint_html():
     assert "prettier -w index.html" in command
     command = capture_cmd_output(f"{lint_cmd} index.html flv.html --dry")
     assert "prettier -w index.html flv.html" in command
+    cmd = "fast lint index.html --dry"
+    assert "prettier -w index.html" in capture_cmd_output(cmd)
+    assert "prettier -w index.html" in capture_cmd_output("pdm run " + cmd)
+    cmd = "fast lint index.html flv.html --dry"
+    assert "prettier -w index.html flv.html" in capture_cmd_output(cmd)
+    assert "prettier -w index.html flv.html" in capture_cmd_output("pdm run " + cmd)
 
 
 def test_lint_by_global_fast():
@@ -151,8 +157,9 @@ def test_lint_by_global_fast():
 
 
 def test_with_dmypy():
-    command = capture_cmd_output("fast lint --dmypy --dry .")
-    assert "dmypy run ." in command
+    cmd = "fast lint --dmypy --dry ."
+    assert "dmypy run ." in capture_cmd_output(cmd)
+    assert "dmypy run ." in capture_cmd_output("pdm run " + cmd)
 
 
 def test_dmypy_run(monkeypatch):

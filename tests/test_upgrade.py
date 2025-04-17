@@ -290,16 +290,20 @@ def test_upgrade_uv_project():
     cmd = "fast upgrade --tool=uv --dry"
     expected = "uv lock --upgrade --verbose && uv sync --frozen"
     assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
 
 
 def test_upgrade_pdm_project():
     cmd = "fast upgrade --tool=pdm --dry"
     expected = "pdm update --verbose && pdm install"
     assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
 
 
 def test_upgrade_unknown_tool():
     cmd = "fast upgrade --tool=hatch --dry"
     expected = "Unknown tool 'hatch'"
     assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
     assert run_and_echo(cmd, verbose=False) == 1
+    assert run_and_echo("pdm run " + cmd, verbose=False) == 1
