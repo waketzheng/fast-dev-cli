@@ -209,9 +209,9 @@ class BumpUp(DryRun):
         super().__init__(dry=dry)
 
     @staticmethod
-    def get_last_commit_message() -> str:
+    def get_last_commit_message(raises=False) -> str:
         cmd = 'git show --pretty=format:"%s" -s HEAD'
-        return capture_cmd_output(cmd)
+        return capture_cmd_output(cmd, raises=raises)
 
     @classmethod
     def should_add_emoji(cls) -> bool:
@@ -219,9 +219,12 @@ class BumpUp(DryRun):
         If last commit message is startswith emoji,
         add a ⬆️ flag at the prefix of bump up commit message.
         """
-        if out := cls.get_last_commit_message():
-            return emoji.is_emoji(out[0])
-        return False
+        try:
+            first_char = cls.get_last_commit_message(raises=True)[0]
+        except (IndexError, ShellCommandError):
+            return False
+        else:
+            return emoji.is_emoji(first_char)
 
     @staticmethod
     def parse_filename() -> str:
