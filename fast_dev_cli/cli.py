@@ -629,16 +629,16 @@ def upgrade(
     dry: bool = DryOption,
 ) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
-    if not (tool := _ensure_str(tool)) or tool == "auto":
+    if not (tool := _ensure_str(tool)) or tool == ToolOption.default:
         tool = Project.get_manage_tool() or "uv"
     if tool == "uv":
-        exit_if_run_failed("uv lock --upgrade && uv sync", dry=dry)
+        exit_if_run_failed("uv lock --upgrade --verbose && uv sync --frozen", dry=dry)
     elif tool == "pdm":
-        exit_if_run_failed("pdm update && pdm install", dry=dry)
+        exit_if_run_failed("pdm update --verbose && pdm install", dry=dry)
     elif tool == "poetry":
         UpgradeDependencies(dry=dry).run()
     else:
-        secho("Unknown tool {tool!r}", fg=typer.colors.YELLOW)
+        secho(f"Unknown tool {tool!r}", fg=typer.colors.YELLOW)
         raise typer.Exit(1)
 
 
@@ -701,7 +701,7 @@ class LintCode(DryRun):
         bandit=False,
         skip_mypy=False,
         dmypy=False,
-        tool: str = "auto",
+        tool: str = ToolOption.default,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -726,7 +726,8 @@ class LintCode(DryRun):
     @staticmethod
     def get_package_name() -> str:
         root = Project.get_work_dir(allow_cwd=True)
-        package_maybe = (root.name.replace("-", "_"), "src")
+        module_name = root.name.replace("-", "_").replace(" ", "_")
+        package_maybe = (module_name, "src")
         for name in package_maybe:
             if root.joinpath(name).is_dir():
                 return name
@@ -740,7 +741,7 @@ class LintCode(DryRun):
         bandit: bool = False,
         skip_mypy: bool = False,
         use_dmypy: bool = False,
-        tool: str = "auto",
+        tool: str = ToolOption.default,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -769,8 +770,8 @@ class LintCode(DryRun):
                     secho(f"{tip}\n\n  {command}\n", fg="yellow")
         else:
             should_run_by_tool = True
-        if should_run_by_tool:
-            if tool == "auto":
+        if should_run_by_tool and tool:
+            if tool == ToolOption.default:
                 tool = Project.get_manage_tool() or ""
             if tool:
                 prefix = tool + " run "
@@ -801,7 +802,12 @@ def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
 
 
 def lint(
-    files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False, tool="auto"
+    files=None,
+    dry=False,
+    bandit=False,
+    skip_mypy=False,
+    dmypy=False,
+    tool=ToolOption.default,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -813,7 +819,12 @@ def lint(
 
 
 def check(
-    files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False, tool="auto"
+    files=None,
+    dry=False,
+    bandit=False,
+    skip_mypy=False,
+    dmypy=False,
+    tool=ToolOption.default,
 ) -> None:
     LintCode(
         files,

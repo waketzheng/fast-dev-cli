@@ -9,6 +9,7 @@ from pathlib import Path
 from fast_dev_cli.cli import (
     TOML_FILE,
     UpgradeDependencies,
+    capture_cmd_output,
     run_and_echo,
     upgrade,
 )
@@ -283,3 +284,22 @@ fastapi = "^0.112.2"
         [],
         "--dev",
     )
+
+
+def test_upgrade_uv_project():
+    cmd = "fast upgrade --tool=uv --dry"
+    expected = "uv lock --upgrade --verbose && uv sync --frozen"
+    assert expected in capture_cmd_output(cmd)
+
+
+def test_upgrade_pdm_project():
+    cmd = "fast upgrade --tool=pdm --dry"
+    expected = "pdm update --verbose && pdm install"
+    assert expected in capture_cmd_output(cmd)
+
+
+def test_upgrade_unknown_tool():
+    cmd = "fast upgrade --tool=hatch --dry"
+    expected = "Unknown tool 'hatch'"
+    assert expected in capture_cmd_output(cmd)
+    assert run_and_echo(cmd, verbose=False) == 1

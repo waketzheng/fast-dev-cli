@@ -156,9 +156,13 @@ def test_with_dmypy():
 
 
 def test_dmypy_run(monkeypatch):
+    command = capture_cmd_output("python -m fast_dev_cli lint --dry .")
+    assert "dmypy run ." not in command
     monkeypatch.setenv("FASTDEVCLI_DMYPY", "1")
     command = capture_cmd_output("python -m fast_dev_cli lint --dry .")
     assert "dmypy run ." in command
+    command = capture_cmd_output("python -m fast_dev_cli lint --skip-mypy --dry .")
+    assert "dmypy run ." not in command
 
 
 def test_lint_with_prefix(mocker):
@@ -297,3 +301,24 @@ def test_get_manage_tool(tmp_path):
         assert Project.get_manage_tool() == "pdm"
         Path(TOML_FILE).write_text("[tool.uv]")
         assert Project.get_manage_tool() == "uv"
+
+
+class TestGetPackageName:
+    project = "hello-world"
+
+    def test_get_package_name(self, tmp_path):
+        project_dir = tmp_path / self.project
+        project_dir.mkdir()
+        module_name = project_dir.name.replace("-", "_").replace(" ", "_")
+        with chdir(project_dir):
+            Path(TOML_FILE).touch()
+            Path(module_name).mkdir()
+            assert LintCode.get_package_name() == module_name
+            Path("src").mkdir()
+            assert LintCode.get_package_name() == module_name
+            shutil.rmtree(module_name)
+            assert LintCode.get_package_name() == "src"
+
+
+class TestGetPackageNameWithSpace(TestGetPackageName):
+    project = "hello world"
