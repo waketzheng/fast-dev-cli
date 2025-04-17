@@ -41,6 +41,9 @@ cli = typer.Typer()
 DryOption = Option(False, "--dry", help="Only print, not really run shell command")
 TOML_FILE = "pyproject.toml"
 ToolName = Literal["poetry", "pdm", "uv"]
+ToolOption = Option(
+    "auto", "--tool", help="Explicit declare manage tool (default to auto detect)"
+)
 
 
 class ShellCommandError(Exception): ...
@@ -161,6 +164,12 @@ def get_current_version(
 def _ensure_bool(value: bool | OptionInfo) -> bool:
     if not isinstance(value, bool):
         value = getattr(value, "default", False)
+    return value
+
+
+def _ensure_str(value: str | OptionInfo) -> str:
+    if not isinstance(value, str):
+        value = getattr(value, "default", "")
     return value
 
 
@@ -616,15 +625,21 @@ class UpgradeDependencies(Project, DryRun):
 
 @cli.command()
 def upgrade(
+    tool: str = ToolOption,
     dry: bool = DryOption,
 ) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
-    if (tool := Project.get_manage_tool()) == "uv":
+    if not (tool := _ensure_str(tool)) or tool == "auto":
+        tool = Project.get_manage_tool() or "uv"
+    if tool == "uv":
         exit_if_run_failed("uv lock --upgrade && uv sync", dry=dry)
     elif tool == "pdm":
         exit_if_run_failed("pdm update && pdm install", dry=dry)
-    else:
+    elif tool == "poetry":
         UpgradeDependencies(dry=dry).run()
+    else:
+        secho("Unknown tool {tool!r}", fg=typer.colors.YELLOW)
+        raise typer.Exit(1)
 
 
 class GitTag(DryRun):
@@ -686,12 +701,14 @@ class LintCode(DryRun):
         bandit=False,
         skip_mypy=False,
         dmypy=False,
+        tool: str = "auto",
     ) -> None:
         self.args = args
         self.check_only = check_only
         self._bandit = bandit
         self._skip_mypy = skip_mypy
         self._use_dmypy = dmypy
+        self._tool = tool
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -723,6 +740,7 @@ class LintCode(DryRun):
         bandit: bool = False,
         skip_mypy: bool = False,
         use_dmypy: bool = False,
+        tool: str = "auto",
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -751,8 +769,11 @@ class LintCode(DryRun):
                     secho(f"{tip}\n\n  {command}\n", fg="yellow")
         else:
             should_run_by_tool = True
-        if should_run_by_tool and (manage_tool := Project.get_manage_tool()):
-            prefix = manage_tool + " run "
+        if should_run_by_tool:
+            if tool == "auto":
+                tool = Project.get_manage_tool() or ""
+            if tool:
+                prefix = tool + " run "
         if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
@@ -779,15 +800,21 @@ def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
     return [i for i in args if not i.startswith("-")]
 
 
-def lint(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> None:
+def lint(
+    files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False, tool="auto"
+) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     if files and files[0] == "lint":
         files = files[1:]
-    LintCode(files, dry=dry, skip_mypy=skip_mypy, bandit=bandit, dmypy=dmypy).run()
+    LintCode(
+        files, dry=dry, skip_mypy=skip_mypy, bandit=bandit, dmypy=dmypy, tool=tool
+    ).run()
 
 
-def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> None:
+def check(
+    files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False, tool="auto"
+) -> None:
     LintCode(
         files,
         check_only=True,
@@ -796,6 +823,7 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> 
         bandit=bandit,
         skip_mypy=skip_mypy,
         dmypy=dmypy,
+        tool=tool,
     ).run()
 
 
@@ -808,6 +836,7 @@ def make_style(
     use_dmypy: bool = Option(
         False, "--dmypy", help="Use `dmypy run` instead of `mypy`"
     ),
+    tool: str = ToolOption,
     dry: bool = DryOption,
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
@@ -818,10 +847,11 @@ def make_style(
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
     bandit = _ensure_bool(bandit)
+    tool = _ensure_str(tool)
     if _ensure_bool(check_only):
-        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit)
+        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit, tool=tool)
     else:
-        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit)
+        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit, tool=tool)
 
 
 @cli.command(name="check")

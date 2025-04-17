@@ -223,3 +223,10 @@ version = "0"
         assert BumpUp.parse_filename() == "helloworld/__init__.py"
         toml_file.write_text(pyproject.strip() + '\npackages=[{include="hello"}]')
         assert BumpUp.parse_filename() == "hello/__init__.py"
+        toml_file.write_text(
+            pyproject.strip() + '\npackages=[{include="hello",from="py"}]'
+        )
+        from_dir = project_dir / "py"
+        from_dir.mkdir()
+        shutil.move(another_dir, from_dir)
+        assert BumpUp.parse_filename() == "py/hello/__init__.py"
