@@ -164,7 +164,7 @@ def test_dmypy_run(monkeypatch):
 def test_lint_with_prefix(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=False, dry=True)
+        make_style(["."], check_only=False, dry=True)
     assert "pdm run" in stream.getvalue()
 
 
@@ -174,13 +174,13 @@ def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
         make_style(check_only=False, dry=True)
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=False, dry=True)
+        make_style(["."], check_only=False, dry=True)
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
         make_style(".", check_only=False, dry=True)  # type:ignore[arg-type]
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=True, dry=True)
+        make_style(["."], check_only=True, dry=True)
     assert CHECK_CMD in stream.getvalue()
     with capture_stdout() as stream:
         only_check(dry=True)

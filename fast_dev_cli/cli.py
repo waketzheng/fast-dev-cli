@@ -798,7 +798,7 @@ def check(files=None, dry=False, bandit=False, skip_mypy=False, dmypy=False) -> 
 
 @cli.command(name="lint")
 def make_style(
-    files: Optional[list[Path]] = typer.Argument(default=None),  # noqa:B008
+    files: Optional[list[str]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
@@ -809,7 +809,7 @@ def make_style(
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
-        files = [Path(".")]
+        files = ["."]
     elif isinstance(files, str):
         files = [files]
     skip = _ensure_bool(skip_mypy)
