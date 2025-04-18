@@ -295,6 +295,7 @@ def test_upgrade_uv_project():
     expected = "uv lock --upgrade --verbose && uv sync --frozen"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
+    assert UpgradeDependencies(tool="uv").gen() == expected
 
 
 def test_upgrade_pdm_project():
@@ -302,6 +303,7 @@ def test_upgrade_pdm_project():
     expected = "pdm update --verbose && pdm install"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
+    assert UpgradeDependencies(tool="pdm").gen() == expected
 
 
 def test_upgrade_unknown_tool(mocker):
