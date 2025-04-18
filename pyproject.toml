@@ -112,6 +112,7 @@ pretty = true
 python_version = "3.9"
 ignore_missing_imports = true
 check_untyped_defs = true
+warn_unused_ignores = true
 exclude = [
     "^fabfile\\.py$",  # TOML's double-quoted strings require escaping backslashes
     'two\.pyi$',  # but TOML's single-quoted strings do not

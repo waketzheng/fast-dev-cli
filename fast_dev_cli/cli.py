@@ -8,7 +8,14 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, Optional, cast, get_args  # Optional is required by typers
+from typing import (
+    Any,
+    Literal,
+    # Optional is required by typers
+    Optional,
+    cast,
+    get_args,
+)
 
 import emoji
 import typer
@@ -56,7 +63,7 @@ def poetry_module_name(name: str) -> str:
     return canonicalize_name(name).replace("-", "_").replace(" ", "_")
 
 
-def load_bool(name: str, default=False) -> bool:
+def load_bool(name: str, default: bool = False) -> bool:
     if not (v := os.getenv(name)):
         return default
     if (lower := v.lower()) in ("0", "false", "f", "off", "no", "n"):
@@ -74,13 +81,15 @@ def is_venv() -> bool:
     )
 
 
-def _run_shell(cmd: list[str] | str, **kw) -> subprocess.CompletedProcess:
+def _run_shell(cmd: list[str] | str, **kw: Any) -> subprocess.CompletedProcess[str]:
     if isinstance(cmd, str):
         kw.setdefault("shell", True)
     return subprocess.run(cmd, **kw)  # nosec:B603
 
 
-def run_and_echo(cmd: str, *, dry=False, verbose=True, **kw) -> int:
+def run_and_echo(
+    cmd: str, *, dry: bool = False, verbose: bool = True, **kw: Any
+) -> int:
     """Run shell command with subprocess and print it"""
     if verbose:
         echo(f"--> {cmd}")
@@ -94,7 +103,9 @@ def check_call(cmd: str) -> bool:
     return r.returncode == 0
 
 
-def capture_cmd_output(command: list[str] | str, *, raises=False, **kw) -> str:
+def capture_cmd_output(
+    command: list[str] | str, *, raises: bool = False, **kw: Any
+) -> str:
     if isinstance(command, str) and not kw.get("shell"):
         command = shlex.split(command)
     r = _run_shell(command, capture_output=True, encoding="utf-8", **kw)
@@ -103,12 +114,12 @@ def capture_cmd_output(command: list[str] | str, *, raises=False, **kw) -> str:
     return r.stdout.strip() or r.stderr
 
 
-def _parse_version(line: str, pattern: re.Pattern) -> str:
+def _parse_version(line: str, pattern: re.Pattern[str]) -> str:
     return pattern.sub("", line).split("#")[0].strip(" '\"")
 
 
 def read_version_from_file(
-    package_name: str, work_dir=None, toml_text: str | None = None
+    package_name: str, work_dir: Path | None = None, toml_text: str | None = None
 ) -> str:
     if toml_text is None:
         toml_text = Project.load_toml_text()
@@ -139,7 +150,9 @@ def read_version_from_file(
 
 
 def get_current_version(
-    verbose=False, is_poetry: bool | None = None, package_name: str | None = None
+    verbose: bool = False,
+    is_poetry: bool | None = None,
+    package_name: str | None = None,
 ) -> str:
     if is_poetry is None:
         is_poetry = Project.manage_by_poetry()
@@ -174,8 +187,12 @@ def _ensure_str(value: str | OptionInfo) -> str:
 
 
 def exit_if_run_failed(
-    cmd: str, env=None, _exit=False, dry=False, **kw
-) -> subprocess.CompletedProcess:
+    cmd: str,
+    env: dict[str, str] | None = None,
+    _exit: bool = False,
+    dry: bool = False,
+    **kw: Any,
+) -> subprocess.CompletedProcess[str]:
     run_and_echo(cmd, dry=True)
     if _ensure_bool(dry):
         return subprocess.CompletedProcess("", 0)
@@ -190,7 +207,7 @@ def exit_if_run_failed(
 
 
 class DryRun:
-    def __init__(self: Self, _exit=False, dry=False) -> None:
+    def __init__(self: Self, _exit: bool = False, dry: bool = False) -> None:
         self.dry = dry
         self._exit = _exit
 
@@ -208,7 +225,11 @@ class BumpUp(DryRun):
         major = "major"
 
     def __init__(
-        self: Self, commit: bool, part: str, filename: str | None = None, dry=False
+        self: Self,
+        commit: bool,
+        part: str,
+        filename: str | None = None,
+        dry: bool = False,
     ) -> None:
         self.commit = commit
         self.part = part
@@ -218,7 +239,7 @@ class BumpUp(DryRun):
         super().__init__(dry=dry)
 
     @staticmethod
-    def get_last_commit_message(raises=False) -> str:
+    def get_last_commit_message(raises: bool = False) -> str:
         cmd = 'git show --pretty=format:"%s" -s HEAD'
         return capture_cmd_output(cmd, raises=raises)
 
@@ -391,7 +412,9 @@ class Project:
         return 'build-backend = "poetry' in text
 
     @staticmethod
-    def work_dir(name: str, parent: Path, depth: int, be_file=False) -> Path | None:
+    def work_dir(
+        name: str, parent: Path, depth: int, be_file: bool = False
+    ) -> Path | None:
         for _ in range(depth):
             if (f := parent.joinpath(name)).exists():
                 if be_file:
@@ -403,10 +426,10 @@ class Project:
     @classmethod
     def get_work_dir(
         cls: type[Self],
-        name=TOML_FILE,
+        name: str = TOML_FILE,
         cwd: Path | None = None,
-        allow_cwd=False,
-        be_file=False,
+        allow_cwd: bool = False,
+        be_file: bool = False,
     ) -> Path:
         cwd = cwd or Path.cwd()
         if d := cls.work_dir(name, cwd, cls.path_depth, be_file):
@@ -416,7 +439,7 @@ class Project:
         raise EnvError(f"{name} not found! Make sure this is a poetry project.")
 
     @classmethod
-    def load_toml_text(cls: type[Self], name=TOML_FILE) -> str:
+    def load_toml_text(cls: type[Self], name: str = TOML_FILE) -> str:
         toml_file = cls.get_work_dir(name, be_file=True)
         return toml_file.read_text("utf8")
 
@@ -433,7 +456,7 @@ class Project:
         else:
             for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
-                    return name
+                    return cast(ToolName, name)
             # Poetry 2.0 default to not include the '[tool.poetry]' section
             if cls.is_poetry_v2(text):
                 return "poetry"
@@ -459,7 +482,9 @@ class ParseError(Exception):
 
 
 class UpgradeDependencies(Project, DryRun):
-    def __init__(self: Self, _exit=False, dry=False, tool: ToolName = "poetry") -> None:
+    def __init__(
+        self: Self, _exit: bool = False, dry: bool = False, tool: ToolName = "poetry"
+    ) -> None:
         super().__init__(_exit, dry)
         self._tool = tool
 
@@ -554,7 +579,7 @@ class UpgradeDependencies(Project, DryRun):
         return cls.DevFlag.new in text or cls.DevFlag.old in text
 
     @staticmethod
-    def parse_item(toml_str) -> list[str]:
+    def parse_item(toml_str: str) -> list[str]:
         lines: list[str] = []
         for line in toml_str.splitlines():
             if (line := line.strip()).startswith("["):
@@ -698,13 +723,13 @@ def tag(
 class LintCode(DryRun):
     def __init__(
         self: Self,
-        args,
-        check_only=False,
-        _exit=False,
-        dry=False,
-        bandit=False,
-        skip_mypy=False,
-        dmypy=False,
+        args: list[str] | str | None,
+        check_only: bool = False,
+        _exit: bool = False,
+        dry: bool = False,
+        bandit: bool = False,
+        skip_mypy: bool = False,
+        dmypy: bool = False,
         tool: str = ToolOption.default,
     ) -> None:
         self.args = args
@@ -720,7 +745,7 @@ class LintCode(DryRun):
         return check_call("ruff --version")
 
     @staticmethod
-    def prefer_dmypy(paths: str, tools: list[str], use_dmypy=False) -> bool:
+    def prefer_dmypy(paths: str, tools: list[str], use_dmypy: bool = False) -> bool:
         return (
             paths == "."
             and any(t.startswith("mypy") for t in tools)
@@ -795,7 +820,9 @@ class LintCode(DryRun):
         return cmd
 
     def gen(self: Self) -> str:
-        paths = " ".join(map(str, self.args)) if self.args else "."
+        if isinstance(args := self.args, str):
+            args = args.split()
+        paths = " ".join(map(str, args)) if args else "."
         return self.to_cmd(
             paths, self.check_only, self._bandit, self._skip_mypy, self._use_dmypy
         )
@@ -806,12 +833,12 @@ def parse_files(args: list[str] | tuple[str, ...]) -> list[str]:
 
 
 def lint(
-    files=None,
-    dry=False,
-    bandit=False,
-    skip_mypy=False,
-    dmypy=False,
-    tool=ToolOption.default,
+    files: list[str] | str | None = None,
+    dry: bool = False,
+    bandit: bool = False,
+    skip_mypy: bool = False,
+    dmypy: bool = False,
+    tool: str = ToolOption.default,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -823,12 +850,12 @@ def lint(
 
 
 def check(
-    files=None,
-    dry=False,
-    bandit=False,
-    skip_mypy=False,
-    dmypy=False,
-    tool=ToolOption.default,
+    files: list[str] | str | None = None,
+    dry: bool = False,
+    bandit: bool = False,
+    skip_mypy: bool = False,
+    dmypy: bool = False,
+    tool: str = ToolOption.default,
 ) -> None:
     LintCode(
         files,
@@ -880,7 +907,9 @@ def only_check(
 
 
 class Sync(DryRun):
-    def __init__(self: Self, filename: str, extras: str, save: bool, dry=False) -> None:
+    def __init__(
+        self: Self, filename: str, extras: str, save: bool, dry: bool = False
+    ) -> None:
         self.filename = filename
         self.extras = extras
         self._save = save
@@ -919,7 +948,7 @@ class Sync(DryRun):
 
 @cli.command()
 def sync(
-    filename="dev_requirements.txt",
+    filename: str = "dev_requirements.txt",
     extras: str = Option("", "--extras", "-E"),
     save: bool = Option(
         False, "--save", "-s", help="Whether save the requirement file"
@@ -937,7 +966,7 @@ def _should_run_test_script(path: Path = Path("scripts")) -> Path | None:
     return None
 
 
-def test(dry: bool, ignore_script=False) -> None:
+def test(dry: bool, ignore_script: bool = False) -> None:
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     script_dir = root / "scripts"
@@ -992,13 +1021,13 @@ def dev(
     port: int | None | OptionInfo,
     host: str | None | OptionInfo,
     file: str | None | ArgumentInfo = None,
-    dry=False,
+    dry: bool = False,
 ) -> None:
     cmd = "fastapi dev"
     no_port_yet = True
     if file is not None:
         try:
-            port = int(str(file))  # type:ignore[arg-type]
+            port = int(str(file))
         except ValueError:
             cmd += f" {file}"
         else:
