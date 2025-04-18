@@ -1,6 +1,24 @@
 # ChangeLog
 
+## 0.15
+
+### [0.15.0](../../releases/tag/v0.15.0) - 2025-04-18
+
+#### Added
+- Support `fast lint --tool=uv`
+
+#### Changed
+- Strict type hints for `fast_dev_cli/cli.py`
+
+#### Fixed
+- Fix macOS filename auto completion error
+
 ## 0.14
+
+### [0.14.2](../../releases/tag/v0.14.2) - 2025-04-15
+
+#### Added
+- Support `fast lint xxx.html`
 
 ### [0.14.1](../../releases/tag/v0.14.1) - 2025-04-06
 

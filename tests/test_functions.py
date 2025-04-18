@@ -72,8 +72,10 @@ def test_run_shell():
     value = "foo"
     cmd = 'python -c "import os;print(list(os.environ))"'
     with redirect_stdout(StringIO()):
-        r = exit_if_run_failed(cmd, env={name: value}, capture_output=True)
-    assert name in r.stdout.decode()
+        r = exit_if_run_failed(
+            cmd, env={name: value}, capture_output=True, encoding="utf-8"
+        )
+    assert name in r.stdout
 
     assert run_and_echo("echo foo", capture_output=True) == 0
 

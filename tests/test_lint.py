@@ -82,11 +82,21 @@ def test_check_bandit(tmp_path):
     src_dir = package_path / "src"
     if not src_dir.exists():  # For poetry<2.1
         src_dir = src_dir.parent / package_path.name
+    with chdir(package_path):
+        package_name = src_dir.name
+        assert f"bandit -r {package_name}" in LintCode.to_cmd(bandit=True)
+        toml_file = Path(TOML_FILE)
+        content = toml_file.read_text()
+        toml_file.write_text(content + '\n[tool.bandit]\nexclude_dirs = ["tests"]')
+        assert f"bandit -c {TOML_FILE} -r ." in LintCode.to_cmd(bandit=True)
     shutil.rmtree(src_dir)
     with chdir(package_path):
         assert LintCode.get_package_name() == "."
         command = capture_cmd_output("fast check --bandit --dry")
-    assert "bandit -r ." in command
+        assert f"bandit -c {TOML_FILE} -r ." in command
+        toml_file.write_text(content)
+        command = capture_cmd_output("fast check --bandit --dry")
+        assert "bandit -r ." in command
 
 
 def test_check_skip_mypy(mock_skip_mypy_0, mocker, capsys):
@@ -140,6 +150,14 @@ def test_lint_html():
     assert "prettier -w index.html" in command
     command = capture_cmd_output(f"{lint_cmd} index.html flv.html --dry")
     assert "prettier -w index.html flv.html" in command
+    cmd = "fast lint index.html --dry"
+    assert "prettier -w index.html" in capture_cmd_output(cmd)
+    assert "prettier -w index.html" in capture_cmd_output("pdm run " + cmd)
+    cmd = "fast lint index.html flv.html --dry"
+    assert "prettier -w index.html flv.html" in capture_cmd_output(cmd)
+    assert "prettier -w index.html flv.html" in capture_cmd_output("pdm run " + cmd)
+    assert LintCode.to_cmd("index.html") == "prettier -w index.html"
+    assert LintCode.to_cmd("index.html flv.html") == "prettier -w index.html flv.html"
 
 
 def test_lint_by_global_fast():
@@ -151,20 +169,29 @@ def test_lint_by_global_fast():
 
 
 def test_with_dmypy():
-    command = capture_cmd_output("fast lint --dmypy --dry .")
+    cmd = "fast lint --dmypy --dry ."
+    assert "dmypy run ." in capture_cmd_output(cmd)
+    assert "dmypy run ." in capture_cmd_output("pdm run " + cmd)
+    command = LintCode.to_cmd(use_dmypy=True, tool="pdm")
     assert "dmypy run ." in command
+    command = LintCode.to_cmd(use_dmypy=False, tool="pdm")
+    assert "dmypy run ." not in command
 
 
 def test_dmypy_run(monkeypatch):
+    command = capture_cmd_output("python -m fast_dev_cli lint --dry .")
+    assert "dmypy run ." not in command
     monkeypatch.setenv("FASTDEVCLI_DMYPY", "1")
     command = capture_cmd_output("python -m fast_dev_cli lint --dry .")
     assert "dmypy run ." in command
+    command = capture_cmd_output("python -m fast_dev_cli lint --skip-mypy --dry .")
+    assert "dmypy run ." not in command
 
 
 def test_lint_with_prefix(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=False, dry=True)
+        make_style(["."], check_only=False, dry=True)
     assert "pdm run" in stream.getvalue()
 
 
@@ -174,13 +201,13 @@ def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
         make_style(check_only=False, dry=True)
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=False, dry=True)
+        make_style(["."], check_only=False, dry=True)
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
         make_style(".", check_only=False, dry=True)  # type:ignore[arg-type]
     assert LINT_CMD in stream.getvalue()
     with capture_stdout() as stream:
-        make_style([Path(".")], check_only=True, dry=True)
+        make_style(["."], check_only=True, dry=True)
     assert CHECK_CMD in stream.getvalue()
     with capture_stdout() as stream:
         only_check(dry=True)
@@ -297,3 +324,24 @@ def test_get_manage_tool(tmp_path):
         assert Project.get_manage_tool() == "pdm"
         Path(TOML_FILE).write_text("[tool.uv]")
         assert Project.get_manage_tool() == "uv"
+
+
+class TestGetPackageName:
+    project = "hello-world"
+
+    def test_get_package_name(self, tmp_path):
+        project_dir = tmp_path / self.project
+        project_dir.mkdir()
+        module_name = project_dir.name.replace("-", "_").replace(" ", "_")
+        with chdir(project_dir):
+            Path(TOML_FILE).touch()
+            Path(module_name).mkdir()
+            assert LintCode.get_package_name() == module_name
+            Path("src").mkdir()
+            assert LintCode.get_package_name() == module_name
+            shutil.rmtree(module_name)
+            assert LintCode.get_package_name() == "src"
+
+
+class TestGetPackageNameWithSpace(TestGetPackageName):
+    project = "hello world"

@@ -6,9 +6,14 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+import pytest
+import typer
+
+import fast_dev_cli
 from fast_dev_cli.cli import (
     TOML_FILE,
     UpgradeDependencies,
+    capture_cmd_output,
     run_and_echo,
     upgrade,
 )
@@ -282,4 +287,35 @@ fastapi = "^0.112.2"
         [],
         [],
         "--dev",
+    )
+
+
+def test_upgrade_uv_project():
+    cmd = "fast upgrade --tool=uv --dry"
+    expected = "uv lock --upgrade --verbose && uv sync --frozen"
+    assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
+    assert UpgradeDependencies(tool="uv").gen() == expected
+
+
+def test_upgrade_pdm_project():
+    cmd = "fast upgrade --tool=pdm --dry"
+    expected = "pdm update --verbose && pdm install"
+    assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
+    assert UpgradeDependencies(tool="pdm").gen() == expected
+
+
+def test_upgrade_unknown_tool(mocker):
+    cmd = "fast upgrade --tool=hatch --dry"
+    expected = "Unknown tool 'hatch'"
+    assert expected in capture_cmd_output(cmd)
+    assert expected in capture_cmd_output("pdm run " + cmd)
+    assert run_and_echo(cmd, verbose=False) == 1
+    assert run_and_echo("pdm run " + cmd, verbose=False) == 1
+    mocker.patch("fast_dev_cli.cli.secho")
+    with pytest.raises(typer.Exit):
+        upgrade(tool="pipenv")
+    fast_dev_cli.cli.secho.assert_called_once_with(  # type:ignore
+        "Unknown tool 'pipenv'", fg=typer.colors.YELLOW
     )

@@ -1,28 +1,25 @@
 import os
 import subprocess
 import sys
-from contextlib import contextmanager, redirect_stdout
+from contextlib import AbstractContextManager, contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-if sys.version_info >= (3, 11):
-    from contextlib import chdir  # type:ignore[attr-defined]
-else:
-    from contextlib import AbstractContextManager
 
-    class chdir(AbstractContextManager):  # type:ignore[no-redef]
-        """Non thread-safe context manager to change the current working directory."""
+# TODO: use `from contextlib import chdir` instead when drop support for Python3.10
+class chdir(AbstractContextManager):  # Copied from source code of Python3.13
+    """Non thread-safe context manager to change the current working directory."""
 
-        def __init__(self, path):
-            self.path = path
-            self._old_cwd = []
+    def __init__(self, path):
+        self.path = path
+        self._old_cwd = []
 
-        def __enter__(self):
-            self._old_cwd.append(os.getcwd())
-            os.chdir(self.path)
+    def __enter__(self):
+        self._old_cwd.append(os.getcwd())
+        os.chdir(self.path)
 
-        def __exit__(self, *excinfo):
-            os.chdir(self._old_cwd.pop())
+    def __exit__(self, *excinfo):
+        os.chdir(self._old_cwd.pop())
 
 
 __all__ = (
