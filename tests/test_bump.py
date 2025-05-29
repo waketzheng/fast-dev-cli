@@ -230,3 +230,22 @@ version = "0"
         from_dir.mkdir()
         shutil.move(another_dir, from_dir)
         assert BumpUp.parse_filename() == "py/hello/__init__.py"
+
+
+def test_pdm_project(tmp_work_dir):
+    capture_cmd_output("pdm new my-project --non-interactive")
+    with chdir("my-project"):
+        toml_file = Path("pyproject.toml")
+        content = toml_file.read_text().replace(
+            'version = "0.1.0"', 'dynamic = ["version"]'
+        )
+        toml_file.write_text(content)
+        with toml_file.open("a+") as f:
+            f.write('\nversion = { source = "file", path = "app/__init__.py" }')
+        app = Path("app")
+        app.mkdir()
+        init_file = app.joinpath("__init__.py")
+        init_file.write_text('__version__ = "0.2.0"')
+        out = capture_cmd_output("fast bump patch")
+        assert str(init_file) in out
+        assert "0.2.1" in init_file.read_text()

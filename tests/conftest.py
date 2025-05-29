@@ -51,7 +51,12 @@ build-backend = "poetry.core.masonry.api"
 
 
 @pytest.fixture
-def tmp_poetry_project(tmp_path: Path):
+def tmp_work_dir(tmp_path):
     with chdir(tmp_path):
-        tmp_path.joinpath(TOML_FILE).write_text(TOML_CONTENT)
-        yield
+        yield tmp_path
+
+
+@pytest.fixture
+def tmp_poetry_project(tmp_work_dir: Path):
+    Path(TOML_FILE).write_text(TOML_CONTENT)
+    yield tmp_work_dir
