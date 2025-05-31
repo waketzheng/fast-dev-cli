@@ -256,3 +256,40 @@ def test_pdm_project(tmp_work_dir):
         out = capture_cmd_output("fast bump patch")
         assert str(init_file) in out
         assert "0.2.1" in init_file.read_text()
+
+
+def test_hatch_project(tmp_work_dir):
+    project_name = "httpx"
+    Path(project_name).mkdir()
+    with chdir(project_name):
+        toml_file = Path("pyproject.toml")
+        toml_file.write_text("""
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[project]
+name = "httpx"
+description = "The next generation HTTP client."
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
+authors = [
+    { name = "Tom Christie", email = "tom@tomchristie.com" },
+]
+dependencies = [
+    "certifi",
+    "httpcore==1.*",
+    "anyio",
+    "idna",
+]
+dynamic = ["readme", "version"]
+
+[tool.hatch.version]
+path = "httpx/__version__.py"
+        """)
+        Path(project_name).mkdir()
+        Path("httpx/__version__.py").write_text("""
+__title__ = "httpx"
+__description__ = "A next generation HTTP client, for Python 3."
+__version__ = "0.28.1"
+        """)

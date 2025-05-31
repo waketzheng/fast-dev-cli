@@ -277,13 +277,16 @@ class BumpUp(DryRun):
                 version_value = context["tool"]["poetry"]["version"]
             except KeyError:
                 if not Project.manage_by_poetry():
-                    with contextlib.suppress(KeyError):
-                        version_path = context["tool"]["pdm"]["version"]["path"]
-                        if (
-                            Path(version_path).exists()
-                            or Project.get_work_dir().joinpath(version_path).exists()
-                        ):
-                            return version_path
+                    for tool in ("pdm", "hatch"):
+                        with contextlib.suppress(KeyError):
+                            version_path = context["tool"][tool]["version"]["path"]
+                            if (
+                                Path(version_path).exists()
+                                or Project.get_work_dir()
+                                .joinpath(version_path)
+                                .exists()
+                            ):
+                                return version_path
                     # version = { source = "file", path = "fast_dev_cli/__init__.py" }
                     v_key = "version = "
                     p_key = 'path = "'
