@@ -232,6 +232,13 @@ version = "0"
         assert BumpUp.parse_filename() == "py/hello/__init__.py"
 
 
+PDM_DYNAMIC_VERSION = """
+[tool.pdm.version]
+source = "file"
+path = "app/__init__.py"
+"""
+
+
 def test_pdm_project(tmp_work_dir):
     capture_cmd_output("pdm new my-project --non-interactive")
     with chdir("my-project"):
@@ -241,7 +248,7 @@ def test_pdm_project(tmp_work_dir):
         )
         toml_file.write_text(content)
         with toml_file.open("a+") as f:
-            f.write('\nversion = { source = "file", path = "app/__init__.py" }')
+            f.write(PDM_DYNAMIC_VERSION)
         app = Path("app")
         app.mkdir()
         init_file = app.joinpath("__init__.py")
