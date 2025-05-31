@@ -2,6 +2,17 @@
 
 ## 0.15
 
+### [0.15.1](../../releases/tag/v0.15.1) - 2025-05-31
+
+#### Added
+- `fast bump <part>` support hatch dynamic version
+
+#### Changed
+- Move `packaging` from dev to main dependencies
+
+#### Fixed
+- Fix bump error with pdm dynamic version
+
 ### [0.15.0](../../releases/tag/v0.15.0) - 2025-04-18
 
 #### Added
