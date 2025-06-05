@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 0.16
+### [0.16.0](../../releases/tag/v0.16.0) - 2025-06-05
+
+#### Changed
+- Move `packaging` and `emoji` to optional dependencies
+
 ## 0.15
 
 ### [0.15.2](../../releases/tag/v0.15.2) - 2025-06-05
