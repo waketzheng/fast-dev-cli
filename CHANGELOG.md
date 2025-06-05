@@ -2,6 +2,11 @@
 
 ## 0.15
 
+### [0.15.2](../../releases/tag/v0.15.2) - 2025-06-05
+
+#### Fixed
+- Fix bump error with version file in work directory
+
 ### [0.15.1](../../releases/tag/v0.15.1) - 2025-05-31
 
 #### Added
