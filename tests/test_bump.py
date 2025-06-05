@@ -288,8 +288,45 @@ dynamic = ["readme", "version"]
 path = "httpx/__version__.py"
         """)
         Path(project_name).mkdir()
-        Path("httpx/__version__.py").write_text("""
+        version_file = Path("httpx/__version__.py")
+        version_file.write_text("""
 __title__ = "httpx"
 __description__ = "A next generation HTTP client, for Python 3."
 __version__ = "0.28.1"
         """)
+        out = capture_cmd_output("fast bump patch")
+        assert str(version_file) in out
+        assert "0.28.2" in version_file.read_text()
+
+
+def test_package_project_diff(tmp_work_dir):
+    project_name = "tortoise-database-url"
+    package_name = "database_url"
+    Path(project_name).mkdir()
+    with chdir(project_name):
+        Path(package_name).mkdir()
+        version_file = Path(package_name, "__init__.py")
+        version_file.write_text('__version__ = "0.3.0"')
+        toml_file = Path("pyproject.toml")
+        toml_file.write_text("""
+[project]
+name = "tortoise-database-url"
+description = "Make it easy to generate database url."
+authors = [{name="Waket Zheng", email="waketzheng@gmail.com"}]
+readme = "README.md"
+dynamic = ["version"]
+keywords = ["database_url", "tortoise-orm"]
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.pdm.version]
+source = "file"
+path = "database_url/__init__.py"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+        """)
+        out = capture_cmd_output("fast bump patch")
+        assert str(version_file) in out
+        assert "0.3.1" in version_file.read_text()

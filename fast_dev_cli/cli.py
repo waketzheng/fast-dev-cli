@@ -122,16 +122,26 @@ def _parse_version(line: str, pattern: re.Pattern[str]) -> str:
 def read_version_from_file(
     package_name: str, work_dir: Path | None = None, toml_text: str | None = None
 ) -> str:
-    if toml_text is None:
-        toml_text = Project.load_toml_text()
-    pattern = re.compile(r"version\s*=")
+    version_file = BumpUp.parse_filename(toml_text, work_dir, package_name)
+    if version_file == TOML_FILE:
+        if toml_text is None:
+            toml_text = Project.load_toml_text()
+        context = tomllib.loads(toml_text)
+        with contextlib.suppress(KeyError):
+            return context["project"]["version"]
+        with contextlib.suppress(KeyError):  # Poetry V1
+            return context["tool"]["poetry"]["version"]
+        secho(f"WARNING: can not find 'version' item in {version_file}!")
+        return "0.0.0"
+    pattern = re.compile(r"__version__\s*=")
     invalid = ("0", "0.0.0")
-    for line in toml_text.splitlines():
+    for line in Path(version_file).read_text("utf-8").splitlines():
         if pattern.match(line):
             lib_version = _parse_version(line, pattern)
             if lib_version.startswith("{") or lib_version in invalid:
                 break
             return lib_version
+    # TODO: remove or refactor the following lines.
     if work_dir is None:
         work_dir = Project.get_work_dir()
     package_dir = work_dir / package_name
@@ -142,6 +152,7 @@ def read_version_from_file(
     ):
         secho("WARNING: __init__.py file does not exist!")
         return "0.0.0"
+
     pattern = re.compile(r"__version__\s*=")
     for line in init_file.read_text("utf-8").splitlines():
         if pattern.match(line):
@@ -258,8 +269,13 @@ class BumpUp(DryRun):
             return emoji.is_emoji(first_char)
 
     @staticmethod
-    def parse_filename() -> str:
-        toml_text = Project.load_toml_text()
+    def parse_filename(
+        toml_text: str | None = None,
+        work_dir: Path | None = None,
+        package_name: str | None = None,
+    ) -> str:
+        if toml_text is None:
+            toml_text = Project.load_toml_text()
         context = tomllib.loads(toml_text)
         by_version_plugin = False
         try:
@@ -277,14 +293,14 @@ class BumpUp(DryRun):
                 version_value = context["tool"]["poetry"]["version"]
             except KeyError:
                 if not Project.manage_by_poetry():
+                    if work_dir is None:
+                        work_dir = Project.get_work_dir()
                     for tool in ("pdm", "hatch"):
                         with contextlib.suppress(KeyError):
                             version_path = context["tool"][tool]["version"]["path"]
                             if (
                                 Path(version_path).exists()
-                                or Project.get_work_dir()
-                                .joinpath(version_path)
-                                .exists()
+                                or work_dir.joinpath(version_path).exists()
                             ):
                                 return version_path
                     # version = { source = "file", path = "fast_dev_cli/__init__.py" }
@@ -295,7 +311,7 @@ class BumpUp(DryRun):
                             continue
                         if p_key in (value := line.split(v_key, 1)[-1].split("#")[0]):
                             filename = value.split(p_key, 1)[-1].split('"')[0]
-                            if Project.get_work_dir().joinpath(filename).exists():
+                            if work_dir.joinpath(filename).exists():
                                 return filename
             else:
                 by_version_plugin = version_value in ("0", "0.0.0", "init")
@@ -319,6 +335,8 @@ class BumpUp(DryRun):
             cwd = Path.cwd()
             pattern = re.compile(r"__version__\s*=\s*['\"]")
             ds: list[Path] = []
+            if package_name is not None:
+                packages.insert(0, (package_name, ""))
             for package_name, source_dir in packages:
                 ds.append(cwd / package_name)
                 ds.append(cwd / "src" / package_name)
@@ -328,7 +346,12 @@ class BumpUp(DryRun):
             ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
             for d in ds:
                 init_file = d / "__init__.py"
-                if init_file.exists() and pattern.search(init_file.read_text("utf8")):
+                if (
+                    init_file.exists() and pattern.search(init_file.read_text("utf8"))
+                ) or (
+                    (init_file := init_file.with_name("__version__.py")).exists()
+                    and pattern.search(init_file.read_text("utf8"))
+                ):
                     break
             else:
                 raise ParseError("Version file not found! Where are you now?")
