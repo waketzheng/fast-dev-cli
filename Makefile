@@ -17,10 +17,11 @@ lock:
 	pdm lock --group :all --strategy inherit_metadata
 
 deps:
-	pdm install --verbose
+	pdm install --verbose --group :all --without=ci
 
 _check:
 	./scripts/check.py
+	twine check dist/*
 check: deps _build _check
 
 _lint:
