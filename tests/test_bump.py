@@ -330,3 +330,38 @@ build-backend = "pdm.backend"
         out = capture_cmd_output("fast bump patch")
         assert str(version_file) in out
         assert "0.3.1" in version_file.read_text()
+
+
+def test_version_file_in_work_dir(tmp_work_dir):
+    project_name = package_name = "bigmodels"
+    Path(project_name).mkdir()
+    with chdir(project_name):
+        Path(package_name).mkdir()
+        version_file = Path("__version__.py")
+        version_file.write_text('__version__ = "0.3.0"')
+        toml_file = Path("pyproject.toml")
+        toml_file.write_text("""
+[project]
+name = "bigmodels"
+description = ""
+authors = [{name="Waket Zheng", email="waketzheng@gmail.com"}]
+readme = "README.md"
+dynamic = ["version"]
+keywords = []
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.version]
+source = "file"
+path = "__version__.py"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+        """)
+        out = capture_cmd_output("fast bump patch")
+        assert str(version_file) in out
+        assert "0.3.1" in version_file.read_text()
