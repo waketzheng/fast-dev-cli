@@ -122,6 +122,11 @@ def _parse_version(line: str, pattern: re.Pattern[str]) -> str:
 def read_version_from_file(
     package_name: str, work_dir: Path | None = None, toml_text: str | None = None
 ) -> str:
+    if not package_name and toml_text:
+        pattern = re.compile(r"version\s*=")
+        for line in toml_text.splitlines():
+            if pattern.match(line):
+                return _parse_version(line, pattern)
     version_file = BumpUp.parse_filename(toml_text, work_dir, package_name)
     if version_file == TOML_FILE:
         if toml_text is None:
