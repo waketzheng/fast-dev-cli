@@ -12,15 +12,13 @@
 
 Python3.9及其以上版本
 
-*注：如需在3.8中使用，下载源码、删除所有类型注解、然后从源码安装即可*
-
 ## 安装
 
 - 全局安装
 ```bash
 pipx install fastdevcli-slim
 ```
-*只依赖typer/emoji*
+*只依赖typer/emoji/packaging*
 
 - 项目中安装
 ```bash
@@ -33,7 +31,7 @@ pip install fast-dev-cli
 1. 使用ruff对当前目录下的所有Python文件进行格式化/导入排序/删除多余import，如果没报错再用mypy进行静态检查
 ```bash
 fast lint
-# 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && mypy run .
+# 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && mypy .
 ```
 
 2. 对单个文件进行格式化和静态检查
@@ -77,11 +75,11 @@ fast bump <part> --commit
 fast test
 ```
 ### 导出依赖文件，并使用pip安装所有依赖
-- 适用于某些poetry install会报错，或无法直接用poetry install的情况
+- 适用于某些poetry install/pdm install/uv sync会报错的情况
 ```bash
-fast sync --save
+fast sync
 ```
-### 升级poetry管理的所有依赖包至最新版本
+### 升级poetry/pdm/uv管理的所有依赖包至最新版本
 poetry update有时只会升级依赖包的小版本，如：sqlmodel==0.0.18 -> sqlmodel==0.0.19
 
 而fast upgrade则会连大版本也升级，如：python-dotenv="^0.19.2" -> python-dotenv="^1.0.1"
