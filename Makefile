@@ -21,7 +21,7 @@ deps:
 
 _check:
 	./scripts/check.py
-	twine check dist/*
+	pdm run twine check dist/*
 check: deps _build _check
 
 _lint:
