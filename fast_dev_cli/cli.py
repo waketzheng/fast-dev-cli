@@ -139,13 +139,9 @@ def read_version_from_file(
         secho(f"WARNING: can not find 'version' item in {version_file}!")
         return "0.0.0"
     pattern = re.compile(r"__version__\s*=")
-    invalid = ("0", "0.0.0")
     for line in Path(version_file).read_text("utf-8").splitlines():
         if pattern.match(line):
-            lib_version = _parse_version(line, pattern)
-            if lib_version.startswith("{") or lib_version in invalid:
-                break
-            return lib_version
+            return _parse_version(line, pattern)
     # TODO: remove or refactor the following lines.
     if work_dir is None:
         work_dir = Project.get_work_dir()

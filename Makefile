@@ -11,10 +11,13 @@ help:
 	@echo  "    lint    Auto-formats the code and check type hints"
 
 up:
-	@pdm update --verbose
+	pdm update --verbose
+
+lock:
+	pdm lock --group :all --strategy inherit_metadata
 
 deps:
-	@pdm install --verbose
+	pdm install --verbose
 
 _check:
 	./scripts/check.py
@@ -47,3 +50,5 @@ venv39:
 
 venv313:
 	$(MAKE) venv version=3.13
+
+ci: check _test
