@@ -63,7 +63,9 @@ source-includes = [
     "scripts/",
 ]
 [tool.pdm.dev-dependencies]
-dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]"]
+dev = [
+    "-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]",
+]
 [tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project]
 name = "fastdevcli-slim"
 
@@ -143,4 +145,7 @@ exclude_dirs = ["tests", "scripts", "examples", ".venv"]
 [dependency-groups]
 ci = [
     "coveralls @ git+https://github.com/waketzheng/coveralls-python@4.1.1",
+]
+dev = [
+    "twine>=6.1.0",
 ]
