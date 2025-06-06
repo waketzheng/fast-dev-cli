@@ -365,3 +365,39 @@ build-backend = "pdm.backend"
         out = capture_cmd_output("fast bump patch")
         assert str(version_file) in out
         assert "0.3.1" in version_file.read_text()
+
+
+def test_installed_version_is_0_0_0(tmp_work_dir):
+    project_name = "my-project"
+    package_name = "app"
+    Path(project_name).mkdir()
+    with chdir(project_name):
+        Path(package_name).mkdir()
+        version_file = Path(package_name, "__init__.py")
+        version_file.write_text('__version__ = "0.3.0"')
+        toml_file = Path("pyproject.toml")
+        toml_file.write_text("""
+[project]
+name = "my-project"
+description = ""
+authors = [{name="Waket Zheng", email="waketzheng@gmail.com"}]
+readme = "README.md"
+dynamic = ["version"]
+keywords = []
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.version]
+source = "file"
+path = "app/__init__.py"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+        """)
+        out = capture_cmd_output("fast bump patch")
+        assert str(version_file) in out
+        assert "0.3.1" in version_file.read_text()

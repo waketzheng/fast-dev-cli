@@ -190,9 +190,13 @@ def get_current_version(
             work_dir = Project.get_work_dir()
             package_name = re.sub(r"[- ]", "_", work_dir.name)
         try:
-            return importlib_metadata.version(package_name)
+            installed_version = importlib_metadata.version(package_name)
         except importlib_metadata.PackageNotFoundError:
-            return read_version_from_file(package_name, work_dir)
+            ...
+        else:
+            if installed_version != "0.0.0":
+                return installed_version
+        return read_version_from_file(package_name, work_dir)
 
     cmd = ["poetry", "version", "-s"]
     if verbose:
