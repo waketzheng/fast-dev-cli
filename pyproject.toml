@@ -147,15 +147,14 @@ extend-select = [
 exclude_dirs = ["tests", "scripts", "examples", ".venv"]
 
 [tool.pdm.scripts]
-test = 'pdm run fast test'
-style = {composite = ["ruff format", "ruff check --fix {args}"]}
-check = 'pdm run fast check {args}'
-lint = 'pdm run fast lint {args}'
 deps = 'pdm sync -G :all {args}'
-prod = 'pdm install --prod --frozen'
-tree = 'pdm list --tree'
-update_self_version = 'pdm sync'
-bump = {composite = ["update_self_version", "pdm run fast bump patch --commit {args}"]}
-tag = {composite = ["update_self_version", "pdm run fast tag {args}"]}
-start = {composite = ["pre-commit install", "deps"]}
+tree = 'pdm list --tree {args}'
+prod = 'pdm install --prod --frozen {args}'
+tag = 'pdm run fast tag {args}'
+test = 'pdm run fast test {args}'
+lint = 'pdm run fast lint {args}'
+check = 'pdm run fast check {args}'
+bump = 'pdm run fast bump patch --commit {args}'
 ci = {composite = ["deps", "check", "test"]}
+start = {composite = ["pre-commit install", "deps"]}
+style = {composite = ["ruff format", "ruff check --fix --unsafe-fixes {args}"]}
