@@ -49,31 +49,27 @@ jobs:
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v6
       - name: Install requirements/Check code style and Type Hint
         run: make check
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
           pdm run python -c "import os;from pathlib import Path;pp=list(Path().glob('.coverage.*'));pp and os.system('pdm run coverage combine .coverage*')"
+      - name: Generate coverage report
+        run: pdm run coverage xml
       - name: Upload Coverage
-        run: |
-          pdm sync -G :all
-          pdm run coveralls --service=github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel: true
+          file: coverage.xml
 
   coveralls:
     name: Indicate completion to coveralls.io
     needs: test
     runs-on: ubuntu-latest
-    container: python:3-slim
     steps:
     - name: Finished
-      run: |
-        pip3 install --upgrade coveralls
-        coveralls --service=github --finish
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel-finished: true
