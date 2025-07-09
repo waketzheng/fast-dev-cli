@@ -413,6 +413,8 @@ class BumpUp(DryRun):
                 cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
+        if Project.get_manage_tool() == "pdm":
+            cmd = "pdm sync --prod && " + cmd
         return cmd
 
     def run(self: Self) -> None:
@@ -704,9 +706,9 @@ class UpgradeDependencies(Project, DryRun):
 
     def gen(self: Self) -> str:
         if self._tool == "uv":
-            return "uv lock --upgrade --verbose && uv sync --frozen"
+            return "uv lock --upgrade --verbose && uv sync --frozen --all-groups"
         elif self._tool == "pdm":
-            return "pdm update --verbose && pdm install"
+            return "pdm update --verbose && pdm sync -G :all"
         return self.gen_cmd() + " && poetry lock && poetry update"
 
 
@@ -745,6 +747,8 @@ class GitTag(DryRun):
         cmd = f"git tag -a {_version} -m {self.message!r} && git push --tags"
         if self.should_push():
             cmd += " && git push"
+        if Project.get_manage_tool() == "pdm":
+            cmd = "pdm sync --prod && " + cmd
         return cmd
 
     @cached_property
