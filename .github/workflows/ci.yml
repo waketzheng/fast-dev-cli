@@ -48,8 +48,8 @@ jobs:
           which pipx
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/ruff-action@v3
       - name: Install requirements/Check code style and Type Hint
         run: make check
       - name: Test with pytest
