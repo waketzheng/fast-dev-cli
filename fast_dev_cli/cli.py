@@ -534,9 +534,10 @@ class Project:
     def is_pdm_project(cls, strict: bool = True) -> bool:
         if cls.get_manage_tool() != "pdm":
             return False
-        if not strict:
-            return True
-        return cls.get_work_dir().joinpath("pdm.lock").exists()
+        if strict:
+            lock_file = cls.get_work_dir() / "pdm.lock"
+            return lock_file.exists()
+        return True
 
 
 class ParseError(Exception):
