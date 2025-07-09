@@ -52,12 +52,14 @@ def test_with_push(mocker):
     mocker.patch.object(git_tag, "git_status", return_value="git push")
     version = get_current_version()
     prefix = "v" if "v" in capture_cmd_output(["git", "tag"]) else ""
-    assert git_tag.gen() == f"git tag -a {prefix}{version} -m '' && git push --tags"
+    sync = "pdm sync --prod"
+    push = "git push --tags"
+    assert git_tag.gen() == f"{sync} && git tag -a {prefix}{version} -m '' && {push}"
     with _clear_tags():
         git_tag_cmd = git_tag.gen()
-    assert git_tag_cmd == f"git tag -a {version} -m '' && git push --tags"
+    assert git_tag_cmd == f"{sync} && git tag -a {version} -m '' && {push}"
     mocker.patch.object(git_tag, "has_v_prefix", return_value=True)
-    tag_cmd = f"git tag -a v{version} -m '' && git push --tags"
+    tag_cmd = f"{sync} && git tag -a v{version} -m '' && {push}"
     assert git_tag.gen() == tag_cmd
     mocker.patch.object(git_tag, "should_push", return_value=True)
     assert git_tag.gen() == tag_cmd + " && git push"
