@@ -1,6 +1,17 @@
 # ChangeLog
 
 ## 0.16
+
+### [0.16.2](../../releases/tag/v0.16.2) - 2025-07-09
+
+#### Changed
+- Run `pdm sync --prod` when bump and tag for pdm project
+
+### [0.16.1](../../releases/tag/v0.16.1) - 2025-06-06
+
+#### Fixed
+- Fix get dynacmic version error when it's defined to be '0.0.0'
+
 ### [0.16.0](../../releases/tag/v0.16.0) - 2025-06-05
 
 #### Changed
