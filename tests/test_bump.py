@@ -38,16 +38,15 @@ def test_enum():
     assert A.ABCD == "ABCD"
 
 
-SYNC = "pdm sync --prod"
-
-
 def _bump_commands(
-    version: str, filename=TOML_FILE, emoji=False
+    version: str, filename=TOML_FILE, emoji=False, add_sync=True
 ) -> tuple[str, str, str]:
-    cmd = rf'{SYNC} && bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
+    cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
     if emoji:
         suffix = suffix.replace("--commit", "--commit --message-emoji=1")
+    if add_sync:
+        cmd = "pdm sync --prod && " + cmd
     patch_without_commit = cmd + f" patch {filename} --allow-dirty"
     patch_with_commit = cmd + f" patch {filename}" + suffix
     minor_with_commit = cmd + f" minor {filename} --tag" + suffix
@@ -102,7 +101,9 @@ def test_bump(
 def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     mocker.patch("builtins.input", return_value=" ")
     version = get_current_version()
-    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, add_sync=False
+    )
     stream = StringIO()
     with redirect_stdout(stream):
         BumpUp(part="patch", commit=False).run()
@@ -170,7 +171,7 @@ def test_bump_with_emoji(mocker, tmp_path, monkeypatch):
 def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
     # real bump
     last_commit = "📝 Update release notes"
-    _, patch_with_commit, __ = _bump_commands("0.1.0", emoji=True)
+    _, patch_with_commit, __ = _bump_commands("0.1.0", emoji=True, add_sync=False)
     with prepare_poetry_project(tmp_path):
         subprocess.run(["git", "init"])
         subprocess.run(["git", "add", "."])
