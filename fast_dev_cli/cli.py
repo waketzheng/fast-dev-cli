@@ -413,7 +413,7 @@ class BumpUp(DryRun):
                 cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
-        if Project.get_manage_tool() == "pdm":
+        if Project.is_pdm_project():
             cmd = "pdm sync --prod && " + cmd
         return cmd
 
@@ -529,6 +529,14 @@ class Project:
         if root.is_relative_to(venv_parent):
             root = venv_parent
         return root
+
+    @classmethod
+    def is_pdm_project(cls, strict: bool = True) -> bool:
+        if cls.get_manage_tool() != "pdm":
+            return False
+        if not strict:
+            return True
+        return cls.get_work_dir().joinpath("pdm.lock").exists()
 
 
 class ParseError(Exception):
@@ -747,7 +755,7 @@ class GitTag(DryRun):
         cmd = f"git tag -a {_version} -m {self.message!r} && git push --tags"
         if self.should_push():
             cmd += " && git push"
-        if Project.get_manage_tool() == "pdm":
+        if Project.is_pdm_project():
             cmd = "pdm sync --prod && " + cmd
         return cmd
 
