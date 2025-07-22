@@ -16,6 +16,7 @@ from typing import (
     Optional,
     cast,
     get_args,
+    overload,
 )
 
 import typer
@@ -64,7 +65,10 @@ ToolOption = Option(
 )
 
 
-class ShellCommandError(Exception): ...
+class FastDevCliError(Exception): ...
+
+
+class ShellCommandError(FastDevCliError): ...
 
 
 def poetry_module_name(name: str) -> str:
@@ -177,33 +181,61 @@ def read_version_from_file(
     return "0.0.0"
 
 
+@overload
 def get_current_version(
     verbose: bool = False,
     is_poetry: bool | None = None,
     package_name: str | None = None,
-) -> str:
-    if is_poetry is None:
-        is_poetry = Project.manage_by_poetry()
-    if not is_poetry:
-        work_dir = None
-        if package_name is None:
-            work_dir = Project.get_work_dir()
-            package_name = re.sub(r"[- ]", "_", work_dir.name)
-        try:
-            installed_version = importlib_metadata.version(package_name)
-        except importlib_metadata.PackageNotFoundError:
-            ...
-        else:
-            if installed_version != "0.0.0":
-                return installed_version
-        return read_version_from_file(package_name, work_dir)
+    *,
+    check_version: Literal[False] = False,
+) -> str: ...
 
-    cmd = ["poetry", "version", "-s"]
-    if verbose:
-        echo(f"--> {' '.join(cmd)}")
-    if out := capture_cmd_output(cmd, raises=True):
-        out = out.splitlines()[-1].strip().split()[-1]
-    return out
+
+@overload
+def get_current_version(
+    verbose: bool = False,
+    is_poetry: bool | None = None,
+    package_name: str | None = None,
+    *,
+    check_version: Literal[True] = True,
+) -> tuple[bool, str]: ...
+
+
+def get_current_version(
+    verbose: bool = False,
+    is_poetry: bool | None = None,
+    package_name: str | None = None,
+    *,
+    check_version: bool = False,
+) -> str | tuple[bool, str]:
+    if is_poetry is True or Project.manage_by_poetry():
+        cmd = ["poetry", "version", "-s"]
+        if verbose:
+            echo(f"--> {' '.join(cmd)}")
+        if out := capture_cmd_output(cmd, raises=True):
+            out = out.splitlines()[-1].strip().split()[-1]
+        if check_version:
+            return True, out
+        return out
+    toml_text = work_dir = None
+    if package_name is None:
+        work_dir = Project.get_work_dir()
+        toml_text = Project.load_toml_text()
+        doc = tomllib.loads(toml_text)
+        project_name = doc.get("project", {}).get("name", work_dir.name)
+        package_name = re.sub(r"[- ]", "_", project_name)
+    local_version = read_version_from_file(package_name, work_dir, toml_text)
+    try:
+        installed_version = importlib_metadata.version(package_name)
+    except importlib_metadata.PackageNotFoundError:
+        installed_version = ""
+    current_version = local_version or installed_version
+    if not current_version:
+        raise FastDevCliError(f"Failed to get current version of {package_name!r}")
+    if check_version:
+        is_conflict = bool(local_version) and local_version != installed_version
+        return is_conflict, current_version
+    return current_version
 
 
 def _ensure_bool(value: bool | OptionInfo) -> bool:
@@ -391,7 +423,9 @@ class BumpUp(DryRun):
             raise Exit(1) from e
 
     def gen(self: Self) -> str:
-        _version = get_current_version()
+        should_sync, _version = get_current_version(check_version=True)
+        if should_sync:
+            Project.sync_dependencies()
         filename = self.filename
         echo(f"Current version(@{filename}): {_version}")
         if self.part:
@@ -413,8 +447,6 @@ class BumpUp(DryRun):
                 cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
-        if Project.is_pdm_project():
-            cmd = "pdm sync --prod && " + cmd
         return cmd
 
     def run(self: Self) -> None:
@@ -462,6 +494,7 @@ class EnvError(Exception):
 
 class Project:
     path_depth = 5
+    _tool: ToolName | None = None
 
     @staticmethod
     def is_poetry_v2(text: str) -> bool:
@@ -492,7 +525,7 @@ class Project:
             return d
         if allow_cwd:
             return cls.get_root_dir(cwd)
-        raise EnvError(f"{name} not found! Make sure this is a poetry project.")
+        raise EnvError(f"{name} not found! Make sure this is a python project.")
 
     @classmethod
     def load_toml_text(cls: type[Self], name: str = TOML_FILE) -> str:
@@ -500,22 +533,40 @@ class Project:
         return toml_file.read_text("utf8")
 
     @classmethod
-    def manage_by_poetry(cls: type[Self]) -> bool:
-        return cls.get_manage_tool() == "poetry"
+    def manage_by_poetry(cls: type[Self], cache: bool = False) -> bool:
+        return cls.get_manage_tool(cache=cache) == "poetry"
 
     @classmethod
-    def get_manage_tool(cls: type[Self]) -> ToolName | None:
+    def get_manage_tool(cls: type[Self], cache: bool = False) -> ToolName | None:
+        if cache and cls._tool:
+            return cls._tool
         try:
             text = cls.load_toml_text()
         except EnvError:
             pass
         else:
+            with contextlib.suppress(KeyError, tomllib.TOMLDecodeError):
+                doc = tomllib.loads(text)
+                backend = doc["build-system"]["build-backend"]
+                if "poetry" in backend:
+                    cls._tool = "poetry"
+                    return cls._tool
+                elif "pdm" in backend:
+                    cls._tool = "pdm"
+                    work_dir = cls.get_work_dir(allow_cwd=True)
+                    if not Path(work_dir, "pdm.lock").exists() and (
+                        "[tool.uv]" in text or Path(work_dir, "uv.lock").exists()
+                    ):
+                        cls._tool = "uv"
+                    return cls._tool
             for name in get_args(ToolName):
                 if f"[tool.{name}]" in text:
-                    return cast(ToolName, name)
+                    cls._tool = cast(ToolName, name)
+                    return cls._tool
             # Poetry 2.0 default to not include the '[tool.poetry]' section
             if cls.is_poetry_v2(text):
-                return "poetry"
+                cls._tool = "poetry"
+                return cls._tool
         return None
 
     @staticmethod
@@ -531,13 +582,23 @@ class Project:
         return root
 
     @classmethod
-    def is_pdm_project(cls, strict: bool = True) -> bool:
-        if cls.get_manage_tool() != "pdm":
+    def is_pdm_project(cls, strict: bool = True, cache: bool = False) -> bool:
+        if cls.get_manage_tool(cache=cache) != "pdm":
             return False
         if strict:
             lock_file = cls.get_work_dir() / "pdm.lock"
             return lock_file.exists()
         return True
+
+    @classmethod
+    def sync_dependencies(cls) -> None:
+        if cls.is_pdm_project():
+            cmd = "pdm sync --prod"
+            run_and_echo(cmd)
+        elif cls.manage_by_poetry(cache=True):
+            run_and_echo("poetry install --only=main")
+        elif cls.get_manage_tool(cache=True) == "uv":
+            run_and_echo("uv sync")
 
 
 class ParseError(Exception):
@@ -749,7 +810,9 @@ class GitTag(DryRun):
         return "git push" in self.git_status
 
     def gen(self: Self) -> str:
-        _version = get_current_version(verbose=False)
+        should_sync, _version = get_current_version(verbose=False, check_version=True)
+        if should_sync:
+            Project.sync_dependencies()
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
             _version = "v" + _version
