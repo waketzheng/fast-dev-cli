@@ -39,7 +39,7 @@ def test_enum():
 
 
 def _bump_commands(
-    version: str, filename=TOML_FILE, emoji=False, add_sync=True
+    version: str, filename=TOML_FILE, emoji=False, add_sync=False
 ) -> tuple[str, str, str]:
     cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
