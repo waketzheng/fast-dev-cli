@@ -1,6 +1,8 @@
 import os
+import re
 import shutil
 import subprocess
+import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -243,23 +245,41 @@ path = "app/__init__.py"
 """
 
 
-def test_pdm_project(tmp_work_dir):
-    capture_cmd_output("pdm new my-project --non-interactive")
-    with chdir("my-project"):
+@pytest.fixture
+def dynamic_pdm_project(tmp_work_dir):
+    py = "{}.{}".format(*sys.version_info)
+    project = "my-project"
+    capture_cmd_output(f"pdm new {project} --non-interactive --python={py} --no-git")
+    with chdir(project):
         toml_file = Path("pyproject.toml")
         content = toml_file.read_text().replace(
             'version = "0.1.0"', 'dynamic = ["version"]'
         )
-        toml_file.write_text(content)
-        with toml_file.open("a+") as f:
-            f.write(PDM_DYNAMIC_VERSION)
+        toml_file.write_text(content + PDM_DYNAMIC_VERSION)
         app = Path("app")
         app.mkdir()
-        init_file = app.joinpath("__init__.py")
-        init_file.write_text('__version__ = "0.2.0"')
-        out = capture_cmd_output("fast bump patch")
-        assert str(init_file) in out
-        assert "0.2.1" in init_file.read_text()
+        yield app
+
+
+def test_pdm_project(dynamic_pdm_project):
+    init_file = dynamic_pdm_project / "__init__.py"
+    init_file.write_text('__version__ = "0.2.0"')
+    out = capture_cmd_output("fast bump patch")
+    assert str(init_file) in out
+    assert "0.2.1" in init_file.read_text()
+
+
+def test_installed_version_is_0_0_0(dynamic_pdm_project):
+    version_file = dynamic_pdm_project / "__init__.py"
+    version_file.write_text('__version__ = "0.0.0"')
+    toml_file = Path("pyproject.toml")
+    text = toml_file.read_text()
+    toml_file.write_text(re.sub(r"(distribution = )false", r"\1true", text))
+    capture_cmd_output("pdm install")
+    version_file.write_text('__version__ = "0.3.0"')
+    out = capture_cmd_output("fast bump patch")
+    assert str(version_file) in out
+    assert "0.3.1" in version_file.read_text()
 
 
 def test_hatch_project(tmp_work_dir):
@@ -361,42 +381,6 @@ distribution = false
 [tool.pdm.version]
 source = "file"
 path = "__version__.py"
-
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-        """)
-        out = capture_cmd_output("fast bump patch")
-        assert str(version_file) in out
-        assert "0.3.1" in version_file.read_text()
-
-
-def test_installed_version_is_0_0_0(tmp_work_dir):
-    project_name = "my-project"
-    package_name = "app"
-    Path(project_name).mkdir()
-    with chdir(project_name):
-        Path(package_name).mkdir()
-        version_file = Path(package_name, "__init__.py")
-        version_file.write_text('__version__ = "0.3.0"')
-        toml_file = Path("pyproject.toml")
-        toml_file.write_text("""
-[project]
-name = "my-project"
-description = ""
-authors = [{name="Waket Zheng", email="waketzheng@gmail.com"}]
-readme = "README.md"
-dynamic = ["version"]
-keywords = []
-requires-python = ">=3.9"
-dependencies = []
-
-[tool.pdm]
-distribution = false
-
-[tool.pdm.version]
-source = "file"
-path = "app/__init__.py"
 
 [build-system]
 requires = ["pdm-backend"]
