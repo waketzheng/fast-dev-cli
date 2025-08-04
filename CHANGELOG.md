@@ -1,5 +1,15 @@
 # ChangeLog
 
+## 0.17
+
+### [0.17.0](../../releases/tag/v0.17.0) - 2025-08-05
+
+#### Added
+- Support `fast exec "<cmd command>"`
+
+#### Changed
+- Only run `pdm sync --prod` when version not match
+
 ## 0.16
 
 ### [0.16.2](../../releases/tag/v0.16.2) - 2025-07-09

@@ -115,7 +115,10 @@ def run_and_echo(
         echo(f"--> {cmd}")
     if dry:
         return 0
-    return _run_shell(cmd, **kw).returncode
+    command: list[str] | str = cmd
+    if "shell" not in kw and "|" not in cmd:
+        command = shlex.split(cmd)
+    return _run_shell(command, **kw).returncode
 
 
 def check_call(cmd: str) -> bool:
@@ -1185,6 +1188,13 @@ def runserver(
         dev(port, host, file=file_or_port, dry=dry)
     else:
         dev(port, host, dry=dry)
+
+
+@cli.command(name="exec")
+def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
+    """Run cmd by subprocess, auto set shell=True when cmd contains '|'"""
+    if rc := run_and_echo(cmd, verbose=True, dry=_ensure_bool(dry)):
+        raise Exit(rc)
 
 
 def main() -> None:
