@@ -1193,8 +1193,16 @@ def runserver(
 @cli.command(name="exec")
 def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
     """Run cmd by subprocess, auto set shell=True when cmd contains '|'"""
-    if rc := run_and_echo(cmd, verbose=True, dry=_ensure_bool(dry)):
-        raise Exit(rc)
+    try:
+        rc = run_and_echo(cmd, verbose=True, dry=_ensure_bool(dry))
+    except FileNotFoundError as e:
+        if e.filename == cmd.split()[0]:
+            echo(f"Command not found: {e.filename}")
+            raise Exit(1) from None
+        raise e
+    else:
+        if rc:
+            raise Exit(rc)
 
 
 def main() -> None:

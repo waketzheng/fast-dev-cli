@@ -31,9 +31,11 @@ def test_exec():
     assert "success" not in out
 
 
-def test_run_by_subprocess():
+def test_run_by_subprocess(capsys):
     with pytest.raises(Exit):
         run_by_subprocess("python -c 'import sys;sys.exit(1)'")
-    with pytest.raises(Exit):
-        run_by_subprocess("cd not-exit-dir")
+    with pytest.raises(Exit, match="1"):
+        run_by_subprocess("not-exit-command")
+    out = capsys.readouterr().out
+    assert "Command not found: not-exit-command" in out
     assert not run_by_subprocess(f"cat {__file__}|grep xxx")
