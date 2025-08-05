@@ -1,6 +1,8 @@
 import os
+import re
 import shutil
 import subprocess
+import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -39,12 +41,14 @@ def test_enum():
 
 
 def _bump_commands(
-    version: str, filename=TOML_FILE, emoji=False
+    version: str, filename=TOML_FILE, emoji=False, add_sync=False
 ) -> tuple[str, str, str]:
     cmd = rf'bumpversion --parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)" --current-version="{version}"'
     suffix = " --commit && git push && git push --tags && git log -1"
     if emoji:
         suffix = suffix.replace("--commit", "--commit --message-emoji=1")
+    if add_sync:
+        cmd = "pdm sync --prod && " + cmd
     patch_without_commit = cmd + f" patch {filename} --allow-dirty"
     patch_with_commit = cmd + f" patch {filename}" + suffix
     minor_with_commit = cmd + f" minor {filename} --tag" + suffix
@@ -99,7 +103,9 @@ def test_bump(
 def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     mocker.patch("builtins.input", return_value=" ")
     version = get_current_version()
-    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(version)
+    patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
+        version, add_sync=False
+    )
     stream = StringIO()
     with redirect_stdout(stream):
         BumpUp(part="patch", commit=False).run()
@@ -167,7 +173,7 @@ def test_bump_with_emoji(mocker, tmp_path, monkeypatch):
 def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
     # real bump
     last_commit = "📝 Update release notes"
-    _, patch_with_commit, __ = _bump_commands("0.1.0", emoji=True)
+    _, patch_with_commit, __ = _bump_commands("0.1.0", emoji=True, add_sync=False)
     with prepare_poetry_project(tmp_path):
         subprocess.run(["git", "init"])
         subprocess.run(["git", "add", "."])
@@ -239,23 +245,41 @@ path = "app/__init__.py"
 """
 
 
-def test_pdm_project(tmp_work_dir):
-    capture_cmd_output("pdm new my-project --non-interactive")
-    with chdir("my-project"):
+@pytest.fixture
+def dynamic_pdm_project(tmp_work_dir):
+    py = "{}.{}".format(*sys.version_info)
+    project = "my-project"
+    capture_cmd_output(f"pdm new {project} --non-interactive --python={py} --no-git")
+    with chdir(project):
         toml_file = Path("pyproject.toml")
         content = toml_file.read_text().replace(
             'version = "0.1.0"', 'dynamic = ["version"]'
         )
-        toml_file.write_text(content)
-        with toml_file.open("a+") as f:
-            f.write(PDM_DYNAMIC_VERSION)
+        toml_file.write_text(content + PDM_DYNAMIC_VERSION)
         app = Path("app")
         app.mkdir()
-        init_file = app.joinpath("__init__.py")
-        init_file.write_text('__version__ = "0.2.0"')
-        out = capture_cmd_output("fast bump patch")
-        assert str(init_file) in out
-        assert "0.2.1" in init_file.read_text()
+        yield app
+
+
+def test_pdm_project(dynamic_pdm_project):
+    init_file = dynamic_pdm_project / "__init__.py"
+    init_file.write_text('__version__ = "0.2.0"')
+    out = capture_cmd_output("fast bump patch")
+    assert str(init_file) in out
+    assert "0.2.1" in init_file.read_text()
+
+
+def test_installed_version_is_0_0_0(dynamic_pdm_project):
+    version_file = dynamic_pdm_project / "__init__.py"
+    version_file.write_text('__version__ = "0.0.0"')
+    toml_file = Path("pyproject.toml")
+    text = toml_file.read_text()
+    toml_file.write_text(re.sub(r"(distribution = )false", r"\1true", text))
+    capture_cmd_output("pdm install")
+    version_file.write_text('__version__ = "0.3.0"')
+    out = capture_cmd_output("fast bump patch")
+    assert str(version_file) in out
+    assert "0.3.1" in version_file.read_text()
 
 
 def test_hatch_project(tmp_work_dir):

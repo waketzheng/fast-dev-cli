@@ -32,8 +32,6 @@ classifiers = [
 
 dependencies = [
     "typer >=0.12.3,<1",
-    "emoji >=2.12.1,<3",
-    "packaging >=20.5",
     "tomli >=2.0.1,<3; python_version < '3.11'"
 ]
 
@@ -42,18 +40,23 @@ Homepage = "https://github.com/waketzheng/fast-dev-cli"
 
 [project.optional-dependencies]
 standard = [
+    "emoji >=2.12.1,<3",
+    "packaging >=20.5",
     "coverage >=7.5.1,<8",
     "mypy >=1.15.0,<2",
     "bumpversion2 >=1.4.3,<2",
     "pytest >=8.2.0,<9",
 ]
 all = [
-    "ruff >=0.11.0,<1",
     "bandit>=1.7.9,<2",
     "pytest-mock >=3.14.0,<4",
     "fast-dev-cli[standard]"
 ]
-ci = ["coveralls @ git+https://github.com/waketzheng/coveralls-python@4.1.1"]
+
+[dependency-groups]
+dev = [
+    "twine>=6.1.0",
+]
 
 [tool.pdm]
 version = { source = "file", path = "fast_dev_cli/__init__.py" }
@@ -64,7 +67,9 @@ source-includes = [
     "scripts/",
 ]
 [tool.pdm.dev-dependencies]
-dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]"]
+dev = [
+    "-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]",
+]
 [tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project]
 name = "fastdevcli-slim"
 
@@ -136,7 +141,22 @@ extend-select = [
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["E501"]
 "scripts/*.py" = ["UP009","UP032"]
-"fast_dev_cli/cli.py" = ["UP007"]
+"fast_dev_cli/cli.py" = ["UP007", "UP045"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "scripts", "examples", ".venv"]
+
+[tool.pdm.scripts]
+up = 'pdm update -G :all'
+tree = 'pdm list --tree {args}'
+deps = 'pdm run python scripts/deps.py {args}'
+prod = 'pdm install --prod --frozen {args}'
+fresh = {composite = ["up", "deps"]}
+test = 'pdm run fast test {args}'
+lint = 'pdm run fast lint {args}'
+check = 'pdm run fast check {args}'
+tag = "pdm run fast tag {args}"
+bump = "pdm run fast bump patch --commit {args}"
+ci = {composite = ["deps", "check", "test"]}
+start = {composite = ["pre-commit install", "deps"]}
+style = {composite = ["ruff format", "ruff check --fix --unsafe-fixes {args}"]}

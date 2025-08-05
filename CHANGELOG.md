@@ -1,5 +1,32 @@
 # ChangeLog
 
+## 0.17
+
+### [0.17.0](../../releases/tag/v0.17.0) - 2025-08-05
+
+#### Added
+- Support `fast exec "<cmd command>"`
+
+#### Changed
+- Only run `pdm sync --prod` when version not match
+
+## 0.16
+
+### [0.16.2](../../releases/tag/v0.16.2) - 2025-07-09
+
+#### Changed
+- Run `pdm sync --prod` when bump and tag for pdm project
+
+### [0.16.1](../../releases/tag/v0.16.1) - 2025-06-06
+
+#### Fixed
+- Fix get dynacmic version error when it's defined to be '0.0.0'
+
+### [0.16.0](../../releases/tag/v0.16.0) - 2025-06-05
+
+#### Changed
+- Move `packaging` and `emoji` to optional dependencies
+
 ## 0.15
 
 ### [0.15.2](../../releases/tag/v0.15.2) - 2025-06-05
