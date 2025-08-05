@@ -24,14 +24,11 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
           cache: true
+          python-version: ${{ matrix.python-version }}
           allow-python-prereleases: true
       - name: Prepare tools
         run: |
