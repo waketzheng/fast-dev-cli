@@ -2,6 +2,8 @@ import re
 from pathlib import Path
 
 import pytest
+from asynctor import Shell
+from asynctor.compat import chdir
 
 from fast_dev_cli import __version__
 from fast_dev_cli.cli import (
@@ -14,8 +16,6 @@ from fast_dev_cli.cli import (
     version,
     version_callback,
 )
-
-from .utils import chdir, get_cmd_output
 
 
 def test_version(capsys):
@@ -66,7 +66,7 @@ def test_display_self_version(capsys):
     with pytest.raises(Exit):
         version_callback(True)
     assert __version__ in capsys.readouterr().out
-    out = get_cmd_output("fast --version")
+    out = Shell("fast --version").capture_output()
     assert out == "Fast Dev Cli Version: 0.17.0"
-    out_v = get_cmd_output("fast -V")
+    out_v = Shell("fast -V").capture_output()
     assert out_v == out

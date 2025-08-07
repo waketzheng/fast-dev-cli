@@ -5,7 +5,7 @@
 groups = ["default", "all", "dev", "standard", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:f39ead1398410272df57f36273285d2ac2d6704d212778fda19787a70bc103b4"
+content_hash = "sha256:eff6d530e2a3ae1e5ae7a53711a752dae55792ce2348dd696e2f0bbafe932464"
 
 [[metadata.targets]]
 requires_python = "~=3.9"
@@ -29,7 +29,7 @@ files = [
 
 [[package]]
 name = "asynctor"
-version = "0.8.5"
+version = "0.8.6"
 requires_python = ">=3.9"
 summary = "Async functions to compare with anyio and asyncio, and toolkit to read excel with async/await."
 groups = ["test"]
@@ -38,8 +38,8 @@ dependencies = [
     "eval-type-backport<1.0.0,>=0.2.2; python_version < \"3.10\"",
 ]
 files = [
-    {file = "asynctor-0.8.5-py3-none-any.whl", hash = "sha256:3f8479c9c633c5d5b8b0d013d137117e8d896881762f98cf8cd5e990e32c9426"},
-    {file = "asynctor-0.8.5.tar.gz", hash = "sha256:8384321b31c84fba1c7270ad45642eb64d1cd926bd2abbf35b52bc3fdc61a6e2"},
+    {file = "asynctor-0.8.6-py3-none-any.whl", hash = "sha256:e437e70954c4d0222455f58712dbc879defaa0e3741cc4a92ed543148b976253"},
+    {file = "asynctor-0.8.6.tar.gz", hash = "sha256:1e19b5f882672271cd06f6401a71e92201c1bc1863c9400e6124148c01e098ca"},
 ]
 
 [[package]]
@@ -262,7 +262,7 @@ version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
 groups = ["default", "all", "dev", "standard"]
-marker = "platform_system == \"Windows\" or sys_platform == \"win32\""
+marker = "sys_platform == \"win32\" or platform_system == \"Windows\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},

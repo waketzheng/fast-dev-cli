@@ -11,7 +11,7 @@ help:
 	@echo  "    lint    Auto-formats the code and check type hints"
 
 up:
-	pdm update --verbose
+	pdm update -G :all --verbose
 
 lock:
 	pdm lock --group :all --strategy inherit_metadata

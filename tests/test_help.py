@@ -1,7 +1,7 @@
-from .utils import get_cmd_output
+from asynctor import Shell
 
 
 def test_help():
-    out = get_cmd_output("fast")
-    out_help = get_cmd_output("fast --help")
+    out = Shell("fast").capture_output()
+    out_help = Shell("fast --help").capture_output()
     assert out == out_help
