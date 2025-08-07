@@ -122,7 +122,7 @@ def run_and_echo(
     if dry:
         return 0
     command: list[str] | str = cmd
-    if "shell" not in kw and not (set(cmd) & {"|", ">"}):
+    if "shell" not in kw and not (set(cmd) & {"|", ">", "&"}):
         command = shlex.split(cmd)
     return _run_shell(command, **kw).returncode
 
