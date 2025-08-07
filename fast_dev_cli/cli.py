@@ -470,7 +470,7 @@ class BumpUp(DryRun):
 @cli.command()
 def version() -> None:
     """Show the version of this tool"""
-    echo(f"Fast Dev Cli version: {__version__}")
+    echo("Fast Dev Cli version: " + typer.style(__version__, fg=typer.colors.BLUE))
 
 
 @cli.command(name="bump")
