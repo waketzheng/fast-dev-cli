@@ -50,16 +50,24 @@ def _clear_tags():
 def test_with_push(mocker):
     git_tag = GitTag("", dry=True)
     mocker.patch.object(git_tag, "git_status", return_value="git push")
-    version = get_current_version()
+    should_sync, version = get_current_version(check_version=True)
     prefix = "v" if "v" in capture_cmd_output(["git", "tag"]) else ""
     sync = "pdm sync --prod"
     push = "git push --tags"
-    assert git_tag.gen() == f"{sync} && git tag -a {prefix}{version} -m '' && {push}"
+    expected = f"git tag -a {prefix}{version} -m '' && {push}"
+    if should_sync:
+        expected = f"{sync} && " + expected
+    assert git_tag.gen() == expected
     with _clear_tags():
         git_tag_cmd = git_tag.gen()
-    assert git_tag_cmd == f"{sync} && git tag -a {version} -m '' && {push}"
+    expected = f"git tag -a {version} -m '' && {push}"
+    if should_sync:
+        expected = f"{sync} && " + expected
+    assert git_tag_cmd == expected
     mocker.patch.object(git_tag, "has_v_prefix", return_value=True)
-    tag_cmd = f"{sync} && git tag -a v{version} -m '' && {push}"
-    assert git_tag.gen() == tag_cmd
+    expected = f"git tag -a v{version} -m '' && {push}"
+    if should_sync:
+        expected = f"{sync} && " + expected
+    assert git_tag.gen() == expected
     mocker.patch.object(git_tag, "should_push", return_value=True)
-    assert git_tag.gen() == tag_cmd + " && git push"
+    assert git_tag.gen() == expected + " && git push"
