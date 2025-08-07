@@ -105,7 +105,7 @@ omit = [
 context = '${CONTEXT}'
 
 [tool.coverage.report]
-exclude_lines = [
+exclude_also = [
     "pragma: no cover",
     "@overload",
     'if __name__ == "__main__":',
