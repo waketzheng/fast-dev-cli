@@ -66,7 +66,7 @@ def test_display_self_version(capsys):
     with pytest.raises(Exit):
         version_callback(True)
     assert __version__ in capsys.readouterr().out
-    out = Shell("fast --version").capture_output()
+    out = Shell("fast --version").capture_output().strip()
     assert out == "Fast Dev Cli Version: 0.17.0"
-    out_v = Shell("fast -V").capture_output()
+    out_v = Shell("fast -V").capture_output().strip()
     assert out_v == out
