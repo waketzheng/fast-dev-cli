@@ -102,9 +102,9 @@ def test_bump(
 
 def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     mocker.patch("builtins.input", return_value=" ")
-    version = get_current_version()
+    should_sync, version = get_current_version(check_version=True)
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
-        version, add_sync=False
+        version, add_sync=should_sync
     )
     stream = StringIO()
     with redirect_stdout(stream):
