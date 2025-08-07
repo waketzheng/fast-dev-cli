@@ -9,6 +9,7 @@
 
 #### Changed
 - `fast` get the same display with `fast --help`
+- `fast lint` will not add `uv run` prefix if lint tool exists
 
 ### [0.17.0](../../releases/tag/v0.17.0) - 2025-08-05
 
