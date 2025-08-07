@@ -1,26 +1,11 @@
-import os
+import shlex
 import subprocess
 import sys
-from contextlib import AbstractContextManager, contextmanager, redirect_stdout
+from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-
-# TODO: use `from contextlib import chdir` instead when drop support for Python3.10
-class chdir(AbstractContextManager):  # Copied from source code of Python3.13
-    """Non thread-safe context manager to change the current working directory."""
-
-    def __init__(self, path):
-        self.path = path
-        self._old_cwd = []
-
-    def __enter__(self):
-        self._old_cwd.append(os.getcwd())
-        os.chdir(self.path)
-
-    def __exit__(self, *excinfo):
-        os.chdir(self._old_cwd.pop())
-
+from asynctor.compat import chdir
 
 __all__ = (
     "chdir",
@@ -73,3 +58,10 @@ def prepare_poetry_project(tmp_path: Path):
         subprocess.run(["poetry", "new", project])
         with chdir(tmp_path / project):
             yield
+
+
+def get_cmd_output(cmd: str) -> str:
+    r = subprocess.run(
+        shlex.split(cmd), capture_output=True, text=True, encoding="utf-8"
+    )
+    return r.stdout.strip()

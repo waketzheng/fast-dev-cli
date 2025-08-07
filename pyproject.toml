@@ -57,6 +57,9 @@ all = [
 dev = [
     "twine>=6.1.0",
 ]
+test = [
+    "asynctor>=0.8.5",
+]
 
 [tool.pdm]
 version = { source = "file", path = "fast_dev_cli/__init__.py" }

@@ -56,7 +56,7 @@ else:  # pragma: no cover
         __str__ = str.__str__
 
 
-cli = typer.Typer()
+cli = typer.Typer(no_args_is_help=True)
 DryOption = Option(False, "--dry", help="Only print, not really run shell command")
 TOML_FILE = "pyproject.toml"
 ToolName = Literal["poetry", "pdm", "uv"]
@@ -1192,7 +1192,7 @@ def runserver(
 
 @cli.command(name="exec")
 def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
-    """Run cmd by subprocess, auto set shell=True when cmd contains '|'"""
+    """Run cmd by subprocess, auto set shell=True when cmd contains '|>'"""
     try:
         rc = run_and_echo(cmd, verbose=True, dry=_ensure_bool(dry))
     except FileNotFoundError as e:
@@ -1203,6 +1203,26 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
     else:
         if rc:
             raise Exit(rc)
+
+
+def version_callback(value: bool) -> None:
+    if value:
+        echo("Fast Dev Cli Version: " + typer.style(__version__, bold=True))
+        raise Exit()
+
+
+@cli.callback()
+def common(
+    version: bool = Option(
+        None,
+        "--version",
+        "-V",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the version of this tool",
+    ),
+) -> None:
+    pass
 
 
 def main() -> None:

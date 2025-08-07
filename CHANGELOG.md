@@ -2,6 +2,14 @@
 
 ## 0.17
 
+### [0.17.1]**(Unreleased)
+
+#### Added
+- Support `fast --version`
+
+#### Changed
+- `fast` get the same display with `fast --help`
+
 ### [0.17.0](../../releases/tag/v0.17.0) - 2025-08-05
 
 #### Added

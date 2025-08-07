@@ -6,14 +6,16 @@ import pytest
 from fast_dev_cli import __version__
 from fast_dev_cli.cli import (
     TOML_FILE,
+    Exit,
     ShellCommandError,
     _parse_version,
     get_current_version,
     read_version_from_file,
     version,
+    version_callback,
 )
 
-from .utils import chdir
+from .utils import chdir, get_cmd_output
 
 
 def test_version(capsys):
@@ -58,3 +60,13 @@ def test_parse_version():
     assert _parse_version(line, pattern) == "0.0.1"
     line = '__version__ = "0.0.1"  # 0.0.2'
     assert _parse_version(line, pattern) == "0.0.1"
+
+
+def test_display_self_version(capsys):
+    with pytest.raises(Exit):
+        version_callback(True)
+    assert __version__ in capsys.readouterr().out
+    out = get_cmd_output("fast --version")
+    assert out == "Fast Dev Cli Version: 0.17.0"
+    out_v = get_cmd_output("fast -V")
+    assert out_v == out
