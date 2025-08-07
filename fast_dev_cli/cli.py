@@ -927,10 +927,21 @@ class LintCode(DryRun):
         lint_them = " && ".join(
             "{0}{" + str(i) + "} {1}" for i in range(2, len(tools) + 2)
         )
+        if ruff_exists := cls.check_lint_tool_installed():
+            # `ruff <command>` get the same result with `pdm run ruff <command>`
+            # While `mypy .`(installed global and env not activated),
+            #   does not the same as `pdm run mypy .`
+            lint_them = " && ".join(
+                ("" if tool.startswith("ruff") else "{0}")
+                + (
+                    "{%d} {1}" % i  # noqa: UP031
+                )
+                for i, tool in enumerate(tools, 2)
+            )
         prefix = ""
         should_run_by_tool = False
         if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(".local/bin"):
-            if not cls.check_lint_tool_installed():
+            if not ruff_exists:
                 should_run_by_tool = True
                 if check_call('python -c "import fast_dev_cli"'):
                     command = 'python -m pip install -U "fast-dev-cli"'
@@ -942,7 +953,11 @@ class LintCode(DryRun):
             if tool == ToolOption.default:
                 tool = Project.get_manage_tool() or ""
             if tool:
-                prefix = tool + " run "
+                prefix = (
+                    str(bin_dir)
+                    if tool == "uv" and (bin_dir := Path(".venv/bin/")).exists()
+                    else (tool + " run ")
+                )
         if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
