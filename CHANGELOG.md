@@ -6,6 +6,7 @@
 
 #### Added
 - Support `fast --version`
+- Add '--no-sync' option for bump/tag
 
 #### Changed
 - `fast` get the same display with `fast --help`

@@ -161,9 +161,9 @@ def read_version_from_file(
             toml_text = Project.load_toml_text()
         context = tomllib.loads(toml_text)
         with contextlib.suppress(KeyError):
-            return context["project"]["version"]
+            return cast(str, context["project"]["version"])
         with contextlib.suppress(KeyError):  # Poetry V1
-            return context["tool"]["poetry"]["version"]
+            return cast(str, context["tool"]["poetry"]["version"])
         secho(f"WARNING: can not find 'version' item in {version_file}!")
         return "0.0.0"
     pattern = re.compile(r"__version__\s*=")
@@ -280,14 +280,14 @@ def exit_if_run_failed(
 
 
 class DryRun:
-    def __init__(self: Self, _exit: bool = False, dry: bool = False) -> None:
+    def __init__(self, _exit: bool = False, dry: bool = False) -> None:
         self.dry = dry
         self._exit = _exit
 
-    def gen(self: Self) -> str:
+    def gen(self) -> str:
         raise NotImplementedError
 
-    def run(self: Self) -> None:
+    def run(self) -> None:
         exit_if_run_failed(self.gen(), _exit=self._exit, dry=self.dry)
 
 
@@ -298,17 +298,19 @@ class BumpUp(DryRun):
         major = "major"
 
     def __init__(
-        self: Self,
+        self,
         commit: bool,
         part: str,
         filename: str | None = None,
         dry: bool = False,
+        no_sync: bool = False,
     ) -> None:
         self.commit = commit
         self.part = part
         if filename is None:
             filename = self.parse_filename()
         self.filename = filename
+        self._no_sync = no_sync
         super().__init__(dry=dry)
 
     @staticmethod
@@ -358,7 +360,9 @@ class BumpUp(DryRun):
                         work_dir = Project.get_work_dir()
                     for tool in ("pdm", "hatch"):
                         with contextlib.suppress(KeyError):
-                            version_path = context["tool"][tool]["version"]["path"]
+                            version_path = cast(
+                                str, context["tool"][tool]["version"]["path"]
+                            )
                             if (
                                 Path(version_path).exists()
                                 or work_dir.joinpath(version_path).exists()
@@ -431,10 +435,8 @@ class BumpUp(DryRun):
             echo(f"Invalid part: {s!r}")
             raise Exit(1) from e
 
-    def gen(self: Self) -> str:
+    def gen(self) -> str:
         should_sync, _version = get_current_version(check_version=True)
-        if should_sync:
-            Project.sync_dependencies()
         filename = self.filename
         echo(f"Current version(@{filename}): {_version}")
         if self.part:
@@ -456,9 +458,11 @@ class BumpUp(DryRun):
                 cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
+        if should_sync and not self._no_sync and (sync := Project.get_sync_command()):
+            cmd = f"{sync} && " + cmd
         return cmd
 
-    def run(self: Self) -> None:
+    def run(self) -> None:
         super().run()
         if not self.commit and not self.dry:
             new_version = get_current_version(True)
@@ -478,6 +482,9 @@ def bump_version(
     part: BumpUp.PartChoices,
     commit: bool = Option(
         False, "--commit", "-c", help="Whether run `git commit` after version changed"
+    ),
+    no_sync: bool = Option(
+        False, "--no-sync", help="Do not run sync command to update version"
     ),
     dry: bool = DryOption,
 ) -> None:
@@ -600,14 +607,19 @@ class Project:
         return True
 
     @classmethod
-    def sync_dependencies(cls) -> None:
+    def get_sync_command(cls, prod: bool = True) -> str:
         if cls.is_pdm_project():
-            cmd = "pdm sync --prod"
-            run_and_echo(cmd)
+            return "pdm sync" + " --prod" * prod
         elif cls.manage_by_poetry(cache=True):
-            run_and_echo("poetry install --only=main")
+            return "poetry install" + " --only=main" * prod
         elif cls.get_manage_tool(cache=True) == "uv":
-            run_and_echo("uv sync")
+            return "uv sync --inexact" + " --no-dev" * prod
+        return ""
+
+    @classmethod
+    def sync_dependencies(cls, prod: bool = True) -> None:
+        if cmd := cls.get_sync_command():
+            run_and_echo(cmd)
 
 
 class ParseError(Exception):
@@ -618,7 +630,7 @@ class ParseError(Exception):
 
 class UpgradeDependencies(Project, DryRun):
     def __init__(
-        self: Self, _exit: bool = False, dry: bool = False, tool: ToolName = "poetry"
+        self, _exit: bool = False, dry: bool = False, tool: ToolName = "poetry"
     ) -> None:
         super().__init__(_exit, dry)
         self._tool = tool
@@ -783,7 +795,7 @@ class UpgradeDependencies(Project, DryRun):
             _upgrade += f" && poetry add {' '.join(single)}"
         return _upgrade
 
-    def gen(self: Self) -> str:
+    def gen(self) -> str:
         if self._tool == "uv":
             return "uv lock --upgrade --verbose && uv sync --frozen --all-groups"
         elif self._tool == "pdm":
@@ -807,36 +819,35 @@ def upgrade(
 
 
 class GitTag(DryRun):
-    def __init__(self: Self, message: str, dry: bool) -> None:
+    def __init__(self, message: str, dry: bool, no_sync: bool = False) -> None:
         self.message = message
+        self._no_sync = no_sync
         super().__init__(dry=dry)
 
     @staticmethod
     def has_v_prefix() -> bool:
         return "v" in capture_cmd_output("git tag")
 
-    def should_push(self: Self) -> bool:
+    def should_push(self) -> bool:
         return "git push" in self.git_status
 
-    def gen(self: Self) -> str:
+    def gen(self) -> str:
         should_sync, _version = get_current_version(verbose=False, check_version=True)
-        if should_sync:
-            Project.sync_dependencies()
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
             _version = "v" + _version
         cmd = f"git tag -a {_version} -m {self.message!r} && git push --tags"
         if self.should_push():
             cmd += " && git push"
-        if Project.is_pdm_project():
-            cmd = "pdm sync --prod && " + cmd
+        if should_sync and not self._no_sync and (sync := Project.get_sync_command()):
+            cmd = f"{sync} && " + cmd
         return cmd
 
     @cached_property
-    def git_status(self: Self) -> str:
+    def git_status(self) -> str:
         return capture_cmd_output("git status")
 
-    def mark_tag(self: Self) -> bool:
+    def mark_tag(self) -> bool:
         if not re.search(r"working (tree|directory) clean", self.git_status) and (
             "无文件要提交，干净的工作区" not in self.git_status
         ):
@@ -845,7 +856,7 @@ class GitTag(DryRun):
             return False
         return bool(super().run())
 
-    def run(self: Self) -> None:
+    def run(self) -> None:
         if self.mark_tag() and not self.dry:
             echo("You may want to publish package:\n poetry publish --build")
 
@@ -853,15 +864,18 @@ class GitTag(DryRun):
 @cli.command()
 def tag(
     message: str = Option("", "-m", "--message"),
+    no_sync: bool = Option(
+        False, "--no-sync", help="Do not run sync command to update version"
+    ),
     dry: bool = DryOption,
 ) -> None:
     """Run shell command: git tag -a <current-version-in-pyproject.toml> -m {message}"""
-    GitTag(message, dry=dry).run()
+    GitTag(message, dry=dry, no_sync=_ensure_bool(no_sync)).run()
 
 
 class LintCode(DryRun):
     def __init__(
-        self: Self,
+        self,
         args: list[str] | str | None,
         check_only: bool = False,
         _exit: bool = False,
@@ -973,7 +987,7 @@ class LintCode(DryRun):
             cmd += " && " + command
         return cmd
 
-    def gen(self: Self) -> str:
+    def gen(self) -> str:
         if isinstance(args := self.args, str):
             args = args.split()
         paths = " ".join(map(str, args)) if args else "."
@@ -1062,7 +1076,7 @@ def only_check(
 
 class Sync(DryRun):
     def __init__(
-        self: Self, filename: str, extras: str, save: bool, dry: bool = False
+        self, filename: str, extras: str, save: bool, dry: bool = False
     ) -> None:
         self.filename = filename
         self.extras = extras
