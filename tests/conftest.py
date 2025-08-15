@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from fast_dev_cli.cli import TOML_FILE
+from fast_dev_cli.cli import TOML_FILE, run_and_echo
 
 from .utils import chdir
 
@@ -59,4 +59,5 @@ def tmp_work_dir(tmp_path):
 @pytest.fixture
 def tmp_poetry_project(tmp_work_dir: Path):
     Path(TOML_FILE).write_text(TOML_CONTENT)
+    run_and_echo("poetry config --local virtualenvs.in-project true")
     yield tmp_work_dir
