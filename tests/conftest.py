@@ -34,10 +34,7 @@ all = ["ruff", "typer", "mypy", "bumpversion", "pytest", "coverage"]
 coveralls = {version = ">=4.0.0", python = ">=3.10,<3.13"}
 coverage = ">=6.5.0"  # use >= to compare with coveralls
 typer = "^0.12.3"
-ruff = "^0.4.4"
-mypy = "^1.10.0"
 pytest = "^8.2.0"
-ipython = "^8.24.0"
 bumpversion = "^0.6.0"
 pytest-mock = "^3.14.0"
 type-extensions = "^0.1.2"

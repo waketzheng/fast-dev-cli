@@ -627,7 +627,12 @@ class Project:
             if prod:
                 if doc is None:
                     doc = tomllib.loads(cls.load_toml_text())
-                if doc.get("project", {}).get("dependencies"):
+                if doc.get("project", {}).get("dependencies") or any(
+                    i != "python"
+                    for i in doc.get("tool", {})
+                    .get("poetry", {})
+                    .get("dependencies", [])
+                ):
                     cmd += " --only=main"
             return cmd
         elif cls.get_manage_tool(cache=True) == "uv":
