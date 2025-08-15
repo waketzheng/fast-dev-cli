@@ -501,7 +501,12 @@ def bump_version(
     dry: bool = DryOption,
 ) -> None:
     """Bump up version string in pyproject.toml"""
-    return BumpUp(_ensure_bool(commit), getattr(part, "value", part), dry=dry).run()
+    return BumpUp(
+        _ensure_bool(commit),
+        getattr(part, "value", part),
+        no_sync=_ensure_bool(no_sync),
+        dry=dry,
+    ).run()
 
 
 def bump() -> None:
@@ -513,7 +518,7 @@ def bump() -> None:
             if not a.startswith("-"):
                 part = a
                 break
-    return BumpUp(commit, part, dry="--dry" in args).run()
+    return BumpUp(commit, part, no_sync="--no-sync" in args, dry="--dry" in args).run()
 
 
 class EnvError(Exception):

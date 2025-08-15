@@ -108,7 +108,7 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     )
     stream = StringIO()
     with redirect_stdout(stream):
-        BumpUp(part="patch", commit=False).run()
+        BumpUp(part="patch", commit=False, no_sync=True).run()
     assert f"Current version(@{TOML_FILE}):" in stream.getvalue()
     stream = StringIO()
     with redirect_stdout(stream):
@@ -182,9 +182,9 @@ def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
         assert BumpUp.should_add_emoji() is False
         subprocess.run(["git", "commit", "-m", last_commit])
         monkeypatch.setenv("DONT_GIT_PUSH", "1")
-        command = BumpUp(part="patch", commit=True).gen()
+        command = BumpUp(part="patch", commit=True, no_sync=True).gen()
         expected = patch_with_commit.split("&&")[0].strip().replace('""', '"0.1.0"')
-        assert ("poetry install && " + expected) == command
+        assert expected == command
         subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
         subprocess.run(["fast", "bump", "patch", "--commit"])
         out = capture_cmd_output(["git", "log"])
