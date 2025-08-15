@@ -102,9 +102,9 @@ def test_bump(
 
 def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     mocker.patch("builtins.input", return_value=" ")
-    should_sync, version = get_current_version(check_version=True)
+    version = get_current_version(check_version=False)
     patch_without_commit, patch_with_commit, minor_with_commit = _bump_commands(
-        version, add_sync=should_sync
+        version, add_sync=False
     )
     stream = StringIO()
     with redirect_stdout(stream):
@@ -112,25 +112,28 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     assert f"Current version(@{TOML_FILE}):" in stream.getvalue()
     stream = StringIO()
     with redirect_stdout(stream):
-        BumpUp(part="minor", commit=False).run()
+        BumpUp(part="minor", commit=False, no_sync=True).run()
     assert "You may want to pin tag by `fast tag`" in stream.getvalue()
     stream = StringIO()
     new_version = get_current_version()
     with redirect_stdout(stream):
-        bump_version(BumpUp.PartChoices.patch, commit=False, dry=True)
+        bump_version(BumpUp.PartChoices.patch, commit=False, dry=True, no_sync=True)
     assert patch_without_commit.replace(version, new_version) in stream.getvalue()
     stream = StringIO()
-    with redirect_stdout(stream), mock_sys_argv(["patch", "--dry"]):
+    with redirect_stdout(stream), mock_sys_argv(["patch", "--dry", "--no-sync"]):
         bump()
     assert patch_without_commit.replace(version, new_version) in stream.getvalue()
     stream = StringIO()
-    with redirect_stdout(stream), mock_sys_argv(["patch", "--commit", "--dry"]):
+    with (
+        redirect_stdout(stream),
+        mock_sys_argv(["patch", "--commit", "--dry", "--no-sync"]),
+    ):
         bump()
     assert patch_with_commit.replace(version, new_version) in stream.getvalue()
     stream = StringIO()
     with (
         redirect_stdout(stream),
-        mock_sys_argv(["-c", "minor", "--commit", "--dry"]),
+        mock_sys_argv(["-c", "minor", "--commit", "--dry", "--no-sync"]),
     ):
         bump()
     assert minor_with_commit.replace(version, new_version) in stream.getvalue()
