@@ -292,7 +292,7 @@ fastapi = "^0.112.2"
 
 def test_upgrade_uv_project():
     cmd = "fast upgrade --tool=uv --dry"
-    expected = "uv lock --upgrade --verbose && uv sync --frozen --all-groups"
+    expected = "uv lock --upgrade --verbose && uv sync --inexact --frozen --all-groups --all-extras"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
     assert UpgradeDependencies(tool="uv").gen() == expected
@@ -300,7 +300,7 @@ def test_upgrade_uv_project():
 
 def test_upgrade_pdm_project():
     cmd = "fast upgrade --tool=pdm --dry"
-    expected = "pdm update --verbose && pdm sync -G :all"
+    expected = "pdm update --verbose && pdm sync -G :all --frozen"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
     assert UpgradeDependencies(tool="pdm").gen() == expected
