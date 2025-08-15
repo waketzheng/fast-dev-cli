@@ -8,7 +8,6 @@ from asynctor import Shell
 from asynctor.compat import chdir
 
 __all__ = (
-    "chdir",
     "mock_sys_argv",
     "capture_stdout",
     "temp_file",

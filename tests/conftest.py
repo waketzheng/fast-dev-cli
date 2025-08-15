@@ -1,10 +1,9 @@
 from pathlib import Path
 
 import pytest
+from asynctor.compat import chdir
 
 from fast_dev_cli.cli import TOML_FILE, run_and_echo
-
-from .utils import chdir
 
 # toml file content before migrate to pdm
 TOML_CONTENT = """
@@ -17,7 +16,7 @@ readme = "README.md"
 packages = [{include = "fast_dev_cli"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 click = ">=7.1.1"  # Many package depends on click, so only limit min version
 strenum = {version = ">=0.4.15", python = "<3.11"}
 type-extensions = {version = ">=0.1.2", python = "<3.11"}
