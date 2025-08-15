@@ -184,7 +184,7 @@ def test_bump_with_emoji_in_poetry_project(mocker, tmp_path, monkeypatch):
         monkeypatch.setenv("DONT_GIT_PUSH", "1")
         command = BumpUp(part="patch", commit=True).gen()
         expected = patch_with_commit.split("&&")[0].strip().replace('""', '"0.1.0"')
-        assert ("poetry install --only=main && " + expected) == command
+        assert ("poetry install && " + expected) == command
         subprocess.run(["poetry", "run", "pip", "install", "bumpversion2"])
         subprocess.run(["fast", "bump", "patch", "--commit"])
         out = capture_cmd_output(["git", "log"])
