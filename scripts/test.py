@@ -11,7 +11,7 @@ work_dir = Path(__file__).parent.resolve().parent
 if Path.cwd() != work_dir:
     os.chdir(str(work_dir))
 
-CMD = "pdm run coverage run -m pytest -n auto"
+CMD = "pdm run coverage run -m pytest"
 COMBINE = "pdm run coverage combine .coverage*"
 REPORT = "pdm run coverage report -m"
 
