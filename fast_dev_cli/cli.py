@@ -474,7 +474,19 @@ class BumpUp(DryRun):
 @cli.command()
 def version() -> None:
     """Show the version of this tool"""
-    echo("Fast Dev Cli version: " + typer.style(__version__, fg=typer.colors.BLUE))
+    echo("Fast Dev Cli Version: " + typer.style(__version__, fg=typer.colors.BLUE))
+    with contextlib.suppress(FileNotFoundError, KeyError):
+        toml_text = Project.load_toml_text()
+        doc = tomllib.loads(toml_text)
+        version_file = doc["tool"]["pdm"]["version"]["path"]
+        text = Project.get_work_dir().joinpath(version_file).read_text()
+        varname = "__version__"
+        for line in text.splitlines():
+            if line.strip().startswith(varname):
+                value = line.split("=", 1)[-1].strip().strip('"').strip("'")
+                styled = typer.style(value, bold=True)
+                echo(f"Version value in {version_file}: " + styled)
+                break
 
 
 @cli.command(name="bump")
@@ -797,9 +809,11 @@ class UpgradeDependencies(Project, DryRun):
 
     def gen(self) -> str:
         if self._tool == "uv":
-            return "uv lock --upgrade --verbose && uv sync --frozen --all-groups"
+            up = "uv lock --upgrade --verbose"
+            deps = "uv sync --inexact --frozen --all-groups --all-extras"
+            return f"{up} && {deps}"
         elif self._tool == "pdm":
-            return "pdm update --verbose && pdm sync -G :all"
+            return "pdm update --verbose && pdm sync -G :all --frozen"
         return self.gen_cmd() + " && poetry lock && poetry update"
 
 

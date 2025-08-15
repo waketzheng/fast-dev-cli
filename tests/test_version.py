@@ -70,3 +70,9 @@ def test_display_self_version(capsys):
     assert out == "Fast Dev Cli Version: 0.17.0"
     out_v = Shell("fast -V").capture_output().strip()
     assert out_v == out
+
+
+def test_fast_version(capsys):
+    out = Shell("fast version").capture_output().strip()
+    assert "Fast Dev Cli Version: 0.17.0" in out
+    assert "fast_dev_cli/__init__.py: 0.17.0" in out
