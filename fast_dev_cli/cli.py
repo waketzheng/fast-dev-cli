@@ -619,11 +619,17 @@ class Project:
         return True
 
     @classmethod
-    def get_sync_command(cls, prod: bool = True) -> str:
+    def get_sync_command(cls, prod: bool = True, doc: dict | None = None) -> str:
         if cls.is_pdm_project():
             return "pdm sync" + " --prod" * prod
         elif cls.manage_by_poetry(cache=True):
-            return "poetry install" + " --only=main" * prod
+            cmd = "poetry install"
+            if prod:
+                if doc is None:
+                    doc = tomllib.loads(cls.load_toml_text())
+                if doc.get("project", {}).get("dependencies"):
+                    cmd += " --only=main"
+            return cmd
         elif cls.get_manage_tool(cache=True) == "uv":
             return "uv sync --inexact" + " --no-dev" * prod
         return ""
