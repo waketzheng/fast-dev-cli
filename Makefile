@@ -17,7 +17,7 @@ lock:
 	pdm lock --group :all --strategy inherit_metadata
 
 deps:
-	pdm install --verbose --group :all --without=ci
+	pdm install --verbose --group :all
 
 _check:
 	./scripts/check.py
