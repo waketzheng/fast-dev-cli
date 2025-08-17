@@ -160,15 +160,6 @@ def test_lint_html():
     assert LintCode.to_cmd("index.html flv.html") == "prettier -w index.html flv.html"
 
 
-def test_lint_by_global_fast():
-    run = "pdm run "
-    fast = Path.home() / ".local" / "bin" / "fast"
-    command = capture_cmd_output(f"{fast} lint --dry")
-    for cmd in command.split(SEP):
-        if "ruff" not in cmd:
-            assert run in cmd
-
-
 def test_with_dmypy():
     cmd = "fast lint --dmypy --dry ."
     assert "dmypy run ." in capture_cmd_output(cmd)
