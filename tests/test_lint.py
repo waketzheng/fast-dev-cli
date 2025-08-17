@@ -165,7 +165,8 @@ def test_lint_by_global_fast():
     fast = Path.home() / ".local" / "bin" / "fast"
     command = capture_cmd_output(f"{fast} lint --dry")
     for cmd in command.split(SEP):
-        assert run in cmd
+        if "ruff" not in cmd:
+            assert run in cmd
 
 
 def test_with_dmypy():

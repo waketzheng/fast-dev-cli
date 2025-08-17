@@ -30,6 +30,10 @@ jobs:
           cache: true
           python-version: ${{ matrix.python-version }}
           allow-python-prereleases: true
+      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/ruff-action@v3
+      - name: Install requirements/Check code style and Type Hint
+        run: make check
       - name: Prepare tools
         run: |
           python -m pip install --upgrade pip poetry pipx
@@ -45,10 +49,6 @@ jobs:
           which pipx
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
-      - uses: astral-sh/setup-uv@v6
-      - uses: astral-sh/ruff-action@v3
-      - name: Install requirements/Check code style and Type Hint
-        run: make check
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
