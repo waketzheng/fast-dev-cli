@@ -2,15 +2,19 @@
 
 ## 0.17
 
-### [0.17.1]**(Unreleased)
+### [0.17.1](../../releases/tag/v0.17.1) - 2025-08-17
 
 #### Added
 - Support `fast --version`
 - Add '--no-sync' option for bump/tag
+- Add '--emoji' option for bump
 
 #### Changed
 - `fast` get the same display with `fast --help`
 - `fast lint` will not add `uv run` prefix if lint tool exists
+- Only try to import emoji module when necessary
+- `fast version` now display version file value when declared by tool.pdm.version section
+- Remove `<tool> run` prefix for ruff if it exists
 
 ### [0.17.0](../../releases/tag/v0.17.0) - 2025-08-05
 
