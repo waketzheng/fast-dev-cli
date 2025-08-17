@@ -24,14 +24,16 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
       - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/ruff-action@v3
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
           cache: true
           python-version: ${{ matrix.python-version }}
           allow-python-prereleases: true
-      - uses: astral-sh/setup-uv@v6
-      - uses: astral-sh/ruff-action@v3
+      - name: Config PDM
+        run: pdm config --global venv.with_pip true
       - name: Install requirements/Check code style and Type Hint
         run: make check
       - name: Prepare tools
@@ -40,7 +42,6 @@ jobs:
           poetry config virtualenvs.create false
           poetry self add poetry-plugin-version
           poetry self add poetry-dynamic-versioning
-          pdm config --global venv.with_pip true
           git config --global user.email "waketzheng@gmail.com"
           git config --global user.name "Waket Zheng"
           python -m pipx install -e .
