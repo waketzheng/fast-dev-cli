@@ -12,12 +12,13 @@ help:
 
 up:
 	pdm update -G :all --verbose
+	$(MAKE) deps options=--frozen
 
 lock:
 	pdm lock --group :all --strategy inherit_metadata
 
 deps:
-	pdm install --verbose --group :all
+	pdm install --verbose --group :all $(options)
 
 _check:
 	./scripts/check.py
