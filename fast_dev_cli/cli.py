@@ -304,6 +304,7 @@ class BumpUp(DryRun):
         filename: str | None = None,
         dry: bool = False,
         no_sync: bool = False,
+        emoji: bool | None = None,
     ) -> None:
         self.commit = commit
         self.part = part
@@ -311,6 +312,7 @@ class BumpUp(DryRun):
             filename = self.parse_filename()
         self.filename = filename
         self._no_sync = no_sync
+        self._emoji = emoji
         super().__init__(dry=dry)
 
     @staticmethod
@@ -452,7 +454,7 @@ class BumpUp(DryRun):
             if part != "patch":
                 cmd += " --tag"
             cmd += " --commit"
-            if self.should_add_emoji():
+            if self._emoji or (self._emoji is None and self.should_add_emoji()):
                 cmd += " --message-emoji=1"
             if not load_bool("DONT_GIT_PUSH"):
                 cmd += " && git push && git push --tags && git log -1"
@@ -495,16 +497,22 @@ def bump_version(
     commit: bool = Option(
         False, "--commit", "-c", help="Whether run `git commit` after version changed"
     ),
+    emoji: Optional[bool] = Option(
+        None, "--emoji", help="Whether add emoji prefix to commit message"
+    ),
     no_sync: bool = Option(
         False, "--no-sync", help="Do not run sync command to update version"
     ),
     dry: bool = DryOption,
 ) -> None:
     """Bump up version string in pyproject.toml"""
+    if emoji is not None:
+        emoji = _ensure_bool(emoji)
     return BumpUp(
         _ensure_bool(commit),
         getattr(part, "value", part),
         no_sync=_ensure_bool(no_sync),
+        emoji=emoji,
         dry=dry,
     ).run()
 

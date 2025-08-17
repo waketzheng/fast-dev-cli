@@ -22,6 +22,7 @@ from fast_dev_cli.cli import (
     bump_version,
     capture_cmd_output,
     get_current_version,
+    run_and_echo,
 )
 
 from .utils import chdir, mock_sys_argv, prepare_poetry_project
@@ -270,6 +271,15 @@ def test_pdm_project(dynamic_pdm_project):
     out = capture_cmd_output("fast bump patch")
     assert str(init_file) in out
     assert "0.2.1" in init_file.read_text()
+    run_and_echo("git init")
+    shutil.copy(Path(__file__).parent.parent / ".gitignore", ".")
+    run_and_echo("git add .")
+    run_and_echo("git config user.name xxx")
+    run_and_echo("git config user.email xxx@a.com")
+    run_and_echo('git commit -m "xxx"')
+    out = capture_cmd_output("fast bump patch --emoji --commit")
+    assert "--message-emoji=1" in out
+    assert "⬆️  Bump version: 0.2.1 → 0.2.2" in capture_cmd_output("git log")
 
 
 def test_installed_version_is_0_0_0(dynamic_pdm_project):
