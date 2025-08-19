@@ -34,8 +34,6 @@ jobs:
           allow-python-prereleases: true
       - name: Config PDM
         run: pdm config --global venv.with_pip true
-      - name: Install requirements/Check code style and Type Hint
-        run: make check
       - name: Prepare tools
         run: |
           python -m pip install --upgrade pip poetry pipx
@@ -50,6 +48,8 @@ jobs:
           which pipx
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
+      - name: Install requirements/Check code style and Type Hint
+        run: make check
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
