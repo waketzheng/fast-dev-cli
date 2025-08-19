@@ -247,7 +247,7 @@ def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
     output = stream.getvalue()
     cmd = 'python -m pip install -U "fast-dev-cli"'
     assert cmd in output
-    tip = "You may need to run following command to install lint tools"
+    tip = "You may need to run the following command to install lint tools"
     assert tip in output
     assert f"{tip}:\n\n  {cmd}" in output
 
