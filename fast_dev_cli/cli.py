@@ -89,6 +89,10 @@ def is_emoji(char: str) -> bool:
     return not "\u4e00" <= char <= "\u9fff"  # Chinese character
 
 
+def yellow_warn(msg: str) -> None:
+    secho(msg, fg="yellow")
+
+
 def load_bool(name: str, default: bool = False) -> bool:
     if not (v := os.getenv(name)):
         return default
@@ -922,6 +926,7 @@ class LintCode(DryRun):
         skip_mypy: bool = False,
         dmypy: bool = False,
         tool: str = ToolOption.default,
+        prefix: bool = False,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -929,6 +934,7 @@ class LintCode(DryRun):
         self._skip_mypy = skip_mypy
         self._use_dmypy = dmypy
         self._tool = tool
+        self._prefix = prefix
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -962,6 +968,7 @@ class LintCode(DryRun):
         skip_mypy: bool = False,
         use_dmypy: bool = False,
         tool: str = ToolOption.default,
+        with_prefix: bool = False,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -991,23 +998,28 @@ class LintCode(DryRun):
                 for i, tool in enumerate(tools, 2)
             )
         prefix = ""
-        should_run_by_tool = False
-        if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(".local/bin"):
-            if not ruff_exists:
+        should_run_by_tool = with_prefix
+        if not should_run_by_tool:
+            if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(
+                ".local/bin"
+            ):
+                if not ruff_exists:
+                    should_run_by_tool = True
+                    if check_call('python -c "import fast_dev_cli"'):
+                        command = 'python -m pip install -U "fast-dev-cli"'
+                        yellow_warn(
+                            "You may need to run the following command"
+                            f" to install lint tools:\n\n  {command}\n"
+                        )
+            else:
                 should_run_by_tool = True
-                if check_call('python -c "import fast_dev_cli"'):
-                    command = 'python -m pip install -U "fast-dev-cli"'
-                    tip = "You may need to run following command to install lint tools:"
-                    secho(f"{tip}\n\n  {command}\n", fg="yellow")
-        else:
-            should_run_by_tool = True
         if should_run_by_tool and tool:
             if tool == ToolOption.default:
                 tool = Project.get_manage_tool() or ""
             if tool:
                 prefix = (
-                    str(bin_dir)
-                    if tool == "uv" and (bin_dir := Path(".venv/bin/")).exists()
+                    bin_dir
+                    if tool == "uv" and Path(bin_dir := ".venv/bin/").exists()
                     else (tool + " run ")
                 )
         if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
@@ -1030,7 +1042,13 @@ class LintCode(DryRun):
             args = args.split()
         paths = " ".join(map(str, args)) if args else "."
         return self.to_cmd(
-            paths, self.check_only, self._bandit, self._skip_mypy, self._use_dmypy
+            paths,
+            self.check_only,
+            self._bandit,
+            self._skip_mypy,
+            self._use_dmypy,
+            tool=self._tool,
+            with_prefix=self._prefix,
         )
 
 
@@ -1045,13 +1063,20 @@ def lint(
     skip_mypy: bool = False,
     dmypy: bool = False,
     tool: str = ToolOption.default,
+    prefix: bool = False,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
     if files and files[0] == "lint":
         files = files[1:]
     LintCode(
-        files, dry=dry, skip_mypy=skip_mypy, bandit=bandit, dmypy=dmypy, tool=tool
+        files,
+        dry=dry,
+        skip_mypy=skip_mypy,
+        bandit=bandit,
+        dmypy=dmypy,
+        tool=tool,
+        prefix=prefix,
     ).run()
 
 
@@ -1080,6 +1105,11 @@ def make_style(
     files: Optional[list[str]] = typer.Argument(default=None),  # noqa:B008
     check_only: bool = Option(False, "--check-only", "-c"),
     bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
+    prefix: bool = Option(
+        False,
+        "--prefix",
+        help="Run lint command with tool prefix, e.g.: pdm run ruff ...",
+    ),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     use_dmypy: bool = Option(
         False, "--dmypy", help="Use `dmypy run` instead of `mypy`"
@@ -1095,11 +1125,20 @@ def make_style(
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
     bandit = _ensure_bool(bandit)
+    prefix = _ensure_bool(prefix)
     tool = _ensure_str(tool)
     if _ensure_bool(check_only):
         check(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit, tool=tool)
     else:
-        lint(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit, tool=tool)
+        lint(
+            files,
+            dry=dry,
+            skip_mypy=skip,
+            dmypy=dmypy,
+            bandit=bandit,
+            tool=tool,
+            prefix=prefix,
+        )
 
 
 @cli.command(name="check")

@@ -187,6 +187,14 @@ def test_lint_with_prefix(mocker):
     assert "pdm run" in stream.getvalue()
 
 
+def test_fast_lint_with_uv():
+    command = capture_cmd_output("fast lint --tool=uv --prefix --dry")
+    assert (
+        command
+        == "--> ruff format . && ruff check --extend-select=I,B,SIM --fix . && .venv/bin/mypy ."
+    )
+
+
 def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     with capture_stdout() as stream:
