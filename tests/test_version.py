@@ -67,12 +67,12 @@ def test_display_self_version(capsys):
         version_callback(True)
     assert __version__ in capsys.readouterr().out
     out = Shell("fast --version").capture_output().strip()
-    assert out == "Fast Dev Cli Version: 0.17.0"
+    assert out == f"Fast Dev Cli Version: {__version__}"
     out_v = Shell("fast -V").capture_output().strip()
     assert out_v == out
 
 
 def test_fast_version(capsys):
     out = Shell("fast version").capture_output().strip()
-    assert "Fast Dev Cli Version: 0.17.0" in out
-    assert "fast_dev_cli/__init__.py: 0.17.0" in out
+    assert f"Fast Dev Cli Version: {__version__}" in out
+    assert f"fast_dev_cli/__init__.py: {__version__}" in out
