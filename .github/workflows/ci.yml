@@ -64,11 +64,13 @@ jobs:
           COVERALLS_PARALLEL: true
 
   coveralls:
-    name: Indicate completion to coveralls.io
+    name: Finish Coveralls
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - name: Finished
-      uses: coverallsapp/github-action@v2
-      with:
-        parallel-finished: true
+      - name: Finished
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
