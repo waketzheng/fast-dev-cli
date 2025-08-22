@@ -2,6 +2,14 @@
 
 ## 0.17
 
+### [0.17.2](../../releases/tag/v0.17.2) - 2025-08-22
+
+#### Added
+- Support `fast list --prefix=uv`
+
+#### Fixed
+- Fix fast lint get error mypy relative path
+
 ### [0.17.1](../../releases/tag/v0.17.1) - 2025-08-17
 
 #### Added
