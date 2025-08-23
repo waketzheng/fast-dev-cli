@@ -1337,16 +1337,20 @@ class MakeDeps(DryRun):
 
     def gen(self) -> str:
         if self._tool == "pdm":
-            return "pdm sync -G :all"
+            return "pdm sync " + ("--prod" if self._prod else "-G :all")
         elif self._tool == "uv":
-            return "uv sync --all-extras --all-groups --inexact --active"
+            return "uv sync --inexact --active" + (
+                "" if self._prod else " --all-extras --all-groups"
+            )
         elif self._tool == "poetry":
-            return "poetry install --all-extras --all-groups"
+            return "poetry install " + (
+                "--only=main" if self._prod else "--all-extras --all-groups"
+            )
         else:
             cmd = "python -m pip install -e ."
             if gs := self.get_groups():
                 cmd += " " + " ".join(f"--group {g}" for g in gs)
-            upgrade = "python -m pip install -U pip"
+            upgrade = "python -m pip install --upgrade pip"
             if self.should_ensure_pip():
                 cmd = f"python -m ensurepip && {upgrade} && {cmd}"
             elif self.should_upgrade_pip():
