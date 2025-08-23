@@ -21,6 +21,7 @@ from typing import (
 )
 
 import typer
+from click import UsageError
 from typer import Exit, Option, echo, secho
 from typer.models import ArgumentInfo, OptionInfo
 
@@ -1315,6 +1316,72 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
     else:
         if rc:
             raise Exit(rc)
+
+
+class MakeDeps(DryRun):
+    def __init__(self, tool: str, prod: bool = False, dry: bool = False) -> None:
+        self._tool = tool
+        self._prod = prod
+        super().__init__(dry=dry)
+
+    def should_ensure_pip(self) -> bool:
+        return True
+
+    def should_upgrade_pip(self) -> bool:
+        return True
+
+    def get_groups(self) -> list[str]:
+        if self._prod:
+            return []
+        return ["dev"]
+
+    def gen(self) -> str:
+        if self._tool == "pdm":
+            return "pdm sync -G :all"
+        elif self._tool == "uv":
+            return "uv sync --all-extras --all-groups --inexact --active"
+        elif self._tool == "poetry":
+            return "poetry install --all-extras --all-groups"
+        else:
+            cmd = "python -m pip install -e ."
+            if gs := self.get_groups():
+                cmd += " " + " ".join(f"--group {g}" for g in gs)
+            upgrade = "python -m pip install -U pip"
+            if self.should_ensure_pip():
+                cmd = f"python -m ensurepip && {upgrade} && {cmd}"
+            elif self.should_upgrade_pip():
+                cmd = "{upgrade} && {cmd}"
+            return cmd
+
+
+@cli.command(name="deps")
+def make_deps(
+    prod: bool = Option(
+        False,
+        "--prod",
+        help="Only instead production dependencies.",
+    ),
+    tool: str = ToolOption,
+    use_uv: bool = Option(False, "--uv", help="Use `uv` to install deps"),
+    use_pdm: bool = Option(False, "--pdm", help="Use `pdm` to install deps"),
+    use_pip: bool = Option(False, "--pip", help="Use `pip` to install deps"),
+    use_poetry: bool = Option(False, "--poetry", help="Use `poetry` to install deps"),
+    dry: bool = DryOption,
+) -> None:
+    """Run: ruff check/format to reformat code and then mypy to check"""
+    if use_uv + use_pdm + use_pip + use_poetry > 1:
+        raise UsageError("`--uv/--pdm/--pip/--poetry` can only choose one!")
+    if use_uv:
+        tool = "uv"
+    elif use_pdm:
+        tool = "pdm"
+    elif use_pip:
+        tool = "pip"
+    elif use_poetry:
+        tool = "poetry"
+    elif tool == ToolOption.default:
+        tool = Project.get_manage_tool(cache=True) or "pip"
+    MakeDeps(tool, prod, dry=dry).run()
 
 
 def version_callback(value: bool) -> None:
