@@ -99,7 +99,7 @@ def test_check_bandit(tmp_path):
         assert "bandit -r ." in command
 
 
-def test_check_skip_mypy(mock_skip_mypy_0, mocker, capsys):
+def test_check_skip_mypy(mock_skip_mypy_0, mocker):
     cmd = "fast check --skip-mypy --dry"
     cmd2 = "fast lint --check-only --skip-mypy --dry"
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
@@ -271,7 +271,7 @@ def test_skip_mypy_option(mock_skip_mypy_0, mocker):
     )
 
 
-def test_skip_mypy_fast_lint(mock_skip_mypy_0, mocker, capsys):
+def test_skip_mypy_fast_lint(mock_skip_mypy_0, mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     command = capture_cmd_output("fast lint --skip-mypy --dry")
     cmds = LINT_CMD.split(SEP)
