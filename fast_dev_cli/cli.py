@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import importlib.metadata as importlib_metadata
 import os
 import re
@@ -286,7 +287,7 @@ def exit_if_run_failed(
 
 class DryRun:
     def __init__(self, _exit: bool = False, dry: bool = False) -> None:
-        self.dry = dry
+        self.dry = _ensure_bool(dry)
         self._exit = _exit
 
     def gen(self) -> str:
@@ -1386,6 +1387,93 @@ def make_deps(
     elif tool == ToolOption.default:
         tool = Project.get_manage_tool(cache=True) or "pip"
     MakeDeps(tool, prod, dry=dry).run()
+
+
+class UvPypi(DryRun):
+    PYPI = "https://pypi.org/simple"
+    HOST = "https://files.pythonhosted.org"
+
+    def __init__(self, lock_file: Path, dry: bool, verbose: bool, quiet: bool) -> None:
+        super().__init__(dry=dry)
+        self.lock_file = lock_file
+        self._verbose = _ensure_bool(verbose)
+        self._quiet = _ensure_bool(quiet)
+
+    def run(self) -> None:
+        try:
+            rc = self.update_lock(self.lock_file, self._verbose, self._quiet)
+        except ValueError as e:
+            secho(str(e), fg=typer.colors.RED)
+            raise Exit(1) from e
+        else:
+            if rc != 0:
+                raise Exit(rc)
+
+    @classmethod
+    def update_lock(cls, p: Path, verbose: bool, quiet: bool) -> int:
+        text = p.read_text("utf-8")
+        registry_pattern = r'(registry = ")(.*?)"'
+        replace_registry = functools.partial(
+            re.sub, registry_pattern, rf'\1{cls.PYPI}"'
+        )
+        registry_urls = {i[1] for i in re.findall(registry_pattern, text)}
+        download_pattern = r'(url = ")(https?://.*?)(/packages/.*?\.)(gz|whl)"'
+        replace_host = functools.partial(
+            re.sub, download_pattern, rf'\1{cls.HOST}\3\4"'
+        )
+        download_hosts = {i[1] for i in re.findall(download_pattern, text)}
+        if not registry_urls:
+            raise ValueError(f"Failed to find pattern {registry_pattern!r} in {p}")
+        if len(registry_urls) == 1:
+            current_registry = registry_urls.pop()
+            if current_registry == cls.PYPI:
+                if download_hosts == {cls.HOST}:
+                    if verbose:
+                        echo(f"Registry of {p} is {cls.PYPI}, no need to change.")
+                    return 0
+            else:
+                text = replace_registry(text)
+                if verbose:
+                    echo(f"{current_registry} --> {cls.PYPI}")
+        else:
+            # TODO: ask each one to confirm replace
+            text = replace_registry(text)
+            if verbose:
+                for current_registry in sorted(registry_urls):
+                    echo(f"{current_registry} --> {cls.PYPI}")
+        if len(download_hosts) == 1:
+            current_host = download_hosts.pop()
+            if current_host != cls.HOST:
+                text = replace_host(text)
+                if verbose:
+                    print(current_host, "-->", cls.HOST)
+        elif download_hosts:
+            # TODO: ask each one to confirm replace
+            text = replace_host(text)
+            if verbose:
+                for current_host in sorted(download_hosts):
+                    echo(f"{current_host} --> {cls.HOST}")
+        size = p.write_text(text, encoding="utf-8")
+        if verbose:
+            echo(f"Updated {p} with {size} bytes.")
+        if quiet:
+            return 0
+        return 1
+
+
+@cli.command()
+def pypi(
+    dry: bool = DryOption,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> None:
+    """Change registry of uv.lock to be pypi.org"""
+    if not (p := Path("uv.lock")).exists() and not (
+        (p := Project.get_work_dir() / p.name).exists()
+    ):
+        yellow_warn(f"{p.name!r} not found!")
+        return
+    UvPypi(p, dry, verbose, quiet).run()
 
 
 def version_callback(value: bool) -> None:
