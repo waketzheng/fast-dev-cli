@@ -2,7 +2,7 @@
 
 ## 0.17
 
-### [0.17.3]**(Unreleased)**
+### [0.17.3](../../releases/tag/v0.17.3) - 2025-08-26
 
 #### Added
 - Support `fast deps`
