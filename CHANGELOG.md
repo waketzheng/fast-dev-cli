@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.18
+
+### [0.18.0](../../releases/tag/v0.18.0) - 2025-08-31
+
+#### Changed
+- Use `typer-slim` instead of `typer`
+
 ## 0.17
 
 ### [0.17.3](../../releases/tag/v0.17.3) - 2025-08-26
