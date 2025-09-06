@@ -2,6 +2,11 @@
 
 ## 0.18
 
+### [0.18.1](../../releases/tag/v0.18.1) - 2025-09-06
+
+#### Added
+- Support `fast pypi custom_uv.lock`
+
 ### [0.18.0](../../releases/tag/v0.18.0) - 2025-08-31
 
 #### Changed
