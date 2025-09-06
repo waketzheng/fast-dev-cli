@@ -1463,12 +1463,13 @@ class UvPypi(DryRun):
 
 @cli.command()
 def pypi(
+    file: Optional[str] = typer.Argument(default=None),
     dry: bool = DryOption,
     verbose: bool = False,
     quiet: bool = False,
 ) -> None:
     """Change registry of uv.lock to be pypi.org"""
-    if not (p := Path("uv.lock")).exists() and not (
+    if not (p := Path(file or "uv.lock")).exists() and not (
         (p := Project.get_work_dir() / p.name).exists()
     ):
         yellow_warn(f"{p.name!r} not found!")
