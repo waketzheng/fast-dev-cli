@@ -245,6 +245,19 @@ def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
     with capture_stdout() as stream:
         lint(".", dry=True)
     output = stream.getvalue()
+    cmd = "pipx install ruff"
+    assert cmd in output
+    tip = "You may need to run the following command to install ruff"
+    assert tip in output
+    assert f"{tip}:\n\n  {cmd}" in output
+
+
+def test_lint_without_mypy_installed(mocker, mock_no_dmypy):
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    mocker.patch("fast_dev_cli.cli.LintCode.missing_mypy_exec", return_value=True)
+    with capture_stdout() as stream:
+        lint(".", dry=True)
+    output = stream.getvalue()
     cmd = 'python -m pip install -U "fast-dev-cli"'
     assert cmd in output
     tip = "You may need to run the following command to install lint tools"

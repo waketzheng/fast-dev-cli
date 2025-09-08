@@ -260,7 +260,7 @@ def _ensure_bool(value: bool | OptionInfo) -> bool:
     return value
 
 
-def _ensure_str(value: str | OptionInfo) -> str:
+def _ensure_str(value: str | OptionInfo | None) -> str:
     if not isinstance(value, str):
         value = getattr(value, "default", "")
     return value
@@ -945,6 +945,10 @@ class LintCode(DryRun):
         return check_call("ruff --version")
 
     @staticmethod
+    def missing_mypy_exec() -> bool:
+        return shutil.which("mypy") is None
+
+    @staticmethod
     def prefer_dmypy(paths: str, tools: list[str], use_dmypy: bool = False) -> bool:
         return (
             paths == "."
@@ -1016,7 +1020,7 @@ class LintCode(DryRun):
                         "You may need to run the following command"
                         f" to install ruff:\n\n  {command}\n"
                     )
-                elif "mypy" in str(tools) and shutil.which("mypy") is None:
+                elif "mypy" in str(tools) and cls.missing_mypy_exec():
                     should_run_by_tool = True
                     if check_call('python -c "import fast_dev_cli"'):
                         command = 'python -m pip install -U "fast-dev-cli"'
@@ -1480,7 +1484,7 @@ def pypi(
     quiet: bool = False,
 ) -> None:
     """Change registry of uv.lock to be pypi.org"""
-    if not (p := Path(file or "uv.lock")).exists() and not (
+    if not (p := Path(_ensure_str(file) or "uv.lock")).exists() and not (
         (p := Project.get_work_dir() / p.name).exists()
     ):
         yellow_warn(f"{p.name!r} not found!")
