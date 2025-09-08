@@ -6,6 +6,7 @@ import importlib.metadata as importlib_metadata
 import os
 import re
 import shlex
+import shutil
 import subprocess  # nosec:B404
 import sys
 from functools import cached_property
@@ -1006,6 +1007,16 @@ class LintCode(DryRun):
                 ".local/bin"
             ):
                 if not ruff_exists:
+                    should_run_by_tool = True
+                    command = "pipx install ruff"
+                    if shutil.which("pipx") is None:
+                        ensure_pipx = "pip install --user pipx\n  pipx ensurepath\n  "
+                        command = ensure_pipx + command
+                    yellow_warn(
+                        "You may need to run the following command"
+                        f" to install ruff:\n\n  {command}\n"
+                    )
+                elif "mypy" in str(tools) and shutil.which("mypy") is None:
                     should_run_by_tool = True
                     if check_call('python -c "import fast_dev_cli"'):
                         command = 'python -m pip install -U "fast-dev-cli"'
