@@ -2,6 +2,11 @@
 
 ## 0.18
 
+### [0.18.2](../../releases/tag/v0.18.2) - 2025-09-09
+
+#### Fixed
+- Fix inexact prompt when lint without ruff installed
+
 ### [0.18.1](../../releases/tag/v0.18.1) - 2025-09-06
 
 #### Added
@@ -22,7 +27,7 @@
 ### [0.17.2](../../releases/tag/v0.17.2) - 2025-08-22
 
 #### Added
-- Support `fast list --prefix=uv`
+- Support `fast lint --prefix=uv`
 
 #### Fixed
 - Fix fast lint get error mypy relative path

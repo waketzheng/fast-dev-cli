@@ -62,10 +62,20 @@ ToolOption = Option(
 )
 
 
-class FastDevCliError(Exception): ...
+class FastDevCliError(Exception):
+    """Basic exception of this library, all custom exceptions inherit from it"""
 
 
-class ShellCommandError(FastDevCliError): ...
+class ShellCommandError(FastDevCliError):
+    """Raise if cmd command returncode is not zero"""
+
+
+class ParseError(FastDevCliError):
+    """Raise this if parse dependence line error"""
+
+
+class EnvError(FastDevCliError):
+    """Raise when expected to be managed by poetry, but toml file not found."""
 
 
 def poetry_module_name(name: str) -> str:
@@ -536,10 +546,6 @@ def bump() -> None:
     return BumpUp(commit, part, no_sync="--no-sync" in args, dry="--dry" in args).run()
 
 
-class EnvError(Exception):
-    """Raise when expected to be managed by poetry, but toml file not found."""
-
-
 class Project:
     path_depth = 5
     _tool: ToolName | None = None
@@ -591,30 +597,33 @@ class Project:
         try:
             text = cls.load_toml_text()
         except EnvError:
-            pass
-        else:
-            with contextlib.suppress(KeyError, tomllib.TOMLDecodeError):
-                doc = tomllib.loads(text)
-                backend = doc["build-system"]["build-backend"]
-                if "poetry" in backend:
-                    cls._tool = "poetry"
-                    return cls._tool
-                elif "pdm" in backend:
-                    cls._tool = "pdm"
-                    work_dir = cls.get_work_dir(allow_cwd=True)
-                    if not Path(work_dir, "pdm.lock").exists() and (
-                        "[tool.uv]" in text or Path(work_dir, "uv.lock").exists()
-                    ):
-                        cls._tool = "uv"
-                    return cls._tool
-            for name in get_args(ToolName):
-                if f"[tool.{name}]" in text:
-                    cls._tool = cast(ToolName, name)
-                    return cls._tool
-            # Poetry 2.0 default to not include the '[tool.poetry]' section
-            if cls.is_poetry_v2(text):
+            return None
+        with contextlib.suppress(KeyError, tomllib.TOMLDecodeError):
+            doc = tomllib.loads(text)
+            backend = doc["build-system"]["build-backend"]
+            if "poetry" in backend:
                 cls._tool = "poetry"
                 return cls._tool
+            work_dir = cls.get_work_dir(allow_cwd=True)
+            uv_lock_exists = Path(work_dir, "uv.lock").exists()
+            if "pdm" in backend:
+                cls._tool = "pdm"
+                if not Path(work_dir, "pdm.lock").exists() and (
+                    uv_lock_exists or "[tool.uv]" in text
+                ):
+                    cls._tool = "uv"
+                return cls._tool
+            elif uv_lock_exists:
+                cls._tool = "uv"
+                return cls._tool
+        for name in get_args(ToolName):
+            if f"[tool.{name}]" in text:
+                cls._tool = cast(ToolName, name)
+                return cls._tool
+        # Poetry 2.0 default to not include the '[tool.poetry]' section
+        if cls.is_poetry_v2(text):
+            cls._tool = "poetry"
+            return cls._tool
         return None
 
     @staticmethod
@@ -663,12 +672,6 @@ class Project:
     def sync_dependencies(cls, prod: bool = True) -> None:
         if cmd := cls.get_sync_command():
             run_and_echo(cmd)
-
-
-class ParseError(Exception):
-    """Raise this if parse dependence line error"""
-
-    pass
 
 
 class UpgradeDependencies(Project, DryRun):
@@ -1144,18 +1147,11 @@ def make_style(
     bandit = _ensure_bool(bandit)
     prefix = _ensure_bool(prefix)
     tool = _ensure_str(tool)
+    kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
     if _ensure_bool(check_only):
-        check(files, dry=dry, skip_mypy=skip, dmypy=dmypy, bandit=bandit, tool=tool)
+        check(files, tool=tool, **kwargs)
     else:
-        lint(
-            files,
-            dry=dry,
-            skip_mypy=skip,
-            dmypy=dmypy,
-            bandit=bandit,
-            tool=tool,
-            prefix=prefix,
-        )
+        lint(files, prefix=prefix, tool=tool, **kwargs)
 
 
 @cli.command(name="check")
@@ -1508,8 +1504,7 @@ def common(
         is_eager=True,
         help="Show the version of this tool",
     ),
-) -> None:
-    pass
+) -> None: ...
 
 
 def main() -> None:
