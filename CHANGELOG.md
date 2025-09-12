@@ -2,6 +2,11 @@
 
 ## 0.18
 
+### [0.18.3](../../releases/tag/v0.18.3) - 2025-09-12
+
+#### Added
+- Auto add suffix with `fast lint <stem>.`
+
 ### [0.18.2](../../releases/tag/v0.18.2) - 2025-09-09
 
 #### Fixed
