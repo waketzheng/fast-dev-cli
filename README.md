@@ -95,3 +95,18 @@ fast dev
 fast upload
 ```
 *Note: all command support the `--dry` option*
+
+## Use it without installed
+
+```bash
+uvx --from fastdevcli-slim fast
+```
+
+## Install global
+```bash
+pipx install fastdevcli-slim
+```
+Or:
+```bash
+uv tool install fastdevcli-slim
+```

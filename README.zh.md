@@ -18,7 +18,7 @@ Python3.9及其以上版本
 ```bash
 pipx install fastdevcli-slim
 ```
-*只依赖typer*
+*只依赖typer-slim*
 
 - 项目中安装
 ```bash
@@ -74,7 +74,7 @@ fast bump <part> --commit
 ```bash
 fast test
 ```
-### 导出依赖文件，并使用pip安装所有依赖
+### 导出依赖文件，并使用pip安装所有依赖（已过时，新版pip可直接fast deps）
 - 适用于某些poetry install/pdm install/uv sync会报错的情况
 ```bash
 fast sync
@@ -112,6 +112,15 @@ fast dev my_app.py --port=9000 --host=0.0.0.0
 fast upload
 ```
 **注：所有命令均支持`--dry`参数，即只打印命令，不实际执行**
+
+### 使用官方源替换uv.lock中的register
+```
+fast pypi
+```
+或：
+```
+uvx --from fastdevcli-slim fast pypi
+```
 
 ## 许可证
 

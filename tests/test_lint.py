@@ -187,6 +187,14 @@ def test_lint_with_prefix(mocker):
     assert "pdm run" in stream.getvalue()
 
 
+def test_lint_auto_suffix(tmp_work_dir):
+    Path("main.py").touch()
+    cmd = "fast lint --dry main."
+    assert "main.py" in capture_cmd_output(cmd)
+    shutil.move("main.py", "main.html")
+    assert "main.html" in capture_cmd_output(cmd)
+
+
 def test_fast_lint_with_uv():
     command = capture_cmd_output("fast lint --tool=uv --prefix --dry")
     assert (

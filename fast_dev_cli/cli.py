@@ -1058,9 +1058,19 @@ class LintCode(DryRun):
         return cmd
 
     def gen(self) -> str:
-        if isinstance(args := self.args, str):
-            args = args.split()
-        paths = " ".join(map(str, args)) if args else "."
+        paths = "."
+        if args := self.args:
+            ps = args.split() if isinstance(args, str) else [str(i) for i in args]
+            if len(ps) == 1:
+                paths = ps[0]
+                if paths != "." and paths.endswith(".") and not Path(paths).exists():
+                    for ft in ("py", "html"):
+                        name = paths + ft
+                        if Path(name).exists():
+                            paths = name
+                            break
+            else:
+                paths = " ".join(ps)
         return self.to_cmd(
             paths,
             self.check_only,
