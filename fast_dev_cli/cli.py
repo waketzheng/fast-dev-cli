@@ -497,6 +497,13 @@ def version() -> None:
     with contextlib.suppress(FileNotFoundError, KeyError):
         toml_text = Project.load_toml_text()
         doc = tomllib.loads(toml_text)
+        if value := doc.get("project", {}).get("version", ""):
+            styled = typer.style(value, bold=True, fg=typer.colors.CYAN)
+            if project_name := doc["project"].get("name", ""):
+                echo(f"{project_name} version: " + styled)
+            else:
+                echo(f"Got Version from {TOML_FILE}: " + styled)
+            return
         version_file = doc["tool"]["pdm"]["version"]["path"]
         text = Project.get_work_dir().joinpath(version_file).read_text()
         varname = "__version__"
