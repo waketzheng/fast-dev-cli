@@ -2,6 +2,12 @@
 
 ## 0.18
 
+### [0.18.4]**(Unreleased)**
+
+#### Added
+- feat: support `--no-active` and `--no-inexact` for fast deps
+- feat: support project version if it is not dynamic
+
 ### [0.18.3](../../releases/tag/v0.18.3) - 2025-09-12
 
 #### Added
