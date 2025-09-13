@@ -6,7 +6,12 @@ def test_make_deps_class():
         MakeDeps("uv", prod=False).gen()
         == "uv sync --inexact --active --all-extras --all-groups"
     )
+    assert (
+        MakeDeps("uv", prod=False, active=False).gen()
+        == "uv sync --inexact --all-extras --all-groups"
+    )
     assert MakeDeps("uv", prod=True).gen() == "uv sync --inexact --active"
+    assert MakeDeps("uv", prod=True, active=False).gen() == "uv sync --inexact"
     assert MakeDeps("pdm", prod=False).gen() == "pdm sync -G :all"
     assert MakeDeps("pdm", prod=True).gen() == "pdm sync --prod"
     assert (
@@ -29,5 +34,17 @@ def test_fast_deps():
     assert out == "--> pdm sync -G :all"
     out = capture_cmd_output("fast deps --uv --prod --dry")
     assert out == "--> uv sync --inexact --active"
+    out = capture_cmd_output("fast deps --uv --prod --dry --no-active")
+    assert out == "--> uv sync --inexact"
+    out = capture_cmd_output("fast deps --uv --prod --dry --no-inexact")
+    assert out == "--> uv sync --active"
+    out = capture_cmd_output("fast deps --uv --prod --dry --no-active --no-inexact")
+    assert out == "--> uv sync"
     out = capture_cmd_output("fast deps --uv --dry")
     assert out == "--> uv sync --inexact --active --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --no-active")
+    assert out == "--> uv sync --inexact --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --no-inexact")
+    assert out == "--> uv sync --active --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --no-active --no-inexact")
+    assert out == "--> uv sync --all-extras --all-groups"

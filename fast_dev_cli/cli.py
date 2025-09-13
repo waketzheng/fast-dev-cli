@@ -1348,9 +1348,18 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
 
 
 class MakeDeps(DryRun):
-    def __init__(self, tool: str, prod: bool = False, dry: bool = False) -> None:
+    def __init__(
+        self,
+        tool: str,
+        prod: bool = False,
+        dry: bool = False,
+        active: bool = True,
+        inexact: bool = True,
+    ) -> None:
         self._tool = tool
         self._prod = prod
+        self._active = active
+        self._inexact = inexact
         super().__init__(dry=dry)
 
     def should_ensure_pip(self) -> bool:
@@ -1368,9 +1377,10 @@ class MakeDeps(DryRun):
         if self._tool == "pdm":
             return "pdm sync " + ("--prod" if self._prod else "-G :all")
         elif self._tool == "uv":
-            return "uv sync --inexact --active" + (
-                "" if self._prod else " --all-extras --all-groups"
-            )
+            uv_sync = "uv sync" + " --inexact" * self._inexact
+            if self._active:
+                uv_sync += " --active"
+            return uv_sync + ("" if self._prod else " --all-extras --all-groups")
         elif self._tool == "poetry":
             return "poetry install " + (
                 "--only=main" if self._prod else "--all-extras --all-groups"
@@ -1399,6 +1409,12 @@ def make_deps(
     use_pdm: bool = Option(False, "--pdm", help="Use `pdm` to install deps"),
     use_pip: bool = Option(False, "--pip", help="Use `pip` to install deps"),
     use_poetry: bool = Option(False, "--poetry", help="Use `poetry` to install deps"),
+    active: bool = Option(
+        True, help="Add `--active` to uv sync command(Only work for uv project)"
+    ),
+    inexact: bool = Option(
+        True, help="Add `--inexact` to uv sync command(Only work for uv project)"
+    ),
     dry: bool = DryOption,
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
@@ -1414,7 +1430,7 @@ def make_deps(
         tool = "poetry"
     elif tool == ToolOption.default:
         tool = Project.get_manage_tool(cache=True) or "pip"
-    MakeDeps(tool, prod, dry=dry).run()
+    MakeDeps(tool, prod, active=active, inexact=inexact, dry=dry).run()
 
 
 class UvPypi(DryRun):
