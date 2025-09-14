@@ -124,40 +124,92 @@ def is_venv() -> bool:
     )
 
 
-def _run_shell(cmd: list[str] | str, **kw: Any) -> subprocess.CompletedProcess[str]:
-    if isinstance(cmd, str):
-        kw.setdefault("shell", True)
-    return subprocess.run(cmd, **kw)  # nosec:B603
+class Shell:
+    def __init__(self, cmd: list[str] | str, **kw: Any) -> None:
+        self._cmd = cmd
+        self._kw = kw
+
+    @staticmethod
+    def run_by_subprocess(
+        cmd: list[str] | str, **kw: Any
+    ) -> subprocess.CompletedProcess[str]:
+        if isinstance(cmd, str):
+            kw.setdefault("shell", True)
+        return subprocess.run(cmd, **kw)  # nosec:B603
+
+    @property
+    def command(self) -> list[str] | str:
+        command: list[str] | str = self._cmd
+        if (
+            isinstance(command, str)
+            and "shell" not in self._kw
+            and not (set(self._cmd) & {"|", ">", "&"})
+        ):
+            command = shlex.split(command)
+        return command
+
+    def _run(self) -> subprocess.CompletedProcess[str]:
+        return self.run_by_subprocess(self.command, **self._kw)
+
+    def run(self, verbose: bool = False, dry: bool = False) -> int:
+        if verbose:
+            echo(f"--> {self._cmd}")
+        if dry:
+            return 0
+        return self._run().returncode
+
+    def check_call(self) -> bool:
+        self._kw.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return self.run() == 0
+
+    def capture_output(self, raises: bool = False) -> str:
+        self._kw.update(capture_output=True, encoding="utf-8")
+        r = self._run()
+        if raises and r.returncode != 0:
+            raise ShellCommandError(r.stderr)
+        return r.stdout.strip() or r.stderr
+
+    def finish(
+        self, env: dict[str, str] | None = None, _exit: bool = False, dry=False
+    ) -> subprocess.CompletedProcess[str]:
+        self.run(dry=True)
+        if _ensure_bool(dry):
+            return subprocess.CompletedProcess("", 0)
+        if env is not None:
+            self._kw["env"] = {**os.environ, **env}
+        r = self._run()
+        if rc := r.returncode:
+            if _exit:
+                sys.exit(rc)
+            raise Exit(rc)
+        return r
 
 
 def run_and_echo(
     cmd: str, *, dry: bool = False, verbose: bool = True, **kw: Any
 ) -> int:
     """Run shell command with subprocess and print it"""
-    if verbose:
-        echo(f"--> {cmd}")
-    if dry:
-        return 0
-    command: list[str] | str = cmd
-    if "shell" not in kw and not (set(cmd) & {"|", ">", "&"}):
-        command = shlex.split(cmd)
-    return _run_shell(command, **kw).returncode
+    return Shell(cmd, **kw).run(verbose=verbose, dry=dry)
 
 
 def check_call(cmd: str) -> bool:
-    r = _run_shell(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return r.returncode == 0
+    return Shell(cmd).check_call()
 
 
 def capture_cmd_output(
     command: list[str] | str, *, raises: bool = False, **kw: Any
 ) -> str:
-    if isinstance(command, str) and not kw.get("shell"):
-        command = shlex.split(command)
-    r = _run_shell(command, capture_output=True, encoding="utf-8", **kw)
-    if raises and r.returncode != 0:
-        raise ShellCommandError(r.stderr)
-    return r.stdout.strip() or r.stderr
+    return Shell(command, **kw).capture_output(raises=raises)
+
+
+def exit_if_run_failed(
+    cmd: str,
+    env: dict[str, str] | None = None,
+    _exit: bool = False,
+    dry: bool = False,
+    **kw: Any,
+) -> subprocess.CompletedProcess[str]:
+    return Shell(cmd, **kw).finish(env=env, _exit=_exit, dry=dry)
 
 
 def _parse_version(line: str, pattern: re.Pattern[str]) -> str:
@@ -274,26 +326,6 @@ def _ensure_str(value: str | OptionInfo | None) -> str:
     if not isinstance(value, str):
         value = getattr(value, "default", "")
     return value
-
-
-def exit_if_run_failed(
-    cmd: str,
-    env: dict[str, str] | None = None,
-    _exit: bool = False,
-    dry: bool = False,
-    **kw: Any,
-) -> subprocess.CompletedProcess[str]:
-    run_and_echo(cmd, dry=True)
-    if _ensure_bool(dry):
-        return subprocess.CompletedProcess("", 0)
-    if env is not None:
-        env = {**os.environ, **env}
-    r = _run_shell(cmd, env=env, **kw)
-    if rc := r.returncode:
-        if _exit:
-            sys.exit(rc)
-        raise Exit(rc)
-    return r
 
 
 class DryRun:
