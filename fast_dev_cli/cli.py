@@ -172,7 +172,7 @@ class Shell:
     def finish(
         self, env: dict[str, str] | None = None, _exit: bool = False, dry=False
     ) -> subprocess.CompletedProcess[str]:
-        self.run(dry=True)
+        self.run(verbose=True, dry=True)
         if _ensure_bool(dry):
             return subprocess.CompletedProcess("", 0)
         if env is not None:
@@ -689,7 +689,7 @@ class Project:
     @classmethod
     def get_sync_command(cls, prod: bool = True, doc: dict | None = None) -> str:
         if cls.is_pdm_project():
-            return "pdm sync" + " --prod" * prod
+            return "pdm install --frozen" + " --prod" * prod
         elif cls.manage_by_poetry(cache=True):
             cmd = "poetry install"
             if prod:
@@ -886,7 +886,7 @@ class UpgradeDependencies(Project, DryRun):
             deps = "uv sync --inexact --frozen --all-groups --all-extras"
             return f"{up} && {deps}"
         elif self._tool == "pdm":
-            return "pdm update --verbose && pdm sync -G :all --frozen"
+            return "pdm update --verbose && pdm install -G :all --frozen"
         return self.gen_cmd() + " && poetry lock && poetry update"
 
 
@@ -1407,7 +1407,7 @@ class MakeDeps(DryRun):
 
     def gen(self) -> str:
         if self._tool == "pdm":
-            return "pdm sync " + ("--prod" if self._prod else "-G :all")
+            return "pdm install --frozen " + ("--prod" if self._prod else "-G :all")
         elif self._tool == "uv":
             uv_sync = "uv sync" + " --inexact" * self._inexact
             if self._active:

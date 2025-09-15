@@ -12,8 +12,8 @@ def test_make_deps_class():
     )
     assert MakeDeps("uv", prod=True).gen() == "uv sync --inexact --active"
     assert MakeDeps("uv", prod=True, active=False).gen() == "uv sync --inexact"
-    assert MakeDeps("pdm", prod=False).gen() == "pdm sync -G :all"
-    assert MakeDeps("pdm", prod=True).gen() == "pdm sync --prod"
+    assert MakeDeps("pdm", prod=False).gen() == "pdm install --frozen -G :all"
+    assert MakeDeps("pdm", prod=True).gen() == "pdm install --frozen --prod"
     assert (
         MakeDeps("poetry", prod=False).gen()
         == "poetry install --all-extras --all-groups"
@@ -31,7 +31,7 @@ def test_make_deps_class():
 
 def test_fast_deps():
     out = capture_cmd_output("fast deps --dry")
-    assert out == "--> pdm sync -G :all"
+    assert out == "--> pdm install --frozen -G :all"
     out = capture_cmd_output("fast deps --uv --prod --dry")
     assert out == "--> uv sync --inexact --active"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-active")
