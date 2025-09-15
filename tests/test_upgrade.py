@@ -300,7 +300,7 @@ def test_upgrade_uv_project():
 
 def test_upgrade_pdm_project():
     cmd = "fast upgrade --tool=pdm --dry"
-    expected = "pdm update --verbose && pdm sync -G :all --frozen"
+    expected = "pdm update --verbose && pdm install -G :all --frozen"
     assert expected in capture_cmd_output(cmd)
     assert expected in capture_cmd_output("pdm run " + cmd)
     assert UpgradeDependencies(tool="pdm").gen() == expected
