@@ -80,8 +80,16 @@ def test_run_shell():
     assert run_and_echo("echo foo", capture_output=True) == 0
 
     with pytest.raises(SystemExit):
+        exit_if_run_failed(
+            "in_valid_command", _exit=True, capture_output=True, shell=True
+        )
+    with pytest.raises(FileNotFoundError):
         exit_if_run_failed("in_valid_command", _exit=True, capture_output=True)
     with pytest.raises(typer.Exit):
+        exit_if_run_failed(
+            "in_valid_command", _exit=False, capture_output=True, shell=True
+        )
+    with pytest.raises(FileNotFoundError):
         exit_if_run_failed("in_valid_command", _exit=False, capture_output=True)
     with pytest.raises(NotImplementedError):
 
