@@ -1070,11 +1070,16 @@ class LintCode(DryRun):
             ps = args.split() if isinstance(args, str) else [str(i) for i in args]
             if len(ps) == 1:
                 paths = ps[0]
-                if paths != "." and paths.endswith(".") and not Path(paths).exists():
-                    for ft in ("py", "html"):
-                        name = paths + ft
-                        if Path(name).exists():
-                            paths = name
+                if paths != "." and not (p := Path(paths)).suffix and not p.exists():
+                    # e.g.:
+                    # stem -> stem.py
+                    # me. -> me.py
+                    if paths.endswith("."):
+                        p = p.with_name(paths[:-1])
+                    for suffix in (".py", ".html"):
+                        p = p.with_suffix(suffix)
+                        if p.exists():
+                            paths = p.name
                             break
             else:
                 paths = " ".join(ps)
