@@ -4,6 +4,7 @@ import contextlib
 import functools
 import importlib.metadata as importlib_metadata
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -100,6 +101,11 @@ def is_emoji(char: str) -> bool:
     if re.match(r"[\w\d\s]", char):
         return False
     return not "\u4e00" <= char <= "\u9fff"  # Chinese character
+
+
+@functools.cache
+def is_windows() -> bool:
+    return platform.system() == "Windows"
 
 
 def yellow_warn(msg: str) -> None:
@@ -1076,11 +1082,12 @@ class LintCode(DryRun):
             if tool == ToolOption.default:
                 tool = Project.get_manage_tool() or ""
             if tool:
-                prefix = (
-                    bin_dir
-                    if tool == "uv" and Path(bin_dir := ".venv/bin/").exists()
-                    else (tool + " run ")
-                )
+                prefix = tool + " run "
+                if tool == "uv":
+                    if is_windows():
+                        prefix += "--no-sync "
+                    elif Path(bin_dir := ".venv/bin/").exists():
+                        prefix = bin_dir
         if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
         cmd += lint_them.format(prefix, paths, *tools)
