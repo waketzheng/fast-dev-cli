@@ -1,5 +1,6 @@
 import shutil
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -8,8 +9,9 @@ from asynctor import Shell
 from asynctor.compat import chdir
 
 __all__ = (
-    "mock_sys_argv",
     "capture_stdout",
+    "mock_sys_argv",
+    "prepare_poetry_project",
     "temp_file",
 )
 
@@ -51,7 +53,7 @@ def temp_file(name: str, text=""):
 
 
 @contextmanager
-def prepare_poetry_project(tmp_path: Path):
+def prepare_poetry_project(tmp_path: Path) -> Generator[str]:
     py = "{}.{}".format(*sys.version_info)
     poetry = "poetry"
     if shutil.which(poetry) is None:
@@ -64,4 +66,4 @@ def prepare_poetry_project(tmp_path: Path):
                 f"{poetry} config --local virtualenvs.in-project true"
             )
             Shell.run_by_subprocess(f"{poetry} env use {py}")
-            yield
+            yield poetry

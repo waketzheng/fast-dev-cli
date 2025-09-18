@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -18,7 +16,7 @@ from fast_dev_cli.cli import (
     upgrade,
 )
 
-from .utils import chdir
+from .utils import chdir, prepare_poetry_project
 
 
 def test_parse_value():
@@ -85,28 +83,26 @@ uvicorn = {version = "^0.23.2", platform = "linux", optional = true}
 
 def test_dev_flag(tmp_path: Path):
     assert UpgradeDependencies.should_with_dev() is False
-    with chdir(tmp_path):
-        project = tmp_path / "project"
-        run_and_echo(f"poetry new {project.name}")
-        with chdir(project):
-            if sys.version_info < (3, 13):
-                p = Path("pyproject.toml")
-                content = p.read_text()
-                pattern = r'(python = "\^3)\.\d+"'
-                new_content = re.sub(pattern, r'\1.9"', content)
-                p.write_text(new_content)
+    with prepare_poetry_project(tmp_path) as poetry:
+        is_newer_poetry = (
+            capture_cmd_output(f"{poetry} --version") >= "Poetry (version 2.2.0)"
+        )
+        assert not UpgradeDependencies.should_with_dev()
+        run_and_echo(f"{poetry} add pytest")
+        assert not UpgradeDependencies.should_with_dev()
+        run_and_echo(f"{poetry} add --group=dev typer")
+        if is_newer_poetry:
             assert not UpgradeDependencies.should_with_dev()
-            run_and_echo("poetry add pytest")
-            assert not UpgradeDependencies.should_with_dev()
-            run_and_echo("poetry add --group=dev typer")
+        else:
+            toml_file = Path(TOML_FILE)
             assert UpgradeDependencies.should_with_dev()
-            text = project.joinpath(TOML_FILE).read_text()
+            text = toml_file.read_text()
             DevFlag = UpgradeDependencies.DevFlag
             if DevFlag.new in text:
                 new_text = text.replace(DevFlag.new, DevFlag.old)
             else:
                 new_text = text.replace(DevFlag.old, DevFlag.new)
-            project.joinpath(TOML_FILE).write_text(new_text)
+            toml_file.write_text(new_text)
             assert UpgradeDependencies.should_with_dev()
 
 
