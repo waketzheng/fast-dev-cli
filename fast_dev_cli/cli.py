@@ -1122,7 +1122,12 @@ class LintCode(DryRun):
             ps = args.split() if isinstance(args, str) else [str(i) for i in args]
             if len(ps) == 1:
                 paths = ps[0]
-                if paths != "." and not (p := Path(paths)).suffix and not p.exists():
+                if (
+                    paths != "."
+                    # `Path("a.").suffix` got "." in py3.14 and got "" with py<3.14
+                    and (p := Path(paths)).suffix in ("", ".")
+                    and not p.exists()
+                ):
                     # e.g.:
                     # stem -> stem.py
                     # me. -> me.py
