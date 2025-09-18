@@ -10,6 +10,7 @@ import typer
 import fast_dev_cli
 from fast_dev_cli.cli import (
     TOML_FILE,
+    Project,
     UpgradeDependencies,
     capture_cmd_output,
     run_and_echo,
@@ -84,9 +85,7 @@ uvicorn = {version = "^0.23.2", platform = "linux", optional = true}
 def test_dev_flag(tmp_path: Path):
     assert UpgradeDependencies.should_with_dev() is False
     with prepare_poetry_project(tmp_path) as poetry:
-        is_newer_poetry = (
-            capture_cmd_output(f"{poetry} --version") >= "Poetry (version 2.2.0)"
-        )
+        is_newer_poetry = Project.get_poetry_version(poetry) >= "2.2.0"
         assert not UpgradeDependencies.should_with_dev()
         run_and_echo(f"{poetry} add pytest")
         assert not UpgradeDependencies.should_with_dev()

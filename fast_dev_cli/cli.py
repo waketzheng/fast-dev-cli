@@ -600,6 +600,19 @@ class Project:
         return 'build-backend = "poetry' in text
 
     @staticmethod
+    def get_poetry_version(command: str = "poetry") -> str:
+        pattern = r"(\d+\.\d+\.\d+)"
+        text = capture_cmd_output(f"{command} --version")
+        for expr in (
+            rf"Poetry \(version {pattern}\)",
+            rf"Poetry.*version.*{pattern}.*\)",
+            rf"{pattern}",
+        ):
+            if m := re.search(expr, text):
+                return m.group(1)
+        return ""
+
+    @staticmethod
     def work_dir(
         name: str, parent: Path, depth: int, be_file: bool = False
     ) -> Path | None:

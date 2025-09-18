@@ -10,6 +10,7 @@ from fast_dev_cli.cli import (
     TOML_FILE,
     BumpUp,
     ParseError,
+    Project,
     poetry_module_name,
     run_and_echo,
 )
@@ -93,3 +94,9 @@ def test_version_plugin_include_defined(mark, tmp_path: Path) -> None:
         assert BumpUp(part="patch", commit=False, dry=True).gen() == command
         run_and_echo("poetry run fast bump patch")
         assert init_file.read_text() == '__version__ = "0.0.2"\n'
+
+
+@pytest.mark.parametrize("command", ["poetry", "uvx poetry"])
+def test_poetry_version(command) -> None:
+    v = Project.get_poetry_version(command)
+    assert v >= "2.2.0"
