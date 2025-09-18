@@ -230,16 +230,16 @@ version = "0"
         another_dir = project_dir / "hello"
         another_dir.mkdir()
         shutil.copy(init_file, another_dir / init_file.name)
-        assert BumpUp.parse_filename() == "helloworld/__init__.py"
+        assert BumpUp.parse_filename() == os.path.join("helloworld", "__init__.py")
         toml_file.write_text(pyproject.strip() + '\npackages=[{include="hello"}]')
-        assert BumpUp.parse_filename() == "hello/__init__.py"
+        assert BumpUp.parse_filename() == os.path.join("hello", "__init__.py")
         toml_file.write_text(
             pyproject.strip() + '\npackages=[{include="hello",from="py"}]'
         )
         from_dir = project_dir / "py"
         from_dir.mkdir()
         shutil.move(another_dir, from_dir)
-        assert BumpUp.parse_filename() == "py/hello/__init__.py"
+        assert BumpUp.parse_filename() == os.path.join("py", "hello", "__init__.py")
 
 
 PDM_DYNAMIC_VERSION = """
@@ -269,7 +269,7 @@ def test_pdm_project(dynamic_pdm_project):
     init_file = dynamic_pdm_project / "__init__.py"
     init_file.write_text('__version__ = "0.2.0"')
     out = capture_cmd_output("fast bump patch")
-    assert str(init_file) in out
+    assert init_file.as_posix() in out
     assert "0.2.1" in init_file.read_text()
     run_and_echo("git init")
     shutil.copy(Path(__file__).parent.parent / ".gitignore", ".")
@@ -291,7 +291,7 @@ def test_installed_version_is_0_0_0(dynamic_pdm_project):
     capture_cmd_output("pdm install")
     version_file.write_text('__version__ = "0.3.0"')
     out = capture_cmd_output("fast bump patch")
-    assert str(version_file) in out
+    assert version_file.as_posix() in out
     assert "0.3.1" in version_file.read_text()
 
 
@@ -332,7 +332,7 @@ __description__ = "A next generation HTTP client, for Python 3."
 __version__ = "0.28.1"
         """)
         out = capture_cmd_output("fast bump patch")
-        assert str(version_file) in out
+        assert version_file.as_posix() in out
         assert "0.28.2" in version_file.read_text()
 
 
@@ -365,7 +365,7 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
         """)
         out = capture_cmd_output("fast bump patch")
-        assert str(version_file) in out
+        assert version_file.as_posix() in out
         assert "0.3.1" in version_file.read_text()
 
 
@@ -400,5 +400,5 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
         """)
         out = capture_cmd_output("fast bump patch")
-        assert str(version_file) in out
+        assert version_file.as_posix() in out
         assert "0.3.1" in version_file.read_text()

@@ -1292,6 +1292,8 @@ def test(dry: bool, ignore_script: bool = False) -> None:
         test_script := _should_run_test_script(script_dir)
     ):
         cmd = f"{os.path.relpath(test_script, root)}"
+        if test_script.suffix == ".py":
+            cmd = "python " + cmd
         if cwd != root:
             cmd = f"cd {root} && " + cmd
     else:
@@ -1382,8 +1384,11 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
     try:
         rc = run_and_echo(cmd, verbose=True, dry=_ensure_bool(dry))
     except FileNotFoundError as e:
-        if e.filename == cmd.split()[0]:
-            echo(f"Command not found: {e.filename}")
+        command = cmd.split()[0]
+        if e.filename == command or (
+            e.filename is None and "系统找不到指定文件" in str(e)
+        ):
+            echo(f"Command not found: {command}")
             raise Exit(1) from None
         raise e
     else:
