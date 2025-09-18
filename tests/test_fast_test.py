@@ -95,7 +95,7 @@ def test_run_script_in_sub_directory(mocker: MockerFixture, capsys, script_path)
     mocker.patch("pathlib.Path.cwd", return_value=script_path.parent)
     unitcase(dry=True)
     out = capsys.readouterr().out
-    assert f"cd {script_path.parent.parent} && {TEST_SCRIPT}" in out
+    assert f"cd {script_path.parent.parent} && python {TEST_SCRIPT}" in out
 
 
 def test_fast_test(mocker, capsys):
