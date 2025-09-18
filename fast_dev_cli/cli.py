@@ -173,7 +173,7 @@ class Shell:
         r = self._run()
         if raises and r.returncode != 0:
             raise ShellCommandError(r.stderr)
-        return r.stdout.strip() or r.stderr
+        return (r.stdout or r.stderr or "").strip()
 
     def finish(
         self, env: dict[str, str] | None = None, _exit: bool = False, dry=False
@@ -1291,7 +1291,7 @@ def test(dry: bool, ignore_script: bool = False) -> None:
     if not _ensure_bool(ignore_script) and (
         test_script := _should_run_test_script(script_dir)
     ):
-        cmd = f"{os.path.relpath(test_script, root)}"
+        cmd = test_script.relative_to(root).as_posix()
         if test_script.suffix == ".py":
             cmd = "python " + cmd
         if cwd != root:
@@ -1386,7 +1386,7 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
     except FileNotFoundError as e:
         command = cmd.split()[0]
         if e.filename == command or (
-            e.filename is None and "系统找不到指定文件" in str(e)
+            e.filename is None and "系统找不到指定的文件" in str(e)
         ):
             echo(f"Command not found: {command}")
             raise Exit(1) from None
