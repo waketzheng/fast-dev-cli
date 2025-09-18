@@ -2,7 +2,18 @@
 
 ## 0.18
 
-### [0.18.5]**(Unreleased)**
+### [0.18.6]**(Unreleased)**
+
+### [0.18.5](../../releases/tag/v0.18.5) - 2025-09-18
+
+#### Added
+- Add `--no-sync` to `uv run` at Windows
+
+#### Changed
+- Use `pdm install --frozen` instead of `pdm sync` as it does not require the pdm.lock
+
+#### Fixed
+- Fix lint error at Windows
 
 ### [0.18.4](../../releases/tag/v0.18.4) - 2025-09-16
 
