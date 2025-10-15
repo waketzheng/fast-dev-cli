@@ -109,6 +109,8 @@ def is_windows() -> bool:
 
 
 def yellow_warn(msg: str) -> None:
+    if is_windows() and (encoding := sys.stdout.encoding) != "utf-8":
+        msg = msg.encode(encoding, errors="ignore").decode(encoding)
     secho(msg, fg="yellow")
 
 
@@ -219,7 +221,7 @@ def exit_if_run_failed(
 
 
 def _parse_version(line: str, pattern: re.Pattern[str]) -> str:
-    return pattern.sub("", line).split("#")[0].strip(" '\"")
+    return pattern.sub("", line).split("#")[0].strip().strip(" '\"")
 
 
 def read_version_from_file(
@@ -1003,7 +1005,11 @@ class LintCode(DryRun):
 
     @staticmethod
     def check_lint_tool_installed() -> bool:
-        return check_call("ruff --version")
+        try:
+            return check_call("ruff --version")
+        except FileNotFoundError:
+            # Windows may raise FileNotFoundError when ruff not installed
+            return False
 
     @staticmethod
     def missing_mypy_exec() -> bool:
