@@ -183,7 +183,7 @@ def test_dmypy_run(monkeypatch):
 def test_lint_with_prefix(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     with capture_stdout() as stream:
-        make_style(["."], check_only=False, dry=True)
+        make_style(["."], check_only=False, dry=True, prefix=True)
     assert "pdm run" in stream.getvalue()
 
 
