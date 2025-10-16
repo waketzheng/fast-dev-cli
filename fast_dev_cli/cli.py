@@ -57,7 +57,7 @@ if TYPE_CHECKING:
 cli = typer.Typer(no_args_is_help=True)
 DryOption = Option(False, "--dry", help="Only print, not really run shell command")
 TOML_FILE = "pyproject.toml"
-ToolName = Literal["poetry", "pdm", "uv"]
+ToolName = Literal["uv", "pdm", "poetry"]
 ToolOption = Option(
     "auto", "--tool", help="Explicit declare manage tool (default to auto detect)"
 )
@@ -658,28 +658,64 @@ class Project:
             text = cls.load_toml_text()
         except EnvError:
             return None
+        backend = ""
+        skip_uv = load_bool("FASTDEVCLI_SKIP_UV")
         with contextlib.suppress(KeyError, tomllib.TOMLDecodeError):
             doc = tomllib.loads(text)
             backend = doc["build-system"]["build-backend"]
-            if "poetry" in backend:
-                cls._tool = "poetry"
-                return cls._tool
+            if skip_uv:
+                for t in ("pdm", "poetry"):
+                    if t in backend:
+                        cls._tool = t
+                        return cls._tool
+        work_dir: Path | None = None
+        uv_lock_exists: bool | None = None
+        if skip_uv:
+            for name in ("pdm", "poetry"):
+                if f"[tool.{name}]" in text:
+                    cls._tool = cast(ToolName, name)
+                    return cls._tool
             work_dir = cls.get_work_dir(allow_cwd=True)
-            uv_lock_exists = Path(work_dir, "uv.lock").exists()
-            if "pdm" in backend:
+            for name in ("pdm", "poetry"):
+                if Path(work_dir, f"{name}.lock").exists():
+                    cls._tool = cast(ToolName, name)
+                    return cls._tool
+            if uv_lock_exists := Path(work_dir, "uv.lock").exists():
+                # Use pdm when uv is not available for uv managed project
                 cls._tool = "pdm"
-                if not Path(work_dir, "pdm.lock").exists() and (
-                    uv_lock_exists or "[tool.uv]" in text
-                ):
-                    cls._tool = "uv"
                 return cls._tool
-            elif uv_lock_exists:
-                cls._tool = "uv"
+            return None
+        if work_dir is None:
+            work_dir = cls.get_work_dir(allow_cwd=True)
+        if uv_lock_exists is None:
+            uv_lock_exists = Path(work_dir, "uv.lock").exists()
+        if uv_lock_exists:
+            cls._tool = "uv"
+            return cls._tool
+        pdm_lock_exists = Path(work_dir, "pdm.lock").exists()
+        poetry_lock_exists = Path(work_dir, "poetry.lock").exists()
+        match pdm_lock_exists + poetry_lock_exists:
+            case 1:
+                cls._tool = "pdm" if pdm_lock_exists else "poetry"
                 return cls._tool
-        for name in get_args(ToolName):
-            if f"[tool.{name}]" in text:
-                cls._tool = cast(ToolName, name)
-                return cls._tool
+            case _ as x:
+                if backend:
+                    for t in ("pdm", "poetry"):
+                        if t in backend:
+                            cls._tool = cast(ToolName, t)
+                            return cls._tool
+                for name in ("pdm", "poetry"):
+                    if f"[tool.{name}]" in text:
+                        cls._tool = cast(ToolName, name)
+                        return cls._tool
+                if x == 2:
+                    cls._tool = (
+                        "poetry" if load_bool("FASTDEVCLI_PREFER_POETRY") else "pdm"
+                    )
+                    return cls._tool
+        if "[tool.uv]" in text or load_bool("FASTDEVCLI_PREFER_uv"):
+            cls._tool = "uv"
+            return cls._tool
         # Poetry 2.0 default to not include the '[tool.poetry]' section
         if cls.is_poetry_v2(text):
             cls._tool = "poetry"
