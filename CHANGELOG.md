@@ -2,7 +2,10 @@
 
 ## 0.18
 
-### [0.18.6]**(Unreleased)**
+### [0.18.6](../../releases/tag/v0.18.6) - 2025-10-16
+
+#### Changed
+- `fast lint` will not add prefix when tool is auto and virtual environment activated
 
 ### [0.18.5](../../releases/tag/v0.18.5) - 2025-09-18
 
