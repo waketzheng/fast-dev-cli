@@ -18,6 +18,11 @@ Python3.9及其以上版本
 ```bash
 pipx install fastdevcli-slim
 ```
+或
+```
+uv tool install fastdevcli-slim
+```
+
 *只依赖typer-slim*
 
 - 项目中安装

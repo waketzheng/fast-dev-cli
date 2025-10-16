@@ -1076,7 +1076,7 @@ class LintCode(DryRun):
         if not should_run_by_tool:
             if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(
                 ".local/bin"
-            ):
+            ):  # Virtual environment activated and fast-dev-cli is installed in it
                 if not ruff_exists:
                     should_run_by_tool = True
                     command = "pipx install ruff"
@@ -1095,6 +1095,14 @@ class LintCode(DryRun):
                             "You may need to run the following command"
                             f" to install lint tools:\n\n  {command}\n"
                         )
+            elif tool == ToolOption.default:
+                root = Project.get_work_dir(allow_cwd=True)
+                if py := shutil.which("python"):
+                    try:
+                        Path(py).relative_to(root)
+                    except ValueError:
+                        # Virtual environment not activated
+                        should_run_by_tool = True
             else:
                 should_run_by_tool = True
         if should_run_by_tool and tool:
