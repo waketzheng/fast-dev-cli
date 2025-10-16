@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Python project development tool."
 authors = [{name = "Waket Zheng", email = "waketzheng@gmail.com>"}]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -116,7 +115,7 @@ omit = [
 
 [tool.mypy]
 pretty = true
-python_version = "3.9"
+python_version = "3.10"
 ignore_missing_imports = true
 check_untyped_defs = true
 warn_unused_ignores = true

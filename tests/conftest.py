@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import pytest
@@ -59,6 +58,5 @@ def tmp_work_dir(tmp_path):
 @pytest.fixture
 def tmp_poetry_project(tmp_work_dir: Path):
     Path(TOML_FILE).write_text(TOML_CONTENT)
-    if sys.version_info >= (3, 10):
-        run_and_echo("poetry config --local virtualenvs.in-project true")
+    run_and_echo("poetry config --local virtualenvs.in-project true")
     yield tmp_work_dir

@@ -1282,7 +1282,7 @@ class Sync(DryRun):
                 ensure_pip = ""
                 if not UpgradeDependencies.should_with_dev():
                     export_cmd = export_cmd.replace(" --with=dev", "")
-                if extras and isinstance(extras, (str, list)):
+                if extras and isinstance(extras, str | list):
                     export_cmd += f" --{extras=}".replace("'", '"')
             elif check_call(prefix + "python -m pip --version"):
                 ensure_pip = ""
