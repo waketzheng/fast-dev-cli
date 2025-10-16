@@ -2,6 +2,11 @@
 
 ## 0.19
 
+### [0.19.1](../../releases/tag/v0.19.1) - 2025-10-16
+
+#### Changed
+- refactor: prefer to choose 'uv' for `fast deps`
+
 ### [0.19.0](../../releases/tag/v0.19.0) - 2025-10-16
 
 #### Changed
