@@ -2,6 +2,11 @@
 
 ## 0.19
 
+### [0.19.2]*(Unrelease)*
+
+#### Changed
+- refactor: use `X | None` instead of `Optional[X]`
+
 ### [0.19.1](../../releases/tag/v0.19.1) - 2025-10-16
 
 #### Changed
