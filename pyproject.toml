@@ -55,7 +55,7 @@ all = [
 [dependency-groups]
 dev = [
     "twine>=6.1.0",
-    "asynctor>=0.8.6",
+    "asynctor>=0.10.0",
 ]
 
 [tool.pdm]
