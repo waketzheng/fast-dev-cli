@@ -382,7 +382,36 @@ class BumpUp(DryRun):
             return is_emoji(first_char)
 
     @staticmethod
+    def parse_dynamic_version(
+        toml_text: str,
+        context: dict,
+        work_dir: Path | None = None,
+    ) -> str | None:
+        if work_dir is None:
+            work_dir = Project.get_work_dir()
+        for tool in ("pdm", "hatch"):
+            with contextlib.suppress(KeyError):
+                version_path = cast(str, context["tool"][tool]["version"]["path"])
+                if (
+                    Path(version_path).exists()
+                    or work_dir.joinpath(version_path).exists()
+                ):
+                    return version_path
+        # version = { source = "file", path = "fast_dev_cli/__init__.py" }
+        v_key = "version = "
+        p_key = 'path = "'
+        for line in toml_text.splitlines():
+            if not line.startswith(v_key):
+                continue
+            if p_key in (value := line.split(v_key, 1)[-1].split("#")[0]):
+                filename = value.split(p_key, 1)[-1].split('"')[0]
+                if work_dir.joinpath(filename).exists():
+                    return filename
+        return None
+
+    @classmethod
     def parse_filename(
+        cls,
         toml_text: str | None = None,
         work_dir: Path | None = None,
         package_name: str | None = None,
@@ -405,74 +434,55 @@ class BumpUp(DryRun):
             try:
                 version_value = context["tool"]["poetry"]["version"]
             except KeyError:
-                if not Project.manage_by_poetry():
-                    if work_dir is None:
-                        work_dir = Project.get_work_dir()
-                    for tool in ("pdm", "hatch"):
-                        with contextlib.suppress(KeyError):
-                            version_path = cast(
-                                str, context["tool"][tool]["version"]["path"]
-                            )
-                            if (
-                                Path(version_path).exists()
-                                or work_dir.joinpath(version_path).exists()
-                            ):
-                                return version_path
-                    # version = { source = "file", path = "fast_dev_cli/__init__.py" }
-                    v_key = "version = "
-                    p_key = 'path = "'
-                    for line in toml_text.splitlines():
-                        if not line.startswith(v_key):
-                            continue
-                        if p_key in (value := line.split(v_key, 1)[-1].split("#")[0]):
-                            filename = value.split(p_key, 1)[-1].split('"')[0]
-                            if work_dir.joinpath(filename).exists():
-                                return filename
+                if not Project.manage_by_poetry() and (
+                    filename := cls.parse_dynamic_version(toml_text, context, work_dir)
+                ):
+                    return filename
             else:
                 by_version_plugin = version_value in ("0", "0.0.0", "init")
         if by_version_plugin:
-            try:
-                package_item = context["tool"]["poetry"]["packages"]
-            except KeyError:
-                try:
-                    project_name = context["project"]["name"]
-                except KeyError:
-                    packages = []
-                else:
-                    packages = [(poetry_module_name(project_name), "")]
-            else:
-                packages = [
-                    (j, i.get("from", ""))
-                    for i in package_item
-                    if (j := i.get("include"))
-                ]
-            # In case of managed by `poetry-plugin-version`
-            cwd = Path.cwd()
-            pattern = re.compile(r"__version__\s*=\s*['\"]")
-            ds: list[Path] = []
-            if package_name is not None:
-                packages.insert(0, (package_name, ""))
-            for package_name, source_dir in packages:
-                ds.append(cwd / package_name)
-                ds.append(cwd / "src" / package_name)
-                if source_dir and source_dir != "src":
-                    ds.append(cwd / source_dir / package_name)
-            module_name = poetry_module_name(cwd.name)
-            ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
-            for d in ds:
-                init_file = d / "__init__.py"
-                if (
-                    init_file.exists() and pattern.search(init_file.read_text("utf8"))
-                ) or (
-                    (init_file := init_file.with_name("__version__.py")).exists()
-                    and pattern.search(init_file.read_text("utf8"))
-                ):
-                    break
-            else:
-                raise ParseError("Version file not found! Where are you now?")
-            return os.path.relpath(init_file, cwd)
+            return cls.parse_plugin_version(context, package_name)
 
         return TOML_FILE
+
+    @staticmethod
+    def parse_plugin_version(context: dict, package_name: str | None) -> str:
+        try:
+            package_item = context["tool"]["poetry"]["packages"]
+        except KeyError:
+            try:
+                project_name = context["project"]["name"]
+            except KeyError:
+                packages = []
+            else:
+                packages = [(poetry_module_name(project_name), "")]
+        else:
+            packages = [
+                (j, i.get("from", "")) for i in package_item if (j := i.get("include"))
+            ]
+        # In case of managed by `poetry-plugin-version`
+        cwd = Path.cwd()
+        pattern = re.compile(r"__version__\s*=\s*['\"]")
+        ds: list[Path] = []
+        if package_name is not None:
+            packages.insert(0, (package_name, ""))
+        for package_name, source_dir in packages:
+            ds.append(cwd / package_name)
+            ds.append(cwd / "src" / package_name)
+            if source_dir and source_dir != "src":
+                ds.append(cwd / source_dir / package_name)
+        module_name = poetry_module_name(cwd.name)
+        ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
+        for d in ds:
+            init_file = d / "__init__.py"
+            if (init_file.exists() and pattern.search(init_file.read_text("utf8"))) or (
+                (init_file := init_file.with_name("__version__.py")).exists()
+                and pattern.search(init_file.read_text("utf8"))
+            ):
+                break
+        else:
+            raise ParseError("Version file not found! Where are you now?")
+        return os.path.relpath(init_file, cwd)
 
     def get_part(self, s: str) -> str:
         choices: dict[str, str] = {}
