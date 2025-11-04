@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 
 import pytest
@@ -30,6 +31,16 @@ build-backend = "poetry.core.masonry.api"
 """
 
 
+@functools.cache
+def is_pip_installed() -> bool:
+    try:
+        import pip  # NOQA
+    except ImportError:
+        return False
+    else:
+        return True
+
+
 def test_sync_not_in_venv(mocker, capsys):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     test_dir = Path(__file__).parent
@@ -44,10 +55,15 @@ def test_sync_not_in_venv(mocker, capsys):
     mocker.patch(
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
     )
-    assert (
-        Sync("req.txt", "", True, dry=True).gen()
-        == "pdm export --without-hashes --with=dev -o req.txt && pdm run python -m pip install -r req.txt"
-    )
+    pdm_export = "pdm export --without-hashes --with=dev -o req.txt"
+    installing = "pdm run python -m pip install -r req.txt"
+    if not is_pip_installed():
+        installing = (
+            "pdm run python -m ensurepip && pdm run python -m pip install -U pip && "
+            + installing
+        )
+    expected = f"{pdm_export} && {installing}"
+    assert Sync("req.txt", "", True, dry=True).gen() == expected
 
 
 def test_sync(mocker):
@@ -62,10 +78,12 @@ def test_sync(mocker):
     mocker.patch(
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
     )
-    assert (
-        Sync("req.txt", "", True, dry=True).gen()
-        == "pdm export --without-hashes --with=dev -o req.txt && python -m pip install -r req.txt"
-    )
+    pdm_export = "pdm export --without-hashes --with=dev -o req.txt"
+    if is_pip_installed():
+        expected = f"{pdm_export} && python -m pip install -r req.txt"
+    else:
+        expected = f"{pdm_export} && python -m ensurepip && python -m pip install -U pip && python -m pip install -r req.txt"
+    assert Sync("req.txt", "", True, dry=True).gen() == expected
 
 
 UV_TOML_EXAMPLE = """
