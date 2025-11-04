@@ -762,7 +762,11 @@ class Project:
                     cmd += " --only=main"
             return cmd
         elif cls.get_manage_tool(cache=True) == "uv":
-            return "uv sync --inexact" + " --no-dev" * prod
+            cmd = "uv sync --inexact" + " --no-dev" * prod
+            if doc is None:
+                doc = tomllib.loads(cls.load_toml_text())
+            if doc.get("tool", {}).get("pdm", {}).get("distribution") is not False:
+                cmd += " && uv pip install -e ."
         return ""
 
     @classmethod
