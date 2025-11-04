@@ -518,7 +518,11 @@ class BumpUp(DryRun):
                 cmd += " && git push && git push --tags && git log -1"
         else:
             cmd += " --allow-dirty"
-        if should_sync and not self._no_sync and (sync := Project.get_sync_command()):
+        if (
+            should_sync
+            and not self._no_sync
+            and (sync := Project.get_sync_command(only_me=True))
+        ):
             cmd = f"{sync} && " + cmd
         return cmd
 
@@ -745,9 +749,12 @@ class Project:
         return True
 
     @classmethod
-    def get_sync_command(cls, prod: bool = True, doc: dict | None = None) -> str:
+    def get_sync_command(
+        cls, prod: bool = True, doc: dict | None = None, only_me: bool = False
+    ) -> str:
+        pdm_i = "pdm install --frozen" + " --prod" * prod
         if cls.is_pdm_project():
-            return "pdm install --frozen" + " --prod" * prod
+            return pdm_i
         elif cls.manage_by_poetry(cache=True):
             cmd = "poetry install"
             if prod:
@@ -762,11 +769,17 @@ class Project:
                     cmd += " --only=main"
             return cmd
         elif cls.get_manage_tool(cache=True) == "uv":
-            cmd = "uv sync --inexact" + " --no-dev" * prod
+            install_me = "uv pip install -e ."
             if doc is None:
                 doc = tomllib.loads(cls.load_toml_text())
-            if doc.get("tool", {}).get("pdm", {}).get("distribution") is not False:
-                cmd += " && uv pip install -e ."
+            is_distribution = (
+                doc.get("tool", {}).get("pdm", {}).get("distribution") is not False
+            )
+            if only_me:
+                return install_me if is_distribution else pdm_i
+            cmd = "uv sync --inexact" + " --no-dev" * prod
+            if is_distribution:
+                cmd += f" && {install_me}"
         return ""
 
     @classmethod
