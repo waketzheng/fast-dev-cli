@@ -6,11 +6,19 @@ name: ci
 on:
   push:
     branches: [ "main", "dev" ]
+    paths-ignore:
+      - "*.md"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - "*.md"
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.event.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   test:
