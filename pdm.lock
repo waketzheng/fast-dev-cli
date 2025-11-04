@@ -29,7 +29,7 @@ files = [
 
 [[package]]
 name = "asynctor"
-version = "0.10.0"
+version = "0.10.1"
 requires_python = ">=3.10"
 summary = "Async functions to compare with anyio and asyncio, and toolkit to read excel with async/await."
 groups = ["dev"]
@@ -38,8 +38,8 @@ dependencies = [
     "eval-type-backport<1.0.0,>=0.2.2; python_version < \"3.10\"",
 ]
 files = [
-    {file = "asynctor-0.10.0-py3-none-any.whl", hash = "sha256:a7a6cc866d68850c486f27750b1cc24180af5046836d878efc698fab874975f0"},
-    {file = "asynctor-0.10.0.tar.gz", hash = "sha256:42f10397401efc3ff9d47b4c276a304fee8fe00d0daef9466d98ec0103d1052d"},
+    {file = "asynctor-0.10.1-py3-none-any.whl", hash = "sha256:d37304253f325ada318e13d701bc7923c5b3e9b6c49f2f2afb3cf59f07b4e8af"},
+    {file = "asynctor-0.10.1.tar.gz", hash = "sha256:331b9ba6143c8d8cda5da676d3d58a9b2a300b3b5e7194375c811b09a6883961"},
 ]
 
 [[package]]
@@ -73,13 +73,13 @@ files = [
 
 [[package]]
 name = "bumpversion2"
-version = "1.4.4"
-requires_python = ">=3.9"
+version = "1.5.1"
+requires_python = ">=3.10"
 summary = "Make it easy to bump version by command line."
 groups = ["all", "dev", "standard"]
 files = [
-    {file = "bumpversion2-1.4.4-py3-none-any.whl", hash = "sha256:6307aacc997568354dc3237b95b23adbdde9311aa8fdae1cc68465606dd7c17d"},
-    {file = "bumpversion2-1.4.4.tar.gz", hash = "sha256:e6a9cabb189525def6015d55e0aba92390bb4517495c257b7ec3e56621078238"},
+    {file = "bumpversion2-1.5.1-py3-none-any.whl", hash = "sha256:7e1f0fc27252b524991615aacaebbb39c6ebeb966e9dad5e37637ec478fa7628"},
+    {file = "bumpversion2-1.5.1.tar.gz", hash = "sha256:df7c29fc55cffae7405809424fa479e8bdf625c5b78edbf36e0a4f6512b8842c"},
 ]
 
 [[package]]
@@ -289,7 +289,7 @@ version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
 groups = ["default", "all", "dev", "standard"]
-marker = "sys_platform == \"win32\" or platform_system == \"Windows\""
+marker = "platform_system == \"Windows\" or sys_platform == \"win32\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
