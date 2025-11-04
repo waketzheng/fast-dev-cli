@@ -6,6 +6,7 @@
 
 #### Changed
 - refactor: use `X | None` instead of `Optional[X]`
+- refactor: prefer to use `uv pip` instead of `uv sync` when bump
 
 ### [0.19.1](../../releases/tag/v0.19.1) - 2025-10-16
 

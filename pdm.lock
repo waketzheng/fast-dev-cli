@@ -29,7 +29,7 @@ files = [
 
 [[package]]
 name = "asynctor"
-version = "0.10.1"
+version = "0.10.2"
 requires_python = ">=3.10"
 summary = "Async functions to compare with anyio and asyncio, and toolkit to read excel with async/await."
 groups = ["dev"]
@@ -38,8 +38,8 @@ dependencies = [
     "eval-type-backport<1.0.0,>=0.2.2; python_version < \"3.10\"",
 ]
 files = [
-    {file = "asynctor-0.10.1-py3-none-any.whl", hash = "sha256:d37304253f325ada318e13d701bc7923c5b3e9b6c49f2f2afb3cf59f07b4e8af"},
-    {file = "asynctor-0.10.1.tar.gz", hash = "sha256:331b9ba6143c8d8cda5da676d3d58a9b2a300b3b5e7194375c811b09a6883961"},
+    {file = "asynctor-0.10.2-py3-none-any.whl", hash = "sha256:7593fcd84d647fd9a996a628336428b42b53aa55bbd9d0eece9ab310e044eeeb"},
+    {file = "asynctor-0.10.2.tar.gz", hash = "sha256:ffb7c8ffe3bae0d4cf281332ce51e3a9e9288530fff844f2ed32afaf09ca8553"},
 ]
 
 [[package]]
