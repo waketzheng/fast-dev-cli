@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from fast_dev_cli.cli import Exit, capture_cmd_output, run_by_subprocess
@@ -15,6 +17,8 @@ def test_exec_dry():
     )
     assert "success" in out
     assert "failed" not in out
+    out = capture_cmd_output('fast exec "python ~/0.py" --dry')
+    assert "--> python ~/0.py" in out
 
 
 def test_exec():
@@ -29,6 +33,12 @@ def test_exec():
     )
     assert "failed" in out
     assert "success" not in out
+    out = capture_cmd_output('fast exec "ls -a ~/"')
+    assert "--> ls -a ~" in out
+    assert ".bashrc" in out
+    home = os.path.expanduser("~")
+    expected = capture_cmd_output(f"ls {home}")
+    assert not (set(expected.splitlines()) - set(out.splitlines()))
 
 
 def test_run_by_subprocess(capsys):

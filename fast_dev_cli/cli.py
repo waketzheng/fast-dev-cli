@@ -139,13 +139,24 @@ class Shell:
     @property
     def command(self) -> list[str] | str:
         command: list[str] | str = self._cmd
-        if (
-            isinstance(command, str)
-            and "shell" not in self._kw
-            and not (set(self._cmd) & {"|", ">", "&"})
-        ):
-            command = shlex.split(command)
+        if isinstance(command, str):
+            cs = shlex.split(command)
+            if "shell" not in self._kw and not (set(self._cmd) & {"|", ">", "&"}):
+                command = self.extend_user(cs)
+            elif any(i.startswith("~") for i in cs):
+                command = re.sub(r" ~", " " + os.path.expanduser("~"), command)
+        else:
+            command = self.extend_user(command)
         return command
+
+    @staticmethod
+    def extend_user(cs: list[str]) -> list[str]:
+        if cs[0] == "echo":
+            return cs
+        for i, c in enumerate(cs):
+            if c.startswith("~"):
+                cs[i] = os.path.expanduser(c)
+        return cs
 
     def _run(self) -> subprocess.CompletedProcess[str]:
         return self.run_by_subprocess(self.command, **self._kw)

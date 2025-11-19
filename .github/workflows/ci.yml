@@ -74,9 +74,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - uses: astral-sh/setup-uv@v7
       - name: Finished
-        run: |
-          pip3 install --upgrade coveralls
-          coveralls --finish
+        run: uvx coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
