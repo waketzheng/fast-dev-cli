@@ -2,7 +2,17 @@
 
 ## 0.19
 
-### [0.19.2]*(Unrelease)*
+### [0.19.4]*(Unrelease)*
+
+#### Added
+- feat: support `fast lint --up`
+
+### [0.19.3](../../releases/tag/v0.19.3) - 2025-11-19
+
+#### Added
+- feat: expanduser for `run_and_echo`
+
+### [0.19.2](../../releases/tag/v0.19.2) - 2025-11-04
 
 #### Changed
 - refactor: use `X | None` instead of `Optional[X]`

@@ -10,7 +10,7 @@
 
 ## 要求
 
-Python3.9及其以上版本
+Python3.10及其以上版本
 
 ## 安装
 
@@ -29,7 +29,7 @@ uv tool install fastdevcli-slim
 ```bash
 pip install fast-dev-cli
 ```
-*会同时安装emoji、typer、ruff、mypy、pytest、coverage、bumpversion2等日常开发工具包*
+*会同时安装emoji、typer-slim、ypy、pytest、coverage、bumpversion2等日常开发工具包*
 
 ## 使用
 ### 代码格式化
@@ -79,17 +79,14 @@ fast bump <part> --commit
 ```bash
 fast test
 ```
-### 导出依赖文件，并使用pip安装所有依赖（已过时，新版pip可直接fast deps）
-- 适用于某些poetry install/pdm install/uv sync会报错的情况
+### 安装pyproject.toml里列出的依赖
 ```bash
-fast sync
+fast deps
 ```
-### 升级poetry/pdm/uv管理的所有依赖包至最新版本
-poetry update有时只会升级依赖包的小版本，如：sqlmodel==0.0.18 -> sqlmodel==0.0.19
+### 将uv.lock里的镜像源改为pypi.org（适用于开源项目）
 
-而fast upgrade则会连大版本也升级，如：python-dotenv="^0.19.2" -> python-dotenv="^1.0.1"
 ```bash
-fast upgrade
+fast pypy
 ```
 
 ### 启动fastapi调试服务（需安装fastapi-cli包）
@@ -111,10 +108,11 @@ fast dev file_with_app.py
 fast dev my_app.py --port=9000 --host=0.0.0.0
 ```
 
-### 发布软件包到pypi
+### 打印并执行shell命令
 
 ```bash
-fast upload
+fast exec "<command>"
+# 如：fast exec "python -V"
 ```
 **注：所有命令均支持`--dry`参数，即只打印命令，不实际执行**
 

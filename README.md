@@ -39,7 +39,7 @@
 
 ## Requirements
 
-Python 3.9+
+Python 3.10+
 
 ## Features
 
@@ -53,7 +53,7 @@ Python 3.9+
 ```bash
 pip install fast-dev-cli
 ```
-*Will install: fast-dev-cli emoji typer ruff mypy bumpversion2 pytest coverage*
+*Will install: fast-dev-cli emoji typer-slim mypy bumpversion2 pytest coverage*
 
 </div>
 
@@ -78,21 +78,17 @@ fast bump <part> --commit # bump version and run `git commit`
 ```bash
 fast test
 ```
-- Export requirement file and install `pip install -r `
+- Install dependencies, support pip/pdm/uv/poetry
 ```bash
-fast sync
-```
-- Upgrade main/dev dependencies to latest version (only for poetry project)
-```bash
-fast upgrade
+fast deps
 ```
 - Start a fastapi server in development mode
 ```bash
 fast dev
 ```
-- Publish to pypi
+- Change register of uv.lock to be pypi.org
 ```bash
-fast upload
+fast pypi
 ```
 *Note: all command support the `--dry` option*
 
