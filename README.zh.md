@@ -29,7 +29,7 @@ uv tool install fastdevcli-slim
 ```bash
 pip install fast-dev-cli
 ```
-*会同时安装emoji、typer-slim、ypy、pytest、coverage、bumpversion2等日常开发工具包*
+*会同时安装emoji、typer-slim、mypy、pytest、coverage、bumpversion2等日常开发工具包*
 
 ## 使用
 ### 代码格式化
@@ -83,10 +83,14 @@ fast test
 ```bash
 fast deps
 ```
-### 将uv.lock里的镜像源改为pypi.org（适用于开源项目）
+
+### 升级poetry/pdm/uv管理的所有依赖包至最新版本
+
+poetry update有时只会升级依赖包的小版本，如：sqlmodel==0.0.18 -> sqlmodel==0.0.19
+而fast upgrade则会连大版本也升级，如：python-dotenv="^0.19.2" -> python-dotenv="^1.0.1"
 
 ```bash
-fast pypy
+fast upgrade
 ```
 
 ### 启动fastapi调试服务（需安装fastapi-cli包）
