@@ -1058,6 +1058,8 @@ class LintCode(DryRun):
         dmypy: bool = False,
         tool: str = ToolOption.default,
         prefix: bool = False,
+        up: bool = False,
+        sim: bool = True,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -1066,6 +1068,8 @@ class LintCode(DryRun):
         self._use_dmypy = dmypy
         self._tool = tool
         self._prefix = prefix
+        self._up = up
+        self._sim = sim
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -1108,6 +1112,8 @@ class LintCode(DryRun):
         use_dmypy: bool = False,
         tool: str = ToolOption.default,
         with_prefix: bool = False,
+        ruff_check_up: bool = False,
+        ruff_check_sim: bool = True,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -1117,6 +1123,10 @@ class LintCode(DryRun):
             tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):
             tools[1] = tools[1].replace(" --fix", "")
+        if ruff_check_up or load_bool("FASTDEVCLI_UP"):
+            tools[1] = tools[1].replace(",SIM", ",SIM,UP")
+        if not ruff_check_sim or load_bool("FASTDEVCLI_NO_SIM"):
+            tools[1] = tools[1].replace(",SIM", "")
         if skip_mypy or load_bool("SKIP_MYPY") or load_bool("FASTDEVCLI_NO_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
@@ -1227,6 +1237,8 @@ class LintCode(DryRun):
             self._use_dmypy,
             tool=self._tool,
             with_prefix=self._prefix,
+            ruff_check_up=self._up,
+            ruff_check_sim=self._sim,
         )
 
 
@@ -1242,6 +1254,8 @@ def lint(
     dmypy: bool = False,
     tool: str = ToolOption.default,
     prefix: bool = False,
+    up: bool = False,
+    sim: bool = True,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -1255,6 +1269,8 @@ def lint(
         dmypy=dmypy,
         tool=tool,
         prefix=prefix,
+        up=up,
+        sim=sim,
     ).run()
 
 
@@ -1265,6 +1281,8 @@ def check(
     skip_mypy: bool = False,
     dmypy: bool = False,
     tool: str = ToolOption.default,
+    up: bool = False,
+    sim: bool = True,
 ) -> None:
     LintCode(
         files,
@@ -1275,6 +1293,8 @@ def check(
         skip_mypy=skip_mypy,
         dmypy=dmypy,
         tool=tool,
+        up=up,
+        sim=sim,
     ).run()
 
 
@@ -1294,6 +1314,8 @@ def make_style(
     ),
     tool: str = ToolOption,
     dry: bool = DryOption,
+    up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
+    sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -1305,11 +1327,13 @@ def make_style(
     bandit = _ensure_bool(bandit)
     prefix = _ensure_bool(prefix)
     tool = _ensure_str(tool)
+    up = _ensure_bool(up)
+    sim = _ensure_bool(sim)
     kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
     if _ensure_bool(check_only):
-        check(files, tool=tool, **kwargs)
+        check(files, tool=tool, up=up, sim=sim, **kwargs)
     else:
-        lint(files, prefix=prefix, tool=tool, **kwargs)
+        lint(files, prefix=prefix, tool=tool, up=up, sim=sim, **kwargs)
 
 
 @cli.command(name="check")
@@ -1317,9 +1341,14 @@ def only_check(
     bandit: bool = Option(False, "--bandit", help="Run `bandit -r <package_dir>`"),
     skip_mypy: bool = Option(False, "--skip-mypy"),
     dry: bool = DryOption,
+    up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
+    sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
 ) -> None:
     """Check code style without reformat"""
-    check(dry=dry, bandit=bandit, skip_mypy=_ensure_bool(skip_mypy))
+    bandit = _ensure_bool(bandit)
+    up = _ensure_bool(up)
+    sim = _ensure_bool(sim)
+    check(dry=dry, bandit=bandit, skip_mypy=_ensure_bool(skip_mypy), up=up, sim=sim)
 
 
 class Sync(DryRun):

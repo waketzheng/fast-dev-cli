@@ -74,6 +74,43 @@ def test_check(mock_no_dmypy, monkeypatch, mocker):
     assert command4 == command
 
 
+def test_check_up_sim(monkeypatch):
+    _test_up_sim(monkeypatch)
+
+
+def test_lint_up_sim(monkeypatch):
+    _test_up_sim(monkeypatch, "lint")
+
+
+def _test_up_sim(monkeypatch, command="check"):
+    out = capture_cmd_output(f"fast {command} --up --dry")
+    assert "--extend-select=I,B,SIM,UP " in out
+    out = capture_cmd_output(f"fast {command} --no-sim --up --dry")
+    assert "--extend-select=I,B,UP " in out
+    out = capture_cmd_output(f"fast {command} --no-sim --dry")
+    assert "--extend-select=I,B " in out
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B,SIM " in out
+    monkeypatch.setenv("FASTDEVCLI_NO_SIM", "1")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B " in out
+    monkeypatch.setenv("FASTDEVCLI_NO_SIM", "0")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B,SIM " in out
+    monkeypatch.setenv("FASTDEVCLI_UP", "1")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B,SIM,UP " in out
+    monkeypatch.setenv("FASTDEVCLI_NO_SIM", "1")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B,UP " in out
+    monkeypatch.setenv("FASTDEVCLI_UP", "0")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B " in out
+    monkeypatch.setenv("FASTDEVCLI_NO_SIM", "0")
+    out = capture_cmd_output(f"fast {command} --dry")
+    assert "--extend-select=I,B,SIM " in out
+
+
 def test_check_bandit(tmp_path):
     package_path = tmp_path / "foo"
     with chdir(tmp_path):
