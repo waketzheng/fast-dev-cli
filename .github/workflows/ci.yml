@@ -31,25 +31,34 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pdm.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - uses: actions/checkout@v5
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - uses: astral-sh/setup-uv@v7
       - uses: astral-sh/ruff-action@v3
-      - name: Setup PDM
-        uses: pdm-project/setup-pdm@v4
-        with:
-          cache: true
-          python-version: ${{ matrix.python-version }}
-          allow-python-prereleases: true
-      - name: Config PDM
-        run: pdm config --global venv.with_pip true
+      - name: Setup PDM by uv
+        run: |
+          uv tool install pdm --with msgpack
+          pdm config check_update false
+      - name: Setup poetry by uv
+        run: |
+          uv tool install poetry --with poetry-plugin-version --with poetry-dynamic-versioning
+          poetry config virtualenvs.create false
       - name: Prepare tools
         run: |
-          python -m pip install --upgrade pip poetry pipx
-          poetry config virtualenvs.create false
-          poetry self add poetry-plugin-version
-          poetry self add poetry-dynamic-versioning
           git config --global user.email "waketzheng@gmail.com"
           git config --global user.name "Waket Zheng"
+          python -m pip install --upgrade pip pipx
           python -m pipx install -e .
           python -m pipx ensurepath
           python -c 'from pathlib import Path;p=Path.home()/".local/bin";p.exists() or p.mkdir(parents=True)'

@@ -1,1 +1,4 @@
 use_uv = false
+
+[venv]
+with_pip = true
