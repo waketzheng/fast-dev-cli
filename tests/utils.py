@@ -47,23 +47,28 @@ def temp_file(name: str, text=""):
         path.write_text(text)
     else:
         path.touch()
-    yield
-    if path.exists():
-        path.unlink()
+    try:
+        yield
+    finally:
+        if path.exists():
+            path.unlink()
 
 
 @contextmanager
-def prepare_poetry_project(tmp_path: Path) -> Generator[str]:
+def prepare_poetry_project(work_dir: Path) -> Generator[str]:
     py = "{}.{}".format(*sys.version_info)
     poetry = "poetry"
     if shutil.which(poetry) is None:
         poetry = "uvx " + poetry
-    with chdir(tmp_path):
-        project = "foo"
-        Shell.run_by_subprocess(f"{poetry} new {project} --python=^{py}")
-        with chdir(tmp_path / project):
-            Shell.run_by_subprocess(
-                f"{poetry} config --local virtualenvs.in-project true"
-            )
-            Shell.run_by_subprocess(f"{poetry} env use {py}")
-            yield poetry
+    project = "foo"
+    with chdir(work_dir), _new_poetry_project(py, poetry, project):
+        yield poetry
+
+
+@contextmanager
+def _new_poetry_project(py: str, poetry: str, project: str) -> Generator[None]:
+    Shell.run_by_subprocess(f"{poetry} new {project} --python=^{py}")
+    with chdir(project):
+        Shell.run_by_subprocess(f"{poetry} config --local virtualenvs.in-project true")
+        Shell.run_by_subprocess(f"{poetry} env use {py}")
+        yield
