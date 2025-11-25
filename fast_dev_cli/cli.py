@@ -180,7 +180,7 @@ class Shell:
         return (r.stdout or r.stderr or "").strip()
 
     def finish(
-        self, env: dict[str, str] | None = None, _exit: bool = False, dry=False
+        self, env: dict[str, str] | None = None, _exit: bool = False, dry: bool = False
     ) -> subprocess.CompletedProcess[str]:
         self.run(verbose=True, dry=True)
         if _ensure_bool(dry):
@@ -395,7 +395,7 @@ class BumpUp(DryRun):
     @staticmethod
     def parse_dynamic_version(
         toml_text: str,
-        context: dict,
+        context: dict[str, Any],
         work_dir: Path | None = None,
     ) -> str | None:
         if work_dir is None:
@@ -457,7 +457,7 @@ class BumpUp(DryRun):
         return TOML_FILE
 
     @staticmethod
-    def parse_plugin_version(context: dict, package_name: str | None) -> str:
+    def parse_plugin_version(context: dict[str, Any], package_name: str | None) -> str:
         try:
             package_item = context["tool"]["poetry"]["packages"]
         except KeyError:
@@ -761,7 +761,7 @@ class Project:
 
     @classmethod
     def get_sync_command(
-        cls, prod: bool = True, doc: dict | None = None, only_me: bool = False
+        cls, prod: bool = True, doc: dict[str, Any] | None = None, only_me: bool = False
     ) -> str:
         pdm_i = "pdm install --frozen" + " --prod" * prod
         if cls.is_pdm_project():
@@ -1060,6 +1060,7 @@ class LintCode(DryRun):
         prefix: bool = False,
         up: bool = False,
         sim: bool = True,
+        strict: bool = False,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -1070,6 +1071,7 @@ class LintCode(DryRun):
         self._prefix = prefix
         self._up = up
         self._sim = sim
+        self._strict = strict
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -1114,6 +1116,7 @@ class LintCode(DryRun):
         with_prefix: bool = False,
         ruff_check_up: bool = False,
         ruff_check_sim: bool = True,
+        mypy_strict: bool = False,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -1130,8 +1133,11 @@ class LintCode(DryRun):
         if skip_mypy or load_bool("SKIP_MYPY") or load_bool("FASTDEVCLI_NO_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
-        elif load_bool("IGNORE_MISSING_IMPORTS"):
-            tools[-1] += " --ignore-missing-imports"
+        else:
+            if load_bool("IGNORE_MISSING_IMPORTS"):
+                tools[-1] += " --ignore-missing-imports"
+            if mypy_strict or load_bool("FASTDEVCLI_STRICT"):
+                tools[-1] += " --strict"
         lint_them = " && ".join(
             "{0}{" + str(i) + "} {1}" for i in range(2, len(tools) + 2)
         )
@@ -1239,6 +1245,7 @@ class LintCode(DryRun):
             with_prefix=self._prefix,
             ruff_check_up=self._up,
             ruff_check_sim=self._sim,
+            mypy_strict=self._strict,
         )
 
 
@@ -1256,6 +1263,7 @@ def lint(
     prefix: bool = False,
     up: bool = False,
     sim: bool = True,
+    strict: bool = False,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -1271,6 +1279,7 @@ def lint(
         prefix=prefix,
         up=up,
         sim=sim,
+        strict=strict,
     ).run()
 
 
@@ -1283,6 +1292,7 @@ def check(
     tool: str = ToolOption.default,
     up: bool = False,
     sim: bool = True,
+    strict: bool = False,
 ) -> None:
     LintCode(
         files,
@@ -1295,6 +1305,7 @@ def check(
         tool=tool,
         up=up,
         sim=sim,
+        strict=strict,
     ).run()
 
 
@@ -1316,6 +1327,7 @@ def make_style(
     dry: bool = DryOption,
     up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
     sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
+    strict: bool = Option(False, help="Whether run mypy with --strict"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -1329,11 +1341,10 @@ def make_style(
     tool = _ensure_str(tool)
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
+    strict = _ensure_bool(strict)
     kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
-    if _ensure_bool(check_only):
-        check(files, tool=tool, up=up, sim=sim, **kwargs)
-    else:
-        lint(files, prefix=prefix, tool=tool, up=up, sim=sim, **kwargs)
+    run = check if _ensure_bool(check_only) else functools.partial(lint, prefix=prefix)
+    run(files, tool=tool, up=up, sim=sim, strict=strict, **kwargs)
 
 
 @cli.command(name="check")
@@ -1343,6 +1354,7 @@ def only_check(
     dry: bool = DryOption,
     up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
     sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
+    strict: bool = Option(False, help="Whether run mypy with --strict"),
 ) -> None:
     """Check code style without reformat"""
     bandit = _ensure_bool(bandit)
