@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from asynctor.compat import chdir
+from asynctor.testing import chdir_tmp_fixture
 
 from fast_dev_cli.cli import TOML_FILE, run_and_echo
 
@@ -49,10 +49,7 @@ build-backend = "poetry.core.masonry.api"
 """
 
 
-@pytest.fixture
-def tmp_work_dir(tmp_path):
-    with chdir(tmp_path):
-        yield tmp_path
+tmp_work_dir = chdir_tmp_fixture()
 
 
 @pytest.fixture
