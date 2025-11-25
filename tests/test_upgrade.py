@@ -85,24 +85,28 @@ uvicorn = {version = "^0.23.2", platform = "linux", optional = true}
 def test_dev_flag(tmp_path: Path):
     assert UpgradeDependencies.should_with_dev() is False
     with prepare_poetry_project(tmp_path) as poetry:
-        is_newer_poetry = Project.get_poetry_version(poetry) >= "2.2.0"
+        _test_dev_flag(poetry)
+
+
+def _test_dev_flag(poetry):
+    is_newer_poetry = Project.get_poetry_version(poetry) >= "2.2.0"
+    assert not UpgradeDependencies.should_with_dev()
+    run_and_echo(f"{poetry} add pytest")
+    assert not UpgradeDependencies.should_with_dev()
+    run_and_echo(f"{poetry} add --group=dev typer")
+    if is_newer_poetry:
         assert not UpgradeDependencies.should_with_dev()
-        run_and_echo(f"{poetry} add pytest")
-        assert not UpgradeDependencies.should_with_dev()
-        run_and_echo(f"{poetry} add --group=dev typer")
-        if is_newer_poetry:
-            assert not UpgradeDependencies.should_with_dev()
+    else:
+        toml_file = Path(TOML_FILE)
+        assert UpgradeDependencies.should_with_dev()
+        text = toml_file.read_text()
+        DevFlag = UpgradeDependencies.DevFlag
+        if DevFlag.new in text:
+            new_text = text.replace(DevFlag.new, DevFlag.old)
         else:
-            toml_file = Path(TOML_FILE)
-            assert UpgradeDependencies.should_with_dev()
-            text = toml_file.read_text()
-            DevFlag = UpgradeDependencies.DevFlag
-            if DevFlag.new in text:
-                new_text = text.replace(DevFlag.new, DevFlag.old)
-            else:
-                new_text = text.replace(DevFlag.old, DevFlag.new)
-            toml_file.write_text(new_text)
-            assert UpgradeDependencies.should_with_dev()
+            new_text = text.replace(DevFlag.old, DevFlag.new)
+        toml_file.write_text(new_text)
+        assert UpgradeDependencies.should_with_dev()
 
 
 def test_parse_item():
