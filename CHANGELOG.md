@@ -2,7 +2,9 @@
 
 ## 0.19
 
-### [0.19.5]*(Unrelease)*
+### [0.19.6]*(Unrelease)*
+
+### [0.19.5](../../releases/tag/v0.19.5) - 2025-11-25
 
 #### Added
 - feat: support `fast lint --strict`
