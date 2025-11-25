@@ -162,7 +162,7 @@ def _fast_check():
         assert cmd in command
 
 
-def test_lint_cmd(mock_no_dmypy):
+def test_lint_cmd(mock_no_dmypy, monkeypatch):
     run = "pdm run "
     lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
     command = capture_cmd_output(f"{lint_cmd} . --dry")
@@ -178,6 +178,9 @@ def test_lint_cmd(mock_no_dmypy):
         == capture_cmd_output(f"{lint_cmd}")
         == capture_cmd_output(f"{run}fast lint")
     )
+    assert "mypy --strict" in capture_cmd_output("fast lint --strict --dry")
+    monkeypatch.setenv("FASTDEVCLI_STRICT", "1")
+    assert "mypy --strict" in capture_cmd_output("fast lint --dry")
 
 
 def test_lint_html():
