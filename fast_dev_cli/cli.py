@@ -170,7 +170,10 @@ class Shell:
 
     def check_call(self) -> bool:
         self._kw.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return self.run() == 0
+        try:
+            return self.run() == 0
+        except FileNotFoundError:
+            return False
 
     def capture_output(self, raises: bool = False) -> str:
         self._kw.update(capture_output=True, encoding="utf-8")
