@@ -2,7 +2,12 @@
 
 ## 0.19
 
-### [0.19.6]*(Unrelease)*
+### [0.19.7]*(Unrelease)*
+
+### [0.19.6](../../releases/tag/v0.19.6) - 2026-01-04
+
+#### Added
+- feat: support `fast pypi --slim`
 
 ### [0.19.5](../../releases/tag/v0.19.5) - 2025-11-25
 
