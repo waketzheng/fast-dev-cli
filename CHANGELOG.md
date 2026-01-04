@@ -4,6 +4,9 @@
 
 ### [0.19.7]*(Unrelease)*
 
+#### Fixes
+- fix: windows read version file raises gbk decode error
+
 ### [0.19.6](../../releases/tag/v0.19.6) - 2026-01-04
 
 #### Added
