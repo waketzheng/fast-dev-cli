@@ -1627,15 +1627,20 @@ class UvPypi(DryRun):
     PYPI = "https://pypi.org/simple"
     HOST = "https://files.pythonhosted.org"
 
-    def __init__(self, lock_file: Path, dry: bool, verbose: bool, quiet: bool) -> None:
+    def __init__(
+        self, lock_file: Path, dry: bool, verbose: bool, quiet: bool, slim: bool = False
+    ) -> None:
         super().__init__(dry=dry)
         self.lock_file = lock_file
         self._verbose = _ensure_bool(verbose)
         self._quiet = _ensure_bool(quiet)
+        self._slim = _ensure_bool(slim)
 
     def run(self) -> None:
         try:
-            rc = self.update_lock(self.lock_file, self._verbose, self._quiet)
+            rc = self.update_lock(
+                self.lock_file, self._verbose, self._quiet, self._slim
+            )
         except ValueError as e:
             secho(str(e), fg=typer.colors.RED)
             raise Exit(1) from e
@@ -1644,7 +1649,9 @@ class UvPypi(DryRun):
                 raise Exit(rc)
 
     @classmethod
-    def update_lock(cls, p: Path, verbose: bool, quiet: bool) -> int:
+    def update_lock(
+        cls, p: Path, verbose: bool, quiet: bool, slim: bool = False
+    ) -> int:
         text = p.read_text("utf-8")
         registry_pattern = r'(registry = ")(.*?)"'
         replace_registry = functools.partial(
@@ -1687,6 +1694,9 @@ class UvPypi(DryRun):
             if verbose:
                 for current_host in sorted(download_hosts):
                     echo(f"{current_host} --> {cls.HOST}")
+        if slim:
+            pattern = r', size = \d+, upload-time = ".*?"'
+            text = re.sub(pattern, "", text)
         size = p.write_text(text, encoding="utf-8")
         if verbose:
             echo(f"Updated {p} with {size} bytes.")
@@ -1701,6 +1711,7 @@ def pypi(
     dry: bool = DryOption,
     verbose: bool = False,
     quiet: bool = False,
+    slim: bool = False,
 ) -> None:
     """Change registry of uv.lock to be pypi.org"""
     if not (p := Path(_ensure_str(file) or "uv.lock")).exists() and not (
@@ -1708,7 +1719,7 @@ def pypi(
     ):
         yellow_warn(f"{p.name!r} not found!")
         return
-    UvPypi(p, dry, verbose, quiet).run()
+    UvPypi(p, dry, verbose, quiet, slim).run()
 
 
 def version_callback(value: bool) -> None:
