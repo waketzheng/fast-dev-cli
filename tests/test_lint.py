@@ -72,6 +72,16 @@ def test_check(mock_no_dmypy, monkeypatch, mocker):
     monkeypatch.setenv("FASTDEVCLI_BANDIT", "0")
     command4 = capture_cmd_output("fast check --dry")
     assert command4 == command
+    command5 = capture_cmd_output("fast check --dry --ty")
+    assert "ty check" in command5
+    command6 = capture_cmd_output("fast check --dry --ty --skip-mypy")
+    assert "ty check" not in command6
+
+
+def test_check_ty(monkeypatch, mocker):
+    monkeypatch.setenv("FASTDEVCLI_TY", "1")
+    command = capture_cmd_output("fast check --dry")
+    assert "ty check" in command
 
 
 def test_check_up_sim(monkeypatch):
@@ -181,6 +191,13 @@ def test_lint_cmd(mock_no_dmypy, monkeypatch):
     assert "mypy --strict" in capture_cmd_output("fast lint --strict --dry")
     monkeypatch.setenv("FASTDEVCLI_STRICT", "1")
     assert "mypy --strict" in capture_cmd_output("fast lint --dry")
+    output = capture_cmd_output("fast lint --dry --ty")
+    assert "--strict" not in output
+    assert "ty check" in output
+    monkeypatch.setenv("FASTDEVCLI_TY", "1")
+    output = capture_cmd_output("fast lint --dry")
+    assert "--strict" not in output
+    assert "ty check" in output
 
 
 def test_lint_html():
