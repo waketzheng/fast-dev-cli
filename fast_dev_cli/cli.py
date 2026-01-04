@@ -564,7 +564,7 @@ def version() -> None:
                 echo(f"Got Version from {TOML_FILE}: " + styled)
             return
         version_file = doc["tool"]["pdm"]["version"]["path"]
-        text = Project.get_work_dir().joinpath(version_file).read_text()
+        text = Project.get_work_dir().joinpath(version_file).read_text(encoding="utf-8")
         varname = "__version__"
         for line in text.splitlines():
             if line.strip().startswith(varname):
