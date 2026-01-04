@@ -26,7 +26,7 @@ _check:
 check: deps _build _check
 
 _lint:
-	pdm run fast lint
+	@just _lint
 lint: deps _build _lint
 
 _test:

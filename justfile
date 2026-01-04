@@ -77,7 +77,7 @@ run *args: venv
     .venv/{{BIN_DIR}}/{{args}}
 
 _lint *args:
-    pdm run fast lint {{args}}
+    pdm run fast lint --ty {{args}}
 
 lint *args: deps
     @just _lint {{args}}
@@ -91,7 +91,7 @@ style *args: deps
     @just fmt {{args}}
 
 _check *args:
-    pdm run fast check {{args}}
+    pdm run fast check --ty {{args}}
 
 check *args: deps
     @just _check {{args}}
