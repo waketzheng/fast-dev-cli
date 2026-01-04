@@ -58,7 +58,8 @@ anyio = {version = ">=3.7.1", optional = true}
 typer = {extras = ["all"], version = "^0.9.0", optional = true}
 uvicorn = {version = "^0.23.2", platform = "linux", optional = true}
     """
-    assert UpgradeDependencies.build_args(segment.splitlines()) == (
+    lines = [str(i) for i in segment.splitlines()]
+    assert UpgradeDependencies.build_args(lines) == (
         [
             '"ipython@latest"',
             '"coveralls@latest"',

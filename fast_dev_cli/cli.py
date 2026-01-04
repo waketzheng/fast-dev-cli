@@ -1694,6 +1694,12 @@ class UvPypi(DryRun):
             if verbose:
                 for current_host in sorted(download_hosts):
                     echo(f"{current_host} --> {cls.HOST}")
+        return cls.slim_and_write(cast(str, text), slim, p, verbose, quiet)
+
+    @staticmethod
+    def slim_and_write(
+        text: str, slim: bool, p: Path, verbose: bool, quiet: bool
+    ) -> int:
         if slim:
             pattern = r', size = \d+, upload-time = ".*?"'
             text = re.sub(pattern, "", text)
