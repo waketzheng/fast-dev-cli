@@ -4,6 +4,9 @@
 
 ### [0.19.7]*(Unrelease)*
 
+#### Added
+- feat: support `fast lint --ty`
+
 #### Fixes
 - fix: windows read version file raises gbk decode error
 
