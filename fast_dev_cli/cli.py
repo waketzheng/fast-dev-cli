@@ -1064,6 +1064,7 @@ class LintCode(DryRun):
         up: bool = False,
         sim: bool = True,
         strict: bool = False,
+        ty: bool = False,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -1075,6 +1076,7 @@ class LintCode(DryRun):
         self._up = up
         self._sim = sim
         self._strict = strict
+        self._ty = _ensure_bool(ty)
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -1120,6 +1122,7 @@ class LintCode(DryRun):
         ruff_check_up: bool = False,
         ruff_check_sim: bool = True,
         mypy_strict: bool = False,
+        prefer_ty: bool = False,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
@@ -1137,10 +1140,13 @@ class LintCode(DryRun):
             # Sometimes mypy is too slow
             tools = tools[:-1]
         else:
-            if load_bool("IGNORE_MISSING_IMPORTS"):
-                tools[-1] += " --ignore-missing-imports"
-            if mypy_strict or load_bool("FASTDEVCLI_STRICT"):
-                tools[-1] += " --strict"
+            if prefer_ty or load_bool("FASTDEVCLI_TY"):
+                tools[-1] = "ty check"
+            else:
+                if load_bool("IGNORE_MISSING_IMPORTS"):
+                    tools[-1] += " --ignore-missing-imports"
+                if mypy_strict or load_bool("FASTDEVCLI_STRICT"):
+                    tools[-1] += " --strict"
         lint_them = " && ".join(
             "{0}{" + str(i) + "} {1}" for i in range(2, len(tools) + 2)
         )
@@ -1249,6 +1255,7 @@ class LintCode(DryRun):
             ruff_check_up=self._up,
             ruff_check_sim=self._sim,
             mypy_strict=self._strict,
+            prefer_ty=self._ty,
         )
 
 
@@ -1267,6 +1274,7 @@ def lint(
     up: bool = False,
     sim: bool = True,
     strict: bool = False,
+    ty: bool = False,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -1283,6 +1291,7 @@ def lint(
         up=up,
         sim=sim,
         strict=strict,
+        ty=ty,
     ).run()
 
 
@@ -1296,6 +1305,7 @@ def check(
     up: bool = False,
     sim: bool = True,
     strict: bool = False,
+    ty: bool = False,
 ) -> None:
     LintCode(
         files,
@@ -1309,6 +1319,7 @@ def check(
         up=up,
         sim=sim,
         strict=strict,
+        ty=ty,
     ).run()
 
 
@@ -1331,6 +1342,7 @@ def make_style(
     up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
     sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
     strict: bool = Option(False, help="Whether run mypy with --strict"),
+    ty: bool = Option(False, help="Whether use ty instead of mypy"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -1347,7 +1359,7 @@ def make_style(
     strict = _ensure_bool(strict)
     kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
     run = check if _ensure_bool(check_only) else functools.partial(lint, prefix=prefix)
-    run(files, tool=tool, up=up, sim=sim, strict=strict, **kwargs)
+    run(files, tool=tool, up=up, sim=sim, strict=strict, ty=ty, **kwargs)
 
 
 @cli.command(name="check")
@@ -1358,12 +1370,14 @@ def only_check(
     up: bool = Option(False, help="Whether ruff check with --extend-select=UP"),
     sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
     strict: bool = Option(False, help="Whether run mypy with --strict"),
+    ty: bool = Option(False, help="Whether use ty instead of mypy"),
 ) -> None:
     """Check code style without reformat"""
     bandit = _ensure_bool(bandit)
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
-    check(dry=dry, bandit=bandit, skip_mypy=_ensure_bool(skip_mypy), up=up, sim=sim)
+    skip_mypy = _ensure_bool(skip_mypy)
+    check(dry=dry, bandit=bandit, skip_mypy=skip_mypy, up=up, sim=sim, ty=ty)
 
 
 class Sync(DryRun):
