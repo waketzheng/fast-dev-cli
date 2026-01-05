@@ -1662,53 +1662,65 @@ class UvPypi(DryRun):
             if rc != 0:
                 raise Exit(rc)
 
-    @classmethod
-    def update_lock(
-        cls, p: Path, verbose: bool, quiet: bool, slim: bool = False
-    ) -> int:
-        text = p.read_text("utf-8")
+    @staticmethod
+    def get_target_content(
+        text: str, verbose: bool, target_registry, target_host: str
+    ) -> str | None:
         registry_pattern = r'(registry = ")(.*?)"'
-        replace_registry = functools.partial(
-            re.sub, registry_pattern, rf'\1{cls.PYPI}"'
-        )
         registry_urls = {i[1] for i in re.findall(registry_pattern, text)}
-        download_pattern = r'(url = ")(https?://.*?)(/packages/.*?\.)(gz|whl)"'
-        replace_host = functools.partial(
-            re.sub, download_pattern, rf'\1{cls.HOST}\3\4"'
-        )
+        download_pattern = r'(url = ")(https?://.*?)(/packages/.*?\.)(gz|whl|zip)"'
         download_hosts = {i[1] for i in re.findall(download_pattern, text)}
         if not registry_urls:
-            raise ValueError(f"Failed to find pattern {registry_pattern!r} in {p}")
+            raise ValueError(
+                f"Failed to find pattern {registry_pattern!r} in uv lock file"
+            )
+
+        def replace_registry(s: str) -> str:
+            return re.sub(registry_pattern, rf'\1{target_registry}"', s)
+
+        def replace_host(s: str) -> str:
+            return re.sub(download_pattern, rf'\1{target_host}\3\4"', s)
+
         if len(registry_urls) == 1:
             current_registry = registry_urls.pop()
-            if current_registry == cls.PYPI:
-                if download_hosts == {cls.HOST}:
-                    if verbose:
-                        echo(f"Registry of {p} is {cls.PYPI}, no need to change.")
-                    return 0
+            if current_registry == target_registry:
+                if download_hosts == {target_host}:
+                    return None
             else:
                 text = replace_registry(text)
                 if verbose:
-                    echo(f"{current_registry} --> {cls.PYPI}")
+                    echo(f"{current_registry} --> {target_registry}")
         else:
             # TODO: ask each one to confirm replace
             text = replace_registry(text)
             if verbose:
                 for current_registry in sorted(registry_urls):
-                    echo(f"{current_registry} --> {cls.PYPI}")
+                    echo(f"{current_registry} --> {target_registry}")
         if len(download_hosts) == 1:
             current_host = download_hosts.pop()
-            if current_host != cls.HOST:
+            if current_host != target_host:
                 text = replace_host(text)
                 if verbose:
-                    print(current_host, "-->", cls.HOST)
+                    echo(f"{current_host} --> {target_host}")
         elif download_hosts:
             # TODO: ask each one to confirm replace
             text = replace_host(text)
             if verbose:
                 for current_host in sorted(download_hosts):
-                    echo(f"{current_host} --> {cls.HOST}")
-        return cls.slim_and_write(cast(str, text), slim, p, verbose, quiet)
+                    echo(f"{current_host} --> {target_host}")
+        return text
+
+    @classmethod
+    def update_lock(
+        cls, p: Path, verbose: bool, quiet: bool, slim: bool = False
+    ) -> int:
+        text = p.read_text("utf-8")
+        new_text = cls.get_target_content(text, verbose, cls.PYPI, cls.HOST)
+        if new_text is None:
+            if verbose:
+                echo(f"Registry of {p} is {cls.PYPI}, no need to change.")
+            return 0
+        return cls.slim_and_write(new_text, slim, p, verbose, quiet)
 
     @staticmethod
     def slim_and_write(
