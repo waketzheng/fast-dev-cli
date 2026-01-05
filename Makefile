@@ -47,8 +47,8 @@ build: deps _build
 venv:
 	pdm venv create $(version)
 
-venv39:
-	pdm venv create 3.9
+venv314t:
+	pdm venv create 3.14t
 
 venv313:
 	$(MAKE) venv version=3.13

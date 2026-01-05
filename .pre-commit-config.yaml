@@ -17,7 +17,7 @@ repos:
   - repo: local
     hooks:
       - id: format
-        name: check and reformat by ruff/mypy/bandit
+        name: check and reformat by ruff/ty/bandit
         entry: pdm run fast lint --ty --bandit
         language: system
         types: [python]
