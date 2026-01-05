@@ -2,6 +2,11 @@
 
 ## 0.19
 
+### [0.19.8](../../releases/tag/v0.19.8) - 2026-01-05
+
+#### Fixes
+- fix: fast pypi not change zip package download url
+
 ### [0.19.7](../../releases/tag/v0.19.7) - 2026-01-04
 
 #### Added
