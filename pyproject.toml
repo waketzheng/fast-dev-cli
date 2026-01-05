@@ -113,8 +113,12 @@ omit = [
     "fast_dev_cli/__main__.py",
 ]
 
+[tool.ty.src]
+exclude = ['*.bak']
 [tool.ty.rules]
 unresolved-import = "ignore"
+[tool.ty.environment]
+python-version = "3.10"
 
 [tool.mypy]
 pretty = true

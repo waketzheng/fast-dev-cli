@@ -54,14 +54,14 @@ uv_lock *args:
 
 [unix]
 lock *args:
-    @just uv_lock {{args}}
+    @if test ! -e uv.lock; then (if test ! -e pdm.lock; then (echo Fallback to uv ...; just uv_lock {{args}}); else (echo pdm lock -G :all;pdm lock -G :all {{args}}); fi); else @just uv_lock {{args}}; fi
 [windows]
 lock *args:
     if (-Not (Test-Path '~/AppData/Roaming/uv/tools/rust-just')) { echo 'Using pdm ...'; pdm lock -G :all {{ args }} } else { echo 'uv lock...'; just uv_lock {{ args }} }
 
 
-up:
-    @just lock --upgrade
+up *args:
+    @if test ! -e uv.lock; then (if test ! -e pdm.lock; then (echo Fallback to uv ...; just uv_lock --upgrade {{args}}); else (echo pdm update -G :all;pdm update -G :all {{args}}); fi); else @just uv_lock --upgrade {{args}}; fi
 
 uv_clear *args:
     {{ UV_DEPS }} {{args}}
