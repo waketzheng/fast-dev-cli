@@ -1163,7 +1163,7 @@ class LintCode(DryRun):
             )
         prefix = ""
         should_run_by_tool = with_prefix
-        if not should_run_by_tool:
+        if not should_run_by_tool and "mypy" in str(tools):
             if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(
                 ".local/bin"
             ):  # Virtual environment activated and fast-dev-cli is installed in it
@@ -1177,7 +1177,7 @@ class LintCode(DryRun):
                         "You may need to run the following command"
                         f" to install ruff:\n\n  {command}\n"
                     )
-                elif "mypy" in str(tools) and cls.missing_mypy_exec():
+                elif cls.missing_mypy_exec():
                     should_run_by_tool = True
                     if check_call('python -c "import fast_dev_cli"'):
                         command = 'python -m pip install -U "fast-dev-cli"'
