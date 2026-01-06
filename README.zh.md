@@ -37,6 +37,7 @@ pip install fast-dev-cli
 ```bash
 fast lint
 # 相当于执行：ruff format . && ruff check --extend-select=I,B,SIM --fix . && mypy .
+# 或：fast lint --ty ==> `ruff format . && ruff check --extend-select=I,B,SIM --fix . && ty check .`
 ```
 
 2. 对单个文件进行格式化和静态检查

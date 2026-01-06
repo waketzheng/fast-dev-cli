@@ -43,10 +43,24 @@ Python 3.10+
 
 ## Features
 
-- Support poetry/pdm/uv
-- Support Windows/MacOS/Linux
+- Support uv/pd/mpoetry
+- Support MacOS/Linux/Windows
 
 ## Installation
+
+- Global install
+
+<div class="termy">
+
+```bash
+uv tool install --python 3.14 fastdevcli-slim
+# Or: pipx install fastdevcli-slim
+```
+*Will create a `fast` command in ~/.local/bin
+
+- Install in project
+
+</div>
 
 <div class="termy">
 
@@ -98,11 +112,8 @@ fast pypi
 uvx --from fastdevcli-slim fast
 ```
 
-## Install global
+## Lint/Check by ty instead of mypy
 ```bash
-pipx install fastdevcli-slim
-```
-Or:
-```bash
-uv tool install fastdevcli-slim
+fast lint --ty
+fast check --ty
 ```
