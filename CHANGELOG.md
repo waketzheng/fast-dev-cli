@@ -2,6 +2,11 @@
 
 ## 0.19
 
+### [0.19.9](../../releases/tag/v0.19.9) - 2026-01-06
+
+#### Changed
+- refactor: no need to with prefix for ty
+
 ### [0.19.8](../../releases/tag/v0.19.8) - 2026-01-05
 
 #### Fixes
