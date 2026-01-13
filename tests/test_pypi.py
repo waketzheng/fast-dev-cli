@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from fast_dev_cli.cli import Exit, pypi
+from fast_dev_cli.cli import Exit, UvPypi, pypi, run_and_echo
 
 ASSERTS_DIR = Path(__file__).parent / "assets"
 
@@ -72,6 +72,7 @@ def test_pypi_slim(tmp_work_dir, capsys):
     assert "aliyun" not in new_text and "pypi.org" in new_text
     assert "upload-time" in new_text
     pypi(slim=True, verbose=True)
+    new_text = lock_file.read_text("utf-8")
     assert "upload-time" in new_text
     assert "no need to change" in capsys.readouterr().out
     shutil.copy(origin_lock, lock_file)
@@ -79,3 +80,30 @@ def test_pypi_slim(tmp_work_dir, capsys):
     new_text = lock_file.read_text("utf-8")
     assert "pypi.org" in new_text
     assert "upload-time" not in new_text
+
+
+def test_pypi_reverse(tmp_work_dir):
+    origin_lock = ASSERTS_DIR / "uv-upload-time.lock"
+    lock_file = Path("uv.lock")
+    Path("pyproject.toml").touch()
+    shutil.copy(origin_lock, lock_file)
+    text = origin_lock.read_text("utf-8")
+    pypi(quiet=True)
+    new_text = lock_file.read_text("utf-8")
+    assert new_text != text
+    assert "aliyun" in text and "pypi.org" not in text
+    assert "aliyun" not in new_text and "pypi.org" in new_text
+    assert "upload-time" in new_text
+    try:
+        pypi(reverse=True, verbose=True, quiet=True)
+    except FileNotFoundError:
+        run_and_echo("uvx pip-conf-mirror --uv aliyun")
+        pypi(reverse=True, verbose=True, quiet=True)
+        new_text = lock_file.read_text("utf-8")
+        assert "aliyun" in new_text and "pypi.org" not in new_text
+    else:
+        new_text = lock_file.read_text("utf-8")
+        assert "pypi.org" not in new_text
+        register_url = UvPypi.get_register_from_uv_config()[0]
+        assert register_url in new_text
+    assert "upload-time" in new_text

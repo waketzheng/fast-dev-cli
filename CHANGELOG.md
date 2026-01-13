@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.20
+
+### [0.20.0]*(Unreleased)*
+
+#### Added
+- feat: support `fast pypi --reverse`
+
 ## 0.19
 
 ### [0.19.9](../../releases/tag/v0.19.9) - 2026-01-06

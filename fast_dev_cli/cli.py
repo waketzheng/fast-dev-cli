@@ -1642,18 +1642,25 @@ class UvPypi(DryRun):
     HOST = "https://files.pythonhosted.org"
 
     def __init__(
-        self, lock_file: Path, dry: bool, verbose: bool, quiet: bool, slim: bool = False
+        self,
+        lock_file: Path,
+        dry: bool,
+        verbose: bool,
+        quiet: bool,
+        slim: bool = False,
+        reverse: bool = False,
     ) -> None:
         super().__init__(dry=dry)
         self.lock_file = lock_file
         self._verbose = _ensure_bool(verbose)
         self._quiet = _ensure_bool(quiet)
         self._slim = _ensure_bool(slim)
+        self._reverse = _ensure_bool(reverse)
 
     def run(self) -> None:
         try:
             rc = self.update_lock(
-                self.lock_file, self._verbose, self._quiet, self._slim
+                self.lock_file, self._verbose, self._quiet, self._slim, self._reverse
             )
         except ValueError as e:
             secho(str(e), fg=typer.colors.RED)
@@ -1712,15 +1719,32 @@ class UvPypi(DryRun):
 
     @classmethod
     def update_lock(
-        cls, p: Path, verbose: bool, quiet: bool, slim: bool = False
+        cls,
+        p: Path,
+        verbose: bool,
+        quiet: bool,
+        slim: bool = False,
+        reverse: bool = False,
     ) -> int:
         text = p.read_text("utf-8")
-        new_text = cls.get_target_content(text, verbose, cls.PYPI, cls.HOST)
+        target_register, target_host = cls.PYPI, cls.HOST
+        if reverse:
+            target_register, target_host = cls.get_register_from_uv_config()
+        new_text = cls.get_target_content(text, verbose, target_register, target_host)
         if new_text is None:
             if verbose:
-                echo(f"Registry of {p} is {cls.PYPI}, no need to change.")
+                echo(f"Registry of {p} is {target_register}, no need to change.")
             return 0
         return cls.slim_and_write(new_text, slim, p, verbose, quiet)
+
+    @staticmethod
+    def get_register_from_uv_config() -> tuple[str, str]:
+        config_dir = "AppData/Roaming" if is_windows() else ".config"
+        config_file = Path.home() / config_dir / "uv/uv.toml"
+        text = config_file.read_text("utf-8")
+        doc = tomllib.loads(text)
+        index_url = doc["index"][0]["url"]
+        return index_url, index_url.replace("/simple", "").rstrip("/")
 
     @staticmethod
     def slim_and_write(
@@ -1744,6 +1768,7 @@ def pypi(
     verbose: bool = False,
     quiet: bool = False,
     slim: bool = False,
+    reverse: bool = False,
 ) -> None:
     """Change registry of uv.lock to be pypi.org"""
     if not (p := Path(_ensure_str(file) or "uv.lock")).exists() and not (
@@ -1751,7 +1776,7 @@ def pypi(
     ):
         yellow_warn(f"{p.name!r} not found!")
         return
-    UvPypi(p, dry, verbose, quiet, slim).run()
+    UvPypi(p, dry, verbose, quiet, slim, reverse).run()
 
 
 def version_callback(value: bool) -> None:
