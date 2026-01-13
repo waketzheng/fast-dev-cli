@@ -55,6 +55,9 @@ jobs:
         run: |
           uv tool install poetry --with poetry-plugin-version --with poetry-dynamic-versioning
           poetry config virtualenvs.create false
+      - name: Setup ty by uv
+        run: |
+          uv tool install ty
       - name: Prepare tools
         run: |
           git config --global user.email "waketzheng@gmail.com"
