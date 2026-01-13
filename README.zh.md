@@ -29,7 +29,7 @@ uv tool install fastdevcli-slim
 ```bash
 pip install fast-dev-cli
 ```
-*会同时安装emoji、typer-slim、mypy、pytest、coverage、bumpversion2等日常开发工具包*
+*会同时安装emoji、typer-slim、pytest、coverage等日常开发工具包*
 
 ## 使用
 ### 代码格式化
@@ -124,6 +124,7 @@ fast exec "<command>"
 ### 使用官方源替换uv.lock中的register
 ```
 fast pypi
+# fast pypi --reverse: pypi.org --> configured index url
 ```
 或：
 ```

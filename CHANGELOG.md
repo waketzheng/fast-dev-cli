@@ -2,10 +2,14 @@
 
 ## 0.20
 
-### [0.20.0]*(Unreleased)*
+### [0.20.0](../../releases/tag/v0.20.0) - 2026-01-13
 
 #### Added
 - feat: support `fast pypi --reverse`
+
+#### Remove
+- Remove mypy from standard extra because prefer to use ty which can be install globally
+- Remove bumpversion2 from standard extra as it can be install globally
 
 ## 0.19
 
