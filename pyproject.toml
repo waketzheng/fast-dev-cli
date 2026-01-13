@@ -42,8 +42,6 @@ standard = [
     "emoji >=2.12.1",
     "packaging >=20.5",
     "coverage >=7.5.1",
-    "mypy >=1.15.0",
-    "bumpversion2 >=1.4.3",
     "pytest >=8.2.0",
 ]
 all = [
