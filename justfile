@@ -66,12 +66,15 @@ up *args:
 uv_clear *args:
     {{ UV_DEPS }} {{args}}
 
+pdm_clear *args:
+    pdm sync -G :all --clean {{args}}
+
 [unix]
 clear *args:
-    @just uv_clear {{args}}
+    @if test ! -e uv.lock; then (if test ! -e pdm.lock; then (echo Fallback to uv ...; just uv_clear {{args}}); else (echo pdm clearing...;just pdm_clear {{args}}); fi); else @just uv_clear {{args}}; fi
 [windows]
 clear *args:
-    @if (-Not (Test-Path 'pdm.lock')) { just uv_clear {{args}}  } else { pdm sync -G :all --clean {{args}} }
+    @if (-Not (Test-Path 'pdm.lock')) { just uv_clear {{args}}  } else { just pdm_clear {{args}} }
 
 run *args: venv
     .venv/{{BIN_DIR}}/{{args}}
