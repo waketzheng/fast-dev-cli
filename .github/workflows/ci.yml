@@ -76,7 +76,7 @@ jobs:
         run: |
           just check
           uv pip install mypy
-          mypy fast_dev_cli
+          pdm run mypy fast_dev_cli
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
