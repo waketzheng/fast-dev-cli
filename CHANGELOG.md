@@ -2,6 +2,11 @@
 
 ## 0.20
 
+### [0.20.1]**(Unreleased)
+
+#### Changed
+- refactor: not raise FileNotFoundError when `fast pypi --reverse` without uv config file
+
 ### [0.20.0](../../releases/tag/v0.20.0) - 2026-01-13
 
 #### Added

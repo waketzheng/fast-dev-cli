@@ -58,6 +58,9 @@ jobs:
       - name: Setup ty by uv
         run: |
           uv tool install ty
+      - name: Setup just by uv
+        run: |
+          uv tool install rust-just
       - name: Prepare tools
         run: |
           git config --global user.email "waketzheng@gmail.com"
@@ -70,10 +73,12 @@ jobs:
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
       - name: Install requirements/Check code style and Type Hint
-        run: make check
+        run: |
+          just check
+          uv pip install mypy
+          mypy fast_dev_cli
       - name: Test with pytest
         run: |
-          uv pip install mypy
           pdm run coverage run -m pytest
           pdm run python -c "import os;from pathlib import Path;pp=list(Path().glob('.coverage.*'));pp and os.system('pdm run coverage combine .coverage*')"
       - name: Upload Coverage
