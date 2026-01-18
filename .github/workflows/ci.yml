@@ -61,6 +61,9 @@ jobs:
       - name: Setup just by uv
         run: |
           uv tool install rust-just
+      - name: Setup bumpvesion by uv
+        run: |
+          uv tool install bumpversion2
       - name: Prepare tools
         run: |
           git config --global user.email "waketzheng@gmail.com"
