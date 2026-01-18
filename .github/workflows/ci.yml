@@ -49,7 +49,7 @@ jobs:
       - uses: astral-sh/ruff-action@v3
       - name: Setup PDM by uv
         run: |
-          uv tool install pdm
+          uv tool install pdm --with pdm-plugin-i
           pdm config check_update false
       - name: Setup poetry by uv
         run: |
