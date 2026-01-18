@@ -82,7 +82,7 @@ def test_pypi_slim(tmp_work_dir, capsys):
     assert "upload-time" not in new_text
 
 
-def test_pypi_reverse(tmp_work_dir):
+def test_pypi_reverse(tmp_work_dir, mocker, capsys):
     origin_lock = ASSERTS_DIR / "uv-upload-time.lock"
     lock_file = Path("uv.lock")
     Path("pyproject.toml").touch()
@@ -94,16 +94,25 @@ def test_pypi_reverse(tmp_work_dir):
     assert "aliyun" in text and "pypi.org" not in text
     assert "aliyun" not in new_text and "pypi.org" in new_text
     assert "upload-time" in new_text
-    try:
-        pypi(reverse=True, verbose=True, quiet=True)
-    except FileNotFoundError:
+    if not UvPypi.get_uv_config_file().exists():
         run_and_echo("uvx pip-conf-mirror --uv aliyun")
         pypi(reverse=True, verbose=True, quiet=True)
         new_text = lock_file.read_text("utf-8")
         assert "aliyun" in new_text and "pypi.org" not in new_text
     else:
+        pypi(reverse=True, verbose=True, quiet=True)
         new_text = lock_file.read_text("utf-8")
         assert "pypi.org" not in new_text
         register_url = UvPypi.get_register_from_uv_config()[0]
         assert register_url in new_text
     assert "upload-time" in new_text
+    # Check output for uv config file not exist case
+    mocker.patch(
+        "fast_dev_cli.cli.UvPypi.get_uv_config_file",
+        return_value=Path("not-exist-file"),
+    )
+    pypi(reverse=True, verbose=True, quiet=True)
+    assert (
+        "Skip register reverse as global uv config file not found."
+        in capsys.readouterr().out
+    )

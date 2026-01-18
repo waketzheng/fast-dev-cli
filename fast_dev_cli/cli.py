@@ -1729,7 +1729,14 @@ class UvPypi(DryRun):
         text = p.read_text("utf-8")
         target_register, target_host = cls.PYPI, cls.HOST
         if reverse:
-            target_register, target_host = cls.get_register_from_uv_config()
+            try:
+                target_register, target_host = cls.get_register_from_uv_config()
+            except FileNotFoundError:
+                if verbose:
+                    echo("Skip register reverse as global uv config file not found.")
+                if quiet:
+                    return 0
+                return 1
         new_text = cls.get_target_content(text, verbose, target_register, target_host)
         if new_text is None:
             if verbose:
@@ -1737,14 +1744,18 @@ class UvPypi(DryRun):
             return 0
         return cls.slim_and_write(new_text, slim, p, verbose, quiet)
 
-    @staticmethod
-    def get_register_from_uv_config() -> tuple[str, str]:
-        config_dir = "AppData/Roaming" if is_windows() else ".config"
-        config_file = Path.home() / config_dir / "uv/uv.toml"
+    @classmethod
+    def get_register_from_uv_config(cls) -> tuple[str, str]:
+        config_file = cls.get_uv_config_file()
         text = config_file.read_text("utf-8")
         doc = tomllib.loads(text)
         index_url = doc["index"][0]["url"]
         return index_url, index_url.replace("/simple", "").rstrip("/")
+
+    @staticmethod
+    def get_uv_config_file() -> Path:
+        config_dir = "AppData/Roaming" if is_windows() else ".config"
+        return Path.home() / config_dir / "uv/uv.toml"
 
     @staticmethod
     def slim_and_write(
