@@ -1398,7 +1398,7 @@ class Sync(DryRun):
             return f"python -m pip install -r {self.filename}"
         prefix = "" if is_venv() else f"{tool} run "
         ensure_pip = " {1}python -m ensurepip && {1}python -m pip install -U pip &&"
-        export_cmd = "uv export --no-hashes --all-extras --frozen"
+        export_cmd = "uv export --no-hashes --all-extras --all-groups --frozen"
         if tool in ("poetry", "pdm"):
             export_cmd = f"{tool} export --without-hashes --with=dev"
             if tool == "poetry":

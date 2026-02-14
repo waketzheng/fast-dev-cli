@@ -210,12 +210,12 @@ def test_sync_uv(mocker, tmp_path):
         toml.with_name("uv.lock").write_text(UV_LOCK_EXAMPLE)
         assert (
             Sync("req.txt", "", True, dry=True).gen()
-            == "uv export --no-hashes --all-extras --frozen -o req.txt && uv run python -m ensurepip && uv run python -m pip install -U pip && uv run python -m pip install -r req.txt"
+            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run python -m ensurepip && uv run python -m pip install -U pip && uv run python -m pip install -r req.txt"
         )
         run_and_echo("uv run python -m ensurepip")
         assert (
             Sync("req.txt", "", True, dry=True).gen()
-            == "uv export --no-hashes --all-extras --frozen -o req.txt && uv run python -m pip install -r req.txt"
+            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run python -m pip install -r req.txt"
         )
 
 
