@@ -35,7 +35,7 @@ def test_exec():
     assert "success" not in out
     out = capture_cmd_output('fast exec "ls -a ~/"')
     assert "--> ls -a ~" in out
-    assert ".bashrc" in out
+    assert ".bash" in out
     home = os.path.expanduser("~")
     expected = capture_cmd_output(f"ls {home}")
     assert not (set(expected.splitlines()) - set(out.splitlines()))
