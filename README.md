@@ -43,7 +43,7 @@ Python 3.10+
 
 ## Features
 
-- Support uv/pd/mpoetry
+- Support uv/pdm/poetry
 - Support MacOS/Linux/Windows
 
 ## Installation
@@ -67,7 +67,7 @@ uv tool install --python 3.14 fastdevcli-slim
 ```bash
 pip install fast-dev-cli
 ```
-*Will install: fast-dev-cli emoji typer-slim pytest coverage*
+*Will install: fast-dev-cli emoji typer-slim packaging pytest coverage*
 
 </div>
 

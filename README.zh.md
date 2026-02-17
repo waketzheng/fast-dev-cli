@@ -29,7 +29,7 @@ uv tool install fastdevcli-slim
 ```bash
 pip install fast-dev-cli
 ```
-*会同时安装emoji、typer-slim、pytest、coverage等日常开发工具包*
+*会同时安装emoji、packaging、typer-slim、pytest、coverage*
 
 ## 使用
 ### 代码格式化
