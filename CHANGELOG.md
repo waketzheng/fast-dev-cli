@@ -2,6 +2,11 @@
 
 ## 0.20
 
+### [0.20.2]*(Unreleased)*
+
+#### Changed
+- refactor: default to add `--all-groups` argument when fast sync
+
 ### [0.20.1](../../releases/tag/v0.20.1) - 2026-01-18
 
 #### Changed
