@@ -5,7 +5,7 @@
 groups = ["default", "all", "dev", "standard"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:eed3c380cf0607661f720c41ba1898a6864e22d8bdd7e57fe8cc4eb0c45aeefc"
+content_hash = "sha256:200f7009e09352eaf99d4b39200bb92cfb74fff4aace76c56e5a301301d93d18"
 
 [[metadata.targets]]
 requires_python = "~=3.10"
@@ -1074,20 +1074,6 @@ dependencies = [
 files = [
     {file = "typer-0.24.0-py3-none-any.whl", hash = "sha256:5fc435a9c8356f6160ed6e85a6301fdd6e3d8b2851da502050d1f92c5e9eddc8"},
     {file = "typer-0.24.0.tar.gz", hash = "sha256:f9373dc4eff901350694f519f783c29b6d7a110fc0dcc11b1d7e353b85ca6504"},
-]
-
-[[package]]
-name = "typer-slim"
-version = "0.24.0"
-requires_python = ">=3.10"
-summary = "Typer, build great CLIs. Easy to code. Based on Python type hints."
-groups = ["default", "dev"]
-dependencies = [
-    "typer>=0.24.0",
-]
-files = [
-    {file = "typer_slim-0.24.0-py3-none-any.whl", hash = "sha256:d5d7ee1ee2834d5020c7c616ed5e0d0f29b9a4b1dd283bdebae198ec09778d0e"},
-    {file = "typer_slim-0.24.0.tar.gz", hash = "sha256:f0ed36127183f52ae6ced2ecb2521789995992c521a46083bfcdbb652d22ad34"},
 ]
 
 [[package]]
