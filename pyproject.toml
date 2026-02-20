@@ -38,12 +38,12 @@ Homepage = "https://github.com/waketzheng/fast-dev-cli"
 
 [project.optional-dependencies]
 standard = [
-    "emoji >=2.12.1",
-    "packaging >=20.5",
     "coverage >=7.5.1",
     "pytest >=8.2.0",
 ]
 all = [
+    "emoji >=2.12.1",
+    "packaging >=20.5",
     "bandit>=1.7.9",
     "pytest-mock >=3.14.0",
     "fast-dev-cli[standard]"
