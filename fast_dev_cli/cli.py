@@ -1065,6 +1065,7 @@ class LintCode(DryRun):
         sim: bool = True,
         strict: bool = False,
         ty: bool = False,
+        fix: bool = True,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -1077,6 +1078,7 @@ class LintCode(DryRun):
         self._sim = sim
         self._strict = strict
         self._ty = _ensure_bool(ty)
+        self._fix = _ensure_bool(fix)
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -1123,11 +1125,13 @@ class LintCode(DryRun):
         ruff_check_sim: bool = True,
         mypy_strict: bool = False,
         prefer_ty: bool = False,
+        ruff_check_fix: bool = True,
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
         cmd = ""
-        tools = ["ruff format", "ruff check --extend-select=I,B,SIM --fix", "mypy"]
+        ruff_check = "ruff check --extend-select=I,B,SIM" + " --fix" * ruff_check_fix
+        tools = ["ruff format", ruff_check, "mypy"]
         if check_only:
             tools[0] += " --check"
         if check_only or load_bool("NO_FIX"):
@@ -1256,6 +1260,7 @@ class LintCode(DryRun):
             ruff_check_sim=self._sim,
             mypy_strict=self._strict,
             prefer_ty=self._ty,
+            ruff_check_fix=self._fix,
         )
 
 
@@ -1275,6 +1280,7 @@ def lint(
     sim: bool = True,
     strict: bool = False,
     ty: bool = False,
+    fix: bool = True,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -1292,6 +1298,7 @@ def lint(
         sim=sim,
         strict=strict,
         ty=ty,
+        fix=fix,
     ).run()
 
 
@@ -1343,6 +1350,7 @@ def make_style(
     sim: bool = Option(True, help="Whether ruff check with --extend-select=SIM"),
     strict: bool = Option(False, help="Whether run mypy with --strict"),
     ty: bool = Option(False, help="Whether use ty instead of mypy"),
+    fix: bool | None = Option(None, help="Whether ruff check with --fix"),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -1352,13 +1360,18 @@ def make_style(
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
     bandit = _ensure_bool(bandit)
-    prefix = _ensure_bool(prefix)
     tool = _ensure_str(tool)
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
     strict = _ensure_bool(strict)
     kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
-    run = check if _ensure_bool(check_only) else functools.partial(lint, prefix=prefix)
+    if _ensure_bool(check_only):
+        run = check
+    else:
+        prefix = _ensure_bool(prefix)
+        if fix is None or not isinstance(fix, bool):
+            fix = load_bool("FASTDEVCLI_FIX", True)
+        run = functools.partial(lint, prefix=prefix, fix=fix)
     run(files, tool=tool, up=up, sim=sim, strict=strict, ty=ty, **kwargs)
 
 
