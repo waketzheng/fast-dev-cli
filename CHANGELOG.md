@@ -2,7 +2,9 @@
 
 ## 0.21
 
-### [0.21.0]*(Unreleased)*
+### [0.21.1]*(Unreleased)*
+
+### [0.21.0](../../releases/tag/v0.21.0) - 2026-03-02
 
 #### Changed
 - Use typer instead of typer-slim
