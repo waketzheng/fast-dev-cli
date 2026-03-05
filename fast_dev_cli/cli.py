@@ -307,7 +307,7 @@ def get_current_version(
     is_poetry: bool | None = None,
     package_name: str | None = None,
     *,
-    check_version: Literal[True] = True,
+    check_version: Literal[True],
 ) -> tuple[bool, str]: ...
 
 

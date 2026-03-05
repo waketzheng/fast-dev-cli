@@ -20,6 +20,12 @@
 <a href="https://github.com/python/mypy" target="_blank">
     <img src="https://img.shields.io/badge/mypy-100%25-brightgreen.svg" alt="Mypy Coverage">
 </a>
+<a href="https://github.com/microsoft/pyright" target="_blank">
+    <img src="https://img.shields.io/badge/pyright-checked-brightgreen.svg" alt="Pyright Checked">
+</a>
+<a href="https://github.com/astral-sh/ty" target="_blank">
+    <img src="https://img.shields.io/badge/ty-checked-brightgreen.svg" alt="ty Checked">
+</a>
 <a href="https://github.com/astral-sh/ruff" target="_blank">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
 </a>

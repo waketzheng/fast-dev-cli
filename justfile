@@ -75,6 +75,7 @@ run *args: venv
 _lint *args:
     pdm run fast lint --ty {{args}}
     @just mypy
+    @just right
 
 lint *args: deps
     @just _lint {{args}}
