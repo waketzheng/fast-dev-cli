@@ -272,6 +272,26 @@ def read_version_from_file(
     return "0.0.0"
 
 
+def _get_frontend_version() -> tuple[Path, str] | None:
+    try:
+        frontend_version_file = Project.get_work_dir("package.json", be_file=True)
+    except EnvError:
+        return None
+    try:
+        from asynctor.jsons import json_loads
+    except ImportError:
+        from json import loads as json_loads
+    content = frontend_version_file.read_bytes()
+    metadata: dict[str, str] = json_loads(content)  # ty:ignore[invalid-assignment]
+    try:
+        current_version = metadata["version"]
+    except (KeyError, TypeError):
+        return None
+    with contextlib.suppress(ValueError):
+        frontend_version_file = frontend_version_file.relative_to(Path.cwd())
+    return frontend_version_file, current_version
+
+
 @overload
 def get_current_version(
     verbose: bool = False,
@@ -310,11 +330,20 @@ def get_current_version(
         return out
     toml_text = work_dir = None
     if package_name is None:
-        work_dir = Project.get_work_dir()
-        toml_text = Project.load_toml_text()
-        doc = tomllib.loads(toml_text)
-        project_name = doc.get("project", {}).get("name", work_dir.name)
-        package_name = re.sub(r"[- ]", "_", project_name)
+        try:
+            work_dir = Project.get_work_dir()
+        except EnvError as e:
+            if (res := _get_frontend_version()) is None:
+                raise e
+            current_version = res[1]
+            if check_version:
+                return False, current_version
+            return current_version
+        else:
+            toml_text = Project.load_toml_text()
+            doc = tomllib.loads(toml_text)
+            project_name = doc.get("project", {}).get("name", work_dir.name)
+            package_name = re.sub(r"[- ]", "_", project_name)
     local_version = read_version_from_file(package_name, work_dir, toml_text)
     try:
         installed_version = importlib_metadata.version(package_name)
@@ -549,12 +578,23 @@ class BumpUp(DryRun):
                 echo("You may want to pin tag by `fast tag`")
 
 
+def _echo_version(version_file: Any, value: str) -> None:
+    styled = typer.style(value, bold=True)
+    echo(f"Version value in {version_file}: " + styled)
+
+
 @cli.command()
 def version() -> None:
     """Show the version of this tool"""
     echo("Fast Dev Cli Version: " + typer.style(__version__, fg=typer.colors.BLUE))
     with contextlib.suppress(FileNotFoundError, KeyError):
-        toml_text = Project.load_toml_text()
+        try:
+            toml_text = Project.load_toml_text()
+        except EnvError:
+            if (res := _get_frontend_version()) is not None:
+                _echo_version(*res)
+                return
+            raise
         doc = tomllib.loads(toml_text)
         if value := doc.get("project", {}).get("version", ""):
             styled = typer.style(value, bold=True, fg=typer.colors.CYAN)
@@ -569,8 +609,7 @@ def version() -> None:
         for line in text.splitlines():
             if line.strip().startswith(varname):
                 value = line.split("=", 1)[-1].strip().strip('"').strip("'")
-                styled = typer.style(value, bold=True)
-                echo(f"Version value in {version_file}: " + styled)
+                _echo_version(version_file, value)
                 break
 
 
