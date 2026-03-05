@@ -75,11 +75,10 @@ def poetry_module_name(name: str) -> str:
     try:
         from packaging.utils import canonicalize_name
     except ImportError:
-
-        def canonicalize_name(s: str) -> str:  # type:ignore[misc]
-            return re.sub(r"[-_.]+", "-", s)
-
-    return canonicalize_name(name).replace("-", "_").replace(" ", "_")
+        module_name = re.sub(r"[-_.]+", "-", name)
+    else:
+        module_name = canonicalize_name(name)
+    return module_name.replace("-", "_").replace(" ", "_")
 
 
 def is_emoji(char: str) -> bool:
@@ -280,9 +279,9 @@ def _get_frontend_version() -> tuple[Path, str] | None:
     try:
         from asynctor.jsons import json_loads
     except ImportError:
-        from json import loads as json_loads
+        from json import loads as json_loads  # type:ignore[assignment]
     content = frontend_version_file.read_bytes()
-    metadata: dict[str, str] = json_loads(content)  # ty:ignore[invalid-assignment]
+    metadata: dict[str, str] = json_loads(content)  # type:ignore[assignment]
     try:
         current_version = metadata["version"]
     except (KeyError, TypeError):
@@ -360,13 +359,13 @@ def get_current_version(
 
 def _ensure_bool(value: bool | OptionInfo) -> bool:
     if not isinstance(value, bool):
-        value = getattr(value, "default", False)
+        value = bool(getattr(value, "default", False))
     return value
 
 
 def _ensure_str(value: str | OptionInfo | None) -> str:
     if not isinstance(value, str):
-        value = getattr(value, "default", "")
+        value = str(getattr(value, "default", ""))
     return value
 
 
@@ -496,7 +495,7 @@ class BumpUp(DryRun):
             try:
                 project_name = context["project"]["name"]
             except KeyError:
-                packages = []
+                packages: list[tuple[str, str]] = []
             else:
                 packages = [(poetry_module_name(project_name), "")]
         else:
