@@ -7,55 +7,91 @@ from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 def test_runserver(capsys):
     runserver(dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev"
+    assert out.replace("--> ", "") == "pdm run fastapi dev"
     runserver(port=8000, dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev"
+    assert out.replace("--> ", "") == "pdm run fastapi dev"
     runserver(port=9000, dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=9000"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --port=9000"
     runserver(host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0"
     runserver(port=9000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0 --port=9000"
     runserver("9000", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0 --port=9000"
     runserver("app.py", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev app.py --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev app.py --host=0.0.0.0"
+
+
+def test_runserver_no_pdm(capsys, mocker):
+    mocker.patch("shutil.which", return_value=None)
+    runserver(dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev"
+    runserver(file_or_port=":8000", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --port=8000"
+    runserver(file_or_port="0:9000", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0 --port=9000"
+    runserver(file_or_port="0.0.0.0:8000", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0 --port=8000"
+    runserver(port=9000, host="0.0.0.0", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0 --port=9000"
+    runserver("9000", host="0.0.0.0", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0 --port=9000"
+    runserver("app.py", uvicorn=True, host="0.0.0.0", dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "uvicorn app:app --host=0.0.0.0"
+    runserver(
+        "tests/test_runserver.py", uvicorn=True, port=9999, host="0.0.0.0", dry=True
+    )
+    out = capsys.readouterr().out.strip()
+    assert (
+        out.replace("--> ", "")
+        == "uvicorn tests.test_runserver:app --host=0.0.0.0 --port=9999"
+    )
 
 
 def test_dev(capsys):
     dev(None, None, dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev"
+    assert out.replace("--> ", "") == "pdm run fastapi dev"
     dev(port=8000, host="", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev"
+    assert out.replace("--> ", "") == "pdm run fastapi dev"
     dev(port=9000, host=None, dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=9000"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --port=9000"
     dev(8000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0"
     dev(port=9000, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=9000 --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0 --port=9000"
     dev(8001, host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=8001 --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0 --port=8001"
     dev(None, file="8001", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev --port=8001 --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev --host=0.0.0.0 --port=8001"
     dev(None, file="main.py", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev main.py --host=0.0.0.0"
+    assert out.replace("--> ", "") == "pdm run fastapi dev main.py --host=0.0.0.0"
     dev(8001, file="main.py", host="0.0.0.0", dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "fastapi dev main.py --port=8001 --host=0.0.0.0"
+    assert (
+        out.replace("--> ", "")
+        == "pdm run fastapi dev main.py --host=0.0.0.0 --port=8001"
+    )
 
 
 def test_fast_dev(tmp_path):
@@ -67,11 +103,11 @@ def test_fast_dev(tmp_path):
     run_and_echo(f"fast dev main.py --port=9000 --dry > {out}", verbose=False)
     assert "fastapi dev main.py --port=9000" in out.read_text()
     run_and_echo(
-        f"fast dev main.py --port=9000 --host=0.0.0.0 --dry > {out}", verbose=False
+        f"fast dev main.py --host=0.0.0.0 --port=9000 --dry > {out}", verbose=False
     )
-    assert "fastapi dev main.py --port=9000 --host=0.0.0.0" in out.read_text()
+    assert "fastapi dev main.py --host=0.0.0.0 --port=9000" in out.read_text()
     run_and_echo(f"fast dev 9000 --host=0.0.0.0 --dry > {out}", verbose=False)
-    assert "fastapi dev --port=9000 --host=0.0.0.0" in out.read_text()
+    assert "fastapi dev --host=0.0.0.0 --port=9000" in out.read_text()
 
 
 def test_run_by_module(tmp_path):
@@ -84,11 +120,11 @@ def test_run_by_module(tmp_path):
     run_and_echo(f"{fast} dev main.py --port=9000 --dry > {out}", verbose=False)
     assert "fastapi dev main.py --port=9000" in out.read_text()
     run_and_echo(
-        f"{fast} dev main.py --port=9000 --host=0.0.0.0 --dry > {out}", verbose=False
+        f"{fast} dev main.py --host=0.0.0.0 --port=9000 --dry > {out}", verbose=False
     )
-    assert "fastapi dev main.py --port=9000 --host=0.0.0.0" in out.read_text()
+    assert "fastapi dev main.py --host=0.0.0.0 --port=9000" in out.read_text()
     run_and_echo(f"{fast} dev 9000 --host=0.0.0.0 --dry > {out}", verbose=False)
-    assert "fastapi dev --port=9000 --host=0.0.0.0" in out.read_text()
+    assert "fastapi dev --host=0.0.0.0 --port=9000" in out.read_text()
 
 
 def test_main(mocker):

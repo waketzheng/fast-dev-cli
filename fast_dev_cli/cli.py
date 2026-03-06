@@ -1583,7 +1583,7 @@ def dev(
             "localhost",
             "127.0.0.1",
         ):
-            args.append(f" --host={host}")
+            args.append(f"--host={host}")
         no_port_yet = True
         if file is not None:
             try:
@@ -1591,12 +1591,12 @@ def dev(
             except ValueError:
                 if m := re.search(r"(.*):(\d+)$", str(file)):
                     h, p = m.group(1), m.group(2)
-                    args.append(f" --port={p}")
                     if h and "--host" not in str(args):
                         if h == "0":
-                            args.append(" --host=0.0.0.0")
+                            args.append("--host=0.0.0.0")
                         else:
-                            args.append(f" --host={h}")
+                            args.append(f"--host={h}")
+                    args.append(f"--port={p}")
                     if uvicorn:
                         p = Path("main.py")
                         if p.exists():
@@ -1606,17 +1606,25 @@ def dev(
                         elif Path("app.py").exists():
                             cmd += " app:app"
                 else:
+                    if uvicorn and (
+                        (filepath := Path(str(file))).is_file()
+                        or filepath.suffix == ".py"
+                    ):
+                        file = filepath.stem + ":app"
+                        parent_names = [j for i in filepath.parents if (j := i.name)]
+                        if parent_names:
+                            file = ".".join([*parent_names[::-1], file])
                     cmd += f" {file}"
             else:
                 if port != 8000:
-                    args.append(f" --port={port}")
+                    args.append(f"--port={port}")
                     no_port_yet = False
         if (
             no_port_yet
             and (port := getattr(port, "default", port))
             and str(port) != "8000"
         ):
-            args.append(f" --port={port}")
+            args.append(f"--port={port}")
         if shutil.which("pdm") is not None:
             cmd = "pdm run " + cmd
     if args:
