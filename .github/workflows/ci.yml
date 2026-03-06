@@ -78,8 +78,6 @@ jobs:
       - name: Install requirements/Check code style and Type Hint
         run: |
           just check
-          uv pip install mypy
-          pdm run mypy fast_dev_cli
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
