@@ -399,7 +399,13 @@ class BumpUp(DryRun):
         self.commit = commit
         self.part = part
         if filename is None:
-            filename = self.parse_filename()
+            try:
+                filename = self.parse_filename()
+            except EnvError:
+                if (res := _get_frontend_version()) is not None:
+                    filename = res[0].name
+                else:
+                    raise
         self.filename = filename
         self._no_sync = no_sync
         self._emoji = emoji
