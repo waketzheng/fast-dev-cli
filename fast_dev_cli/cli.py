@@ -358,15 +358,15 @@ def get_current_version(
 
 
 def _ensure_bool(value: bool | OptionInfo) -> bool:
-    if not isinstance(value, bool):
-        value = bool(getattr(value, "default", False))
-    return value
+    if isinstance(value, bool):
+        return value
+    return bool(getattr(value, "default", False))
 
 
-def _ensure_str(value: str | OptionInfo | None) -> str:
-    if not isinstance(value, str):
-        value = str(getattr(value, "default", ""))
-    return value
+def _ensure_str(value: str | OptionInfo | None) -> str | None:
+    if isinstance(value, str) or value is None:
+        return value
+    return getattr(value, "default", "")
 
 
 class DryRun:
@@ -1029,7 +1029,7 @@ def upgrade(
     dry: bool = DryOption,
 ) -> None:
     """Upgrade dependencies in pyproject.toml to latest versions"""
-    if not (tool := _ensure_str(tool)) or tool == ToolOption.default:
+    if not (tool := _ensure_str(tool) or "") or tool == ToolOption.default:
         tool = Project.get_manage_tool() or "uv"
     if tool in get_args(ToolName):
         UpgradeDependencies(dry=dry, tool=cast(ToolName, tool)).run()
@@ -1404,7 +1404,7 @@ def make_style(
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
     bandit = _ensure_bool(bandit)
-    tool = _ensure_str(tool)
+    tool = _ensure_str(tool) or ""
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
     strict = _ensure_bool(strict)
