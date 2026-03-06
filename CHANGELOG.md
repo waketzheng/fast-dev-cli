@@ -2,7 +2,12 @@
 
 ## 0.21
 
-### [0.21.1]*(Unreleased)*
+### [0.21.2]*(Unreleased)*
+
+### [0.21.1](../../releases/tag/v0.21.1) - 2026-03-05
+
+#### Added
+- feat: support `fast bump/tag` for package.json
 
 ### [0.21.0](../../releases/tag/v0.21.0) - 2026-03-02
 
