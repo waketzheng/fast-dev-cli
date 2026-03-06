@@ -402,3 +402,23 @@ build-backend = "pdm.backend"
         out = capture_cmd_output("fast bump patch")
         assert version_file.as_posix() in out
         assert "0.3.1" in version_file.read_text()
+
+
+def test_package_dot_json(tmp_work_dir):
+    p = Path("package.json")
+    p.write_text('{"version":"0.1.0"}', encoding="utf-8")
+    out = capture_cmd_output("fast bump patch")
+    assert p.name in out
+    assert "0.1.1" in p.read_text()
+    out = capture_cmd_output("fast bump patch --commit --dry")
+    assert (
+        'bumpversion --parse "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)" --current-version="0.1.1" patch package.json --commit'
+        in out
+    )
+    run_and_echo("git init")
+    run_and_echo("git add .")
+    run_and_echo("git config user.name xxx")
+    run_and_echo("git config user.email xxx@a.com")
+    run_and_echo('git commit -m "xxx"')
+    out = capture_cmd_output("fast tag --dry")
+    assert "git tag -a 0.1.1 -m '' && git push --tags" in out
