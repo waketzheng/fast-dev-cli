@@ -1453,7 +1453,9 @@ class Sync(DryRun):
             if should_remove or not is_venv():
                 raise EnvError("There project is not managed by uv/pdm/poetry!")
             return f"python -m pip install -r {self.filename}"
-        prefix = "" if is_venv() else f"{tool} run "
+        prefix = ""
+        if not is_venv():
+            prefix = f"{tool} run " + "--no-sync " * (tool == "uv")
         ensure_pip = " {1}python -m ensurepip && {1}python -m pip install -U pip &&"
         export_cmd = "uv export --no-hashes --all-extras --all-groups --frozen"
         if tool in ("poetry", "pdm"):
