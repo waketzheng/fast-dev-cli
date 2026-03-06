@@ -4,6 +4,9 @@
 
 ### [0.21.2]*(Unreleased)*
 
+#### Added
+- feat: support `fast dev --reload --prod`
+
 ### [0.21.1](../../releases/tag/v0.21.1) - 2026-03-05
 
 #### Added
