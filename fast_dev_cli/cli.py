@@ -1549,30 +1549,78 @@ def upload(
     exit_if_run_failed(cmd, dry=dry)
 
 
+def should_use_just() -> bool:
+    if shutil.which("just") is None:
+        return False
+    d = Path.cwd()
+    for _ in range(5):
+        f = d / "justfile"
+        if f.exists():
+            text = f.read_text(encoding="utf-8")
+            return any(i.startswith("dev *args:") for i in text.splitlines())
+        if d.joinpath("pyproject.toml").exists():
+            break
+    return False
+
+
 def dev(
     port: int | None | OptionInfo,
     host: str | None | OptionInfo,
+    fastapi: bool | None = None,
+    uvicorn: bool | None = None,
+    prod: bool | None = None,
+    reload: bool | None = None,
     file: str | None | ArgumentInfo = None,
     dry: bool = False,
 ) -> None:
-    cmd = "fastapi dev"
-    no_port_yet = True
-    if file is not None:
-        try:
-            port = int(str(file))
-        except ValueError:
-            cmd += f" {file}"
-        else:
-            if port != 8000:
-                cmd += f" --port={port}"
-                no_port_yet = False
-    if no_port_yet and (port := getattr(port, "default", port)) and str(port) != "8000":
-        cmd += f" --port={port}"
-    if (host := getattr(host, "default", host)) and host not in (
-        "localhost",
-        "127.0.0.1",
-    ):
-        cmd += f" --host={host}"
+    if should_use_just():
+        args = [i for i in sys.argv[2:] if i != "--dry"]
+        cmd = "just dev"
+    else:
+        cmd = "uvicorn" if uvicorn else "fastapi dev"
+        args = []
+        if (host := getattr(host, "default", host)) and host not in (
+            "localhost",
+            "127.0.0.1",
+        ):
+            args.append(f" --host={host}")
+        no_port_yet = True
+        if file is not None:
+            try:
+                port = int(str(file))
+            except ValueError:
+                if m := re.search(r"(.*):(\d+)$", str(file)):
+                    h, p = m.group(1), m.group(2)
+                    args.append(f" --port={p}")
+                    if h and "--host" not in str(args):
+                        if h == "0":
+                            args.append(" --host=0.0.0.0")
+                        else:
+                            args.append(f" --host={h}")
+                    if uvicorn:
+                        p = Path("main.py")
+                        if p.exists():
+                            cmd += " main:app"
+                        elif Path("app", p.name).exists():
+                            cmd += " app.main:app"
+                        elif Path("app.py").exists():
+                            cmd += " app:app"
+                else:
+                    cmd += f" {file}"
+            else:
+                if port != 8000:
+                    args.append(f" --port={port}")
+                    no_port_yet = False
+        if (
+            no_port_yet
+            and (port := getattr(port, "default", port))
+            and str(port) != "8000"
+        ):
+            args.append(f" --port={port}")
+        if shutil.which("pdm") is not None:
+            cmd = "pdm run " + cmd
+    if args:
+        cmd += " " + " ".join(args)
     exit_if_run_failed(cmd, dry=dry)
 
 
@@ -1581,13 +1629,18 @@ def runserver(
     file_or_port: str | None = typer.Argument(default=None),
     port: int | None = Option(None, "-p", "--port"),
     host: str | None = Option(None, "-h", "--host"),
+    fastapi: bool | None = None,
+    uvicorn: bool | None = None,
+    prod: bool | None = None,
+    reload: bool | None = None,
     dry: bool = DryOption,
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
+    f = functools.partial(dev, port, host, fastapi, uvicorn, prod, reload, dry=dry)
     if getattr(file_or_port, "default", file_or_port):
-        dev(port, host, file=file_or_port, dry=dry)
+        f(file=file_or_port)
     else:
-        dev(port, host, dry=dry)
+        f()
 
 
 @cli.command(name="exec")
