@@ -1,7 +1,3 @@
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-
 [project]
 name = "fast-dev-cli"
 dynamic = ["version"]
@@ -55,27 +51,13 @@ dev = [
     "asynctor>=0.10.0",
 ]
 
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
 [tool.pdm]
 version = { source = "file", path = "fast_dev_cli/__init__.py" }
 distribution = true
-
-[tool.pdm.build]
-source-includes = ["scripts/"]
-[tool.pdm.dev-dependencies]
-dev = ["-e file:///${PROJECT_ROOT}/#egg=fast-dev-cli[all]"]
-[tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project]
-name = "fastdevcli-slim"
-
-[tool.waketzheng._internal-slim-build.packages.fast-dev-cli]
-include-optional-dependencies = ["standard"]
-
-[tool.waketzheng._internal-slim-build.packages.fast-dev-cli.project.optional-dependencies]
-include-optional-dependencies = ["all"]
-
-[tool.waketzheng._internal-slim-build.packages.fastdevcli-slim.project.scripts]
-fast = "fast_dev_cli:cli.main"
-[tool.waketzheng._internal-slim-build.packages.fast-dev-cli.project.scripts]
-fast = "fast_dev_cli:cli.main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -138,16 +120,16 @@ extend-select = [
 exclude_dirs = ["tests", "scripts", "examples", ".venv"]
 
 [tool.pdm.scripts]
-up = 'pdm update -G :all'
+up = 'just up {args}'
 tree = 'pdm list --tree {args}'
-deps = 'pdm run python scripts/deps.py {args}'
+deps = 'just deps {args}'
 prod = 'pdm install --prod --frozen {args}'
 fresh = {composite = ["up", "deps"]}
 test = 'pdm run fast test {args}'
-lint = 'pdm run fast lint {args}'
-check = 'pdm run fast check {args}'
+lint = 'just lint {args}'
+check = 'just check {args}'
 tag = "pdm run fast tag {args}"
 bump = "pdm run fast bump patch --commit {args}"
 ci = {composite = ["deps", "check", "test"]}
-start = {composite = ["pre-commit install", "deps"]}
+start = {composite = ["prek install", "deps"]}
 style = {composite = ["ruff format", "ruff check --fix --unsafe-fixes {args}"]}
