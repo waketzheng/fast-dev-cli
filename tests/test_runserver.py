@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import functools
+
 import fast_dev_cli
 from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 
@@ -95,19 +97,20 @@ def test_dev(capsys):
 
 
 def test_fast_dev(tmp_path):
-    out = tmp_path / "a.txt"
-    run_and_echo(f"fast dev 9000 --dry > {out}", verbose=False)
-    assert "fastapi dev --port=9000" in out.read_text()
-    run_and_echo(f"fast dev main.py --dry > {out}", verbose=False)
-    assert "fastapi dev main.py" in out.read_text()
-    run_and_echo(f"fast dev main.py --port=9000 --dry > {out}", verbose=False)
-    assert "fastapi dev main.py --port=9000" in out.read_text()
+    file = tmp_path / "a.txt"
+    read_text = functools.partial(file.read_text, encoding="utf-8")
+    run_and_echo(f"fast dev 9000 --dry > {file}", verbose=False)
+    assert "fastapi dev --port=9000" in read_text()
+    run_and_echo(f"fast dev main.py --dry > {file}", verbose=False)
+    assert "fastapi dev main.py" in read_text()
+    run_and_echo(f"fast dev main.py --port=9000 --dry > {file}", verbose=False)
+    assert "fastapi dev main.py --port=9000" in read_text()
     run_and_echo(
-        f"fast dev main.py --host=0.0.0.0 --port=9000 --dry > {out}", verbose=False
+        f"fast dev main.py --host=0.0.0.0 --port=9000 --dry > {file}", verbose=False
     )
-    assert "fastapi dev main.py --host=0.0.0.0 --port=9000" in out.read_text()
-    run_and_echo(f"fast dev 9000 --host=0.0.0.0 --dry > {out}", verbose=False)
-    assert "fastapi dev --host=0.0.0.0 --port=9000" in out.read_text()
+    assert "fastapi dev main.py --host=0.0.0.0 --port=9000" in read_text()
+    run_and_echo(f"fast dev 9000 --host=0.0.0.0 --dry > {file}", verbose=False)
+    assert "fastapi dev --host=0.0.0.0 --port=9000" in read_text()
 
 
 def test_run_by_module(tmp_path):

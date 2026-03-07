@@ -45,6 +45,9 @@ all = [
     "fast-dev-cli[standard]"
 ]
 
+[project.scripts]
+fast = "fast_dev_cli.cli:main"
+
 [dependency-groups]
 dev = [
     "twine>=6.1.0",
