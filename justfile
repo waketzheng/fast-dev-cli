@@ -152,10 +152,16 @@ version part="patch" *args:
     pdm run fast bump {{part}} {{args}}
 
 bump *args:
-    pdm run fast bump patch --commit {{args}}
+    @just version patch --commit {{args}}
 
 tag *args:
     pdm run fast tag {{args}}
 
+# Bump version with patch part(0.1.1->0.1.2) and auto mark tag
 release: venv bump tag
+    git --no-pager log -1
+
+# Bump version with minor part(0.1.1->0.2.0) and auto mark tag
+minor *args:
+    @just version minor --commit {{args}}
     git --no-pager log -1
