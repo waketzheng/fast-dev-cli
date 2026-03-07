@@ -148,8 +148,8 @@ start:
     pre-commit install
     @just deps
 
-version part="patch":
-    pdm run fast bump {{part}}
+version part="patch" *args:
+    pdm run fast bump {{part}} {{args}}
 
 bump *args:
     pdm run fast bump patch --commit {{args}}
