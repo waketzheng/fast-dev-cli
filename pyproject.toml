@@ -52,6 +52,7 @@ fast = "fast_dev_cli.cli:main"
 dev = [
     "twine>=6.1.0",
     "asynctor>=0.10.0",
+    "mypy>=1.19.1",
 ]
 
 [build-system]
