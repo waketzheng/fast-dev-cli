@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+import re
 import shutil
 from pathlib import Path
 
@@ -52,6 +54,11 @@ def mock_ignore_missing_imports(monkeypatch):
 @pytest.fixture
 def mock_ignore_missing_imports_0(monkeypatch):
     monkeypatch.setenv("IGNORE_MISSING_IMPORTS", "0")
+
+
+@pytest.fixture
+def mock_ty_0(monkeypatch):
+    monkeypatch.setenv("FASTDEVCLI_TY", "0")
 
 
 SEP = " && "
@@ -178,16 +185,12 @@ def test_lint_cmd(mock_no_dmypy, monkeypatch):
     command = capture_cmd_output(f"{lint_cmd} . --dry")
     for cmd in LINT_CMD.split(SEP):
         assert cmd in command
-    assert (
-        capture_cmd_output(f"{lint_cmd} --dry")
-        == capture_cmd_output(f"{run}fast lint --dry")
-        == command
-    )
-    assert (
-        capture_cmd_output(f"{lint_cmd} .")
-        == capture_cmd_output(f"{lint_cmd}")
-        == capture_cmd_output(f"{run}fast lint")
-    )
+    assert capture_cmd_output(f"{lint_cmd} --dry") == command
+    out = capture_cmd_output(f"{run}fast lint --dry")
+    assert out == "--> " + LINT_CMD
+    assert capture_cmd_output(f"{lint_cmd} .") == capture_cmd_output(f"{lint_cmd}")
+    out = capture_cmd_output(f"{run}fast lint")
+    assert LINT_CMD in out
     assert "mypy --strict" in capture_cmd_output("fast lint --strict --dry")
     monkeypatch.setenv("FASTDEVCLI_STRICT", "1")
     assert "mypy --strict" in capture_cmd_output("fast lint --dry")
@@ -241,7 +244,8 @@ def test_lint_with_prefix(mocker):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=False)
     with capture_stdout() as stream:
         make_style(["."], check_only=False, dry=True, prefix=True)
-    assert "pdm run" in stream.getvalue()
+    prefix = "uv run" if platform.system() == "Windows" else ".venv/bin/mypy"
+    assert prefix in stream.getvalue()
 
 
 def test_lint_auto_suffix(tmp_work_dir):
@@ -262,44 +266,62 @@ def test_fast_lint_with_uv():
 
 def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    expected = LINT_CMD
+    check_expected = CHECK_CMD
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+        check_expected = check_expected.replace("&& mypy", f"&& {prefix}mypy")
     with capture_stdout() as stream:
         make_style(check_only=False, dry=True)
-    assert LINT_CMD in stream.getvalue()
+    assert expected in stream.getvalue()
     with capture_stdout() as stream:
         make_style(["."], check_only=False, dry=True)
-    assert LINT_CMD in stream.getvalue()
+    assert expected in stream.getvalue()
     with capture_stdout() as stream:
         make_style(".", check_only=False, dry=True)  # type:ignore[arg-type]
-    assert LINT_CMD in stream.getvalue()
+    assert expected in stream.getvalue()
     with capture_stdout() as stream:
         make_style(["."], check_only=True, dry=True)
-    assert CHECK_CMD in stream.getvalue()
+    assert check_expected in stream.getvalue()
     with capture_stdout() as stream:
         only_check(dry=True)
-    assert CHECK_CMD in stream.getvalue()
+    assert check_expected in stream.getvalue()
 
 
 def test_lint_class(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD
+    expected = LINT_CMD
+    check_expected = CHECK_CMD
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+        check_expected = check_expected.replace("&& mypy", f"&& {prefix}mypy")
+    assert LintCode(".").gen() == expected
     check = LintCode(".", check_only=True)
-    assert check.gen() == CHECK_CMD
+    assert check.gen() == check_expected
     mocker.patch("fast_dev_cli.cli.Project.work_dir", return_value=None)
     assert LintCode(".").gen() == LINT_CMD
 
 
-def test_lint_func(mocker, mock_no_dmypy):
+def test_lint_func(mocker, mock_no_dmypy, mock_ty_0):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    expected = LINT_CMD
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
     with capture_stdout() as stream:
         lint(".", dry=True)
-    assert LINT_CMD in stream.getvalue()
+    assert expected in stream.getvalue()
     with mock_sys_argv(["tests"]), capture_stdout() as stream:
         lint(dry=True)
-    assert LINT_CMD.replace(" .", " tests") in stream.getvalue()
+    with_dir = re.sub(r" \.$", " tests", expected.replace(" . ", " tests "))
+    out = stream.getvalue()
+    assert with_dir in out
     with capture_stdout() as stream:
         lint(["lint"], dry=True)
-    assert LINT_CMD in stream.getvalue()
-    assert LINT_CMD in capture_cmd_output("pdm run python -m fast_dev_cli lint --dry")
+    assert expected in stream.getvalue()
+    assert expected in capture_cmd_output("pdm run python -m fast_dev_cli lint --dry")
 
 
 def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
@@ -332,7 +354,11 @@ def test_lint_without_mypy_installed(mocker, mock_no_dmypy):
 
 def test_no_fix(mock_no_fix, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD.replace(" --fix", "")
+    expected = LINT_CMD.replace(" --fix", "")
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+    assert LintCode(".").gen() == expected
 
 
 def test_skip_mypy(mock_skip_mypy, mocker):
@@ -360,34 +386,47 @@ def test_skip_mypy_fast_lint(mock_skip_mypy_0, mocker):
 
 def test_skip_mypy_0(mock_skip_mypy_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD
+    expected = LINT_CMD
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+    assert LintCode(".").gen() == expected
 
 
 def test_ignore_missing_imports(mock_ignore_missing_imports, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD.replace(
-        "mypy ", "mypy --ignore-missing-imports "
-    )
+    expected = LINT_CMD.replace("mypy ", "mypy --ignore-missing-imports ")
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+    assert LintCode(".").gen() == expected
 
 
 def test_ignore_missing_imports_0(mock_ignore_missing_imports_0, mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
-    assert LintCode(".").gen() == LINT_CMD
+    expected = LINT_CMD
+    if shutil.which("mypy") is None:
+        prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
+        expected = expected.replace("&& mypy", f"&& {prefix}mypy")
+    assert LintCode(".").gen() == expected
 
 
-def test_not_in_root(mocker, mock_no_dmypy):
+def test_not_in_root(mocker, mock_no_dmypy, mock_ty_0):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     root = Path(__file__).parent.parent
+    expected = LINT_CMD
+    if shutil.which("mypy") is None:
+        expected = expected.replace("&& mypy", "&& uv run mypy")
     with chdir(root / "fast_dev_cli"):
-        assert LintCode(".").gen() == LINT_CMD
+        assert LintCode(".").gen() == expected
     with chdir(root / "tests"):
-        assert LintCode(".").gen() == LINT_CMD
+        assert LintCode(".").gen() == expected
         sub = Path("temp_dir")
         sub.mkdir()
         with chdir(sub):
             cmd = LintCode(".").gen()
         sub.rmdir()
-        assert cmd == LINT_CMD
+        assert cmd == expected
 
 
 def test_get_manage_tool(tmp_path):

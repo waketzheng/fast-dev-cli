@@ -56,13 +56,17 @@ def test_sync_not_in_venv(mocker, capsys):
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
     )
     pdm_export = "pdm export --without-hashes --with=dev -o req.txt"
-    installing = "pdm run python -m pip install -r req.txt"
+    uv_export = "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt"
+    using_pdm = Path("pdm.lock").exists()
+    export_cmd = pdm_export if using_pdm else uv_export
+    tool_run = "pdm run" if using_pdm else "uv run --no-sync"
+    installing = f"{tool_run} python -m pip install -r req.txt"
     if not is_pip_installed():
         installing = (
-            "pdm run python -m ensurepip && pdm run python -m pip install -U pip && "
+            f"{tool_run} python -m ensurepip && {tool_run} python -m pip install -U pip && "
             + installing
         )
-    expected = f"{pdm_export} && {installing}"
+    expected = f"{export_cmd} && {installing}"
     assert Sync("req.txt", "", True, dry=True).gen() == expected
 
 
@@ -79,10 +83,12 @@ def test_sync(mocker):
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
     )
     pdm_export = "pdm export --without-hashes --with=dev -o req.txt"
+    uv_export = "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt"
+    export_cmd = pdm_export if Path("pdm.lock").exists() else uv_export
     if is_pip_installed():
-        expected = f"{pdm_export} && python -m pip install -r req.txt"
+        expected = f"{export_cmd} && python -m pip install -r req.txt"
     else:
-        expected = f"{pdm_export} && python -m ensurepip && python -m pip install -U pip && python -m pip install -r req.txt"
+        expected = f"{export_cmd} && python -m ensurepip && python -m pip install -U pip && python -m pip install -r req.txt"
     assert Sync("req.txt", "", True, dry=True).gen() == expected
 
 
@@ -210,12 +216,12 @@ def test_sync_uv(mocker, tmp_path):
         toml.with_name("uv.lock").write_text(UV_LOCK_EXAMPLE)
         assert (
             Sync("req.txt", "", True, dry=True).gen()
-            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run python -m ensurepip && uv run python -m pip install -U pip && uv run python -m pip install -r req.txt"
+            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run --no-sync python -m ensurepip && uv run --no-sync python -m pip install -U pip && uv run --no-sync python -m pip install -r req.txt"
         )
-        run_and_echo("uv run python -m ensurepip")
+        run_and_echo("uv run --no-sync python -m ensurepip")
         assert (
             Sync("req.txt", "", True, dry=True).gen()
-            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run python -m pip install -r req.txt"
+            == "uv export --no-hashes --all-extras --all-groups --frozen -o req.txt && uv run --no-sync python -m pip install -r req.txt"
         )
 
 

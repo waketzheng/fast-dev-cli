@@ -30,7 +30,7 @@ def test_make_deps_class():
 
 
 def test_fast_deps():
-    out = capture_cmd_output("fast deps --dry")
+    out = capture_cmd_output("fast deps --pdm --dry")
     assert out == "--> pdm install --frozen -G :all"
     out = capture_cmd_output("fast deps --uv --prod --dry")
     assert out == "--> uv sync --inexact --active"

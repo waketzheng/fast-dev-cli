@@ -41,85 +41,39 @@
 
 **Source Code**: <a href="https://github.com/waketzheng/fast-dev-cli" target="_blank">https://github.com/waketzheng/fast-dev-cli</a>
 
-**English** | [中文](./README.zh.md)
+---
 
-## Requirements
+fast-dev-cli is a command line tool to make it easy to:
+- Bump version
+- Lint code
+- Serve api
+- Display version
+- Install deps
 
-Python 3.10+
+## `fastdevcli-slim`
 
-## Features
+⚠️ Do not install this package. ⚠️
 
-- Support uv/pdm/poetry
-- Support MacOS/Linux/Windows
+This package, `fastdevcli-slim`, does nothing other than depend on `fast-dev-cli`.
 
-## Installation
+There used to be a slimmed-down version of fast-dev-cli called `fastdevcli-slim`, which didn't include the dependencies `rich` and `shellingham`, and use `typer-slim` instead of `typer`.
 
-- Global install
+However, since version 0.22.0, we have stopped supporting this, and `fastdevcli-slim` now simply installs (all of) fast-dev-cli.
 
-<div class="termy">
+If you want to disable Rich globally, you can set an environmental variable `TYPER_USE_RICH` to `False` or `0`.
 
-```bash
-uv tool install fast-dev-cli
-# Or: pipx install fast-dev-cli
-```
-*Will create a `fast` command in ~/.local/bin
+The only reason this package exists is as a migration path for old projects that used to depend on `fastdevcli-slim`, so that they can get the latest version of `fast-dev-cli`.
 
-- Install in project
+You **should not** install this package.
 
-</div>
-
-<div class="termy">
+Install instead:
 
 ```bash
-pip install "fast-dev-cli[standard]"
-```
-*Will install: fast-dev-cli emoji typer packaging pytest coverage*
-
-</div>
-
-## Usage
-
-- Lint py code:
-```bash
-fast lint [/path/to/file-or-directory]
-```
-- Check only
-```bash
-fast check
-```
-- Bump up version in pyproject.toml(or package.json)
-```bash
-fast bump patch  # 0.1.0 -> 0.1.1
-fast bump minor  # 0.1.0 -> 0.2.0
-fast bump major  # 0.1.0 -> 1.0.0
-fast bump <part> --commit # bump version and run `git commit`
-```
-- Run unittest and report coverage
-```bash
-fast test
-```
-- Install dependencies, support pip/pdm/uv/poetry
-```bash
-fast deps
-```
-- Start a fastapi server in development mode
-```bash
-fast dev
-```
-- Change register of uv.lock to be pypi.org
-```bash
-fast pypi
-```
-*Note: all command support the `--dry` option*
-
-## Use it without installed
-
-```bash
-uvx --from fast-dev-cli fast
+pip install fast-dev-cli
 ```
 
-## Lint/Check by ty instead of mypy
-```bash
-fast lint --ty
-fast check --ty
-```
+This package is deprecated and will stop receiving any updates and published versions.
+
+## License
+
+This project is licensed under the terms of the MIT license.

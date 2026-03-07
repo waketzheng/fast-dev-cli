@@ -8,7 +8,7 @@ from .utils import chdir
 def test_upload(capsys):
     upload(dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "pdm publish"
+    assert out.replace("--> ", "") == "uv build && uv publish"
 
 
 def test_upload_poetry(tmp_path, capsys):

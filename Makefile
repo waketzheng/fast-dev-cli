@@ -11,17 +11,16 @@ help:
 	@echo  "    lint    Auto-formats the code and check type hints"
 
 up:
-	pdm update -G :all --verbose
-	$(MAKE) deps options=--frozen
+	@just up
 
 lock:
-	pdm lock --group :all --strategy inherit_metadata
+	@just lock
 
 deps:
-	pdm install --verbose --group :all $(options)
+	@just deps
 
 _check:
-	./scripts/check.py
+	@just _check
 	pdm run twine check dist/*
 check: deps _build _check
 
@@ -38,17 +37,18 @@ _style:
 style: deps _style
 
 _build:
-	pdm build
-	BUILD_PACKAGE=fastdevcli-slim pdm build
-build: deps _build
+	@just _build
+
+build:
+	@just build
 
 # Usage::
 #   make venv version=3.12
 venv:
-	pdm venv create $(version)
+	@just venv $(version)
 
 venv314t:
-	pdm venv create 3.14t
+	@just venv 3.14t
 
 venv313:
 	$(MAKE) venv version=3.13

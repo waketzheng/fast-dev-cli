@@ -42,6 +42,7 @@ def test_cli_test(mocker, capsys):
 def test_test_with_pdm_run(mocker: MockerFixture, capsys):
     mocker.patch("fast_dev_cli.cli.check_call", return_value=False)
     mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=None)
+    mocker.patch("fast_dev_cli.cli.Project.get_manage_tool", return_value="pdm")
     unitcase(dry=True)
     assert (
         '--> pdm run coverage run -m pytest -s && pdm run coverage report --omit="tests/*" -m'
