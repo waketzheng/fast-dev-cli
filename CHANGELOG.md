@@ -1,11 +1,19 @@
 # ChangeLog
 
-## 0.21
+## 0.22
 
-### [0.21.2]*(Unreleased)*
+### [0.22.1]*(Unreleased)*
+
+### [0.22.0](../../releases/tag/v0.22.0) - 2026-03-07
 
 #### Added
 - feat: support `fast dev --reload --prod`
+
+#### Changed
+- feat: deprecated fastdevcli-slim
+- refactor: use `uv run --no-sync` instead of `uv run` for fast sync
+
+## 0.21
 
 ### [0.21.1](../../releases/tag/v0.21.1) - 2026-03-05
 
