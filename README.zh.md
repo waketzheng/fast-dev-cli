@@ -16,18 +16,18 @@ Python3.10及其以上版本
 
 - 全局安装
 ```bash
-pipx install fastdevcli-slim
+pipx install fast-dev-cli
 ```
 或
 ```
-uv tool install fastdevcli-slim
+uv tool install fast-dev-cli
 ```
 
-*只依赖typer-slim*
+*只依赖typer*
 
 - 项目中安装
 ```bash
-pip install fast-dev-cli
+pip install "fast-dev-cli[standard]"
 ```
 *会同时安装emoji、packaging、typer-slim、pytest、coverage*
 
@@ -128,7 +128,7 @@ fast pypi
 ```
 或：
 ```
-uvx --from fastdevcli-slim fast pypi
+uvx --from fast-dev-cli fast pypi
 ```
 
 ## 许可证
