@@ -56,7 +56,7 @@ lock *args:
     @just uv_lock {{args}}
 [windows]
 lock *args:
-    if (-Not (Test-Path '~/AppData/Roaming/uv/tools/rust-just')) { echo 'Using pdm ...'; pdm lock -G :all {{ args }} } else { echo 'uv lock...'; just uv_lock {{ args }} }
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock {{ args }} } else { echo 'Using pdm ...'; pdm lock -G :all {{ args }} }
 
 add *args:
     @just pypi_reverse
@@ -68,7 +68,7 @@ up *args:
     @just uv_lock --upgrade {{args}}
 [windows]
 up *args:
-    if (-Not (Test-Path '~/AppData/Roaming/uv/tools/rust-just')) { echo 'Using pdm ...'; pdm update -G :all {{ args }} } else { echo 'uv lock...'; just uv_lock --upgrade {{ args }} }
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock --upgrade {{ args }} } else { echo 'Using pdm ...'; pdm update -G :all {{ args }} }
 
 uv_clear *args:
     {{ UV_DEPS }} {{args}}
@@ -96,7 +96,7 @@ mypy *args:
 
 mypy310 *args:
     uv export --python=3.10 --no-hashes --all-extras --all-groups --no-group test --frozen -o dev_requirements.txt
-    uvx --python=3.10 --with-requirements=dev_requirements.txt mypy --cache-dir=.mypy310_cache asynctor {{args}}
+    uvx --python=3.10 --with-requirements=dev_requirements.txt mypy --cache-dir=.mypy310_cache {{SRC}} {{args}}
 
 right *args:
     @just uvx_py pyright --pythonpath={{PY_EXEC}} {{args}}
