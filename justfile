@@ -29,7 +29,7 @@ venv313 *args:
     {{ VENV_CREATE }} 3.13 {{args}}
 
 pypi *args:
-    @uv run --no-sync fast pypi --quiet {{args}}
+    @uv run --no-sync fast pypi --slim --quiet {{args}}
 
 pypi_reverse *args:
     @just pypi --reverse {{args}}
