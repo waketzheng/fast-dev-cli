@@ -98,6 +98,14 @@ def is_windows() -> bool:
     return platform.system() == "Windows"
 
 
+@functools.cache
+def prefer_uv_tool() -> bool:
+    if shutil.which("uv") is None:
+        return False
+    cmd = "uv tool list"
+    return Shell(cmd).capture_output() != "No tools installed"
+
+
 def yellow_warn(msg: str) -> None:
     if is_windows() and (encoding := sys.stdout.encoding) != "utf-8":
         msg = msg.encode(encoding, errors="ignore").decode(encoding)
@@ -1078,7 +1086,7 @@ class GitTag(DryRun):
 
     def run(self) -> None:
         if self.mark_tag() and not self.dry:
-            echo("You may want to publish package:\n poetry publish --build")
+            echo("You may want to publish package:\n pdm publish")
 
 
 @cli.command()
@@ -1221,6 +1229,8 @@ class LintCode(DryRun):
                     if shutil.which("pipx") is None:
                         ensure_pipx = "pip install --user pipx\n  pipx ensurepath\n  "
                         command = ensure_pipx + command
+                    elif prefer_uv_tool():
+                        command = "uv tool install ruff"
                     yellow_warn(
                         "You may need to run the following command"
                         f" to install ruff:\n\n  {command}\n"
@@ -1228,7 +1238,7 @@ class LintCode(DryRun):
                 elif cls.missing_mypy_exec():
                     should_run_by_tool = True
                     if check_call('python -c "import fast_dev_cli"'):
-                        command = 'python -m pip install -U "fast-dev-cli"'
+                        command = "python -m pip install -U mypy"
                         yellow_warn(
                             "You may need to run the following command"
                             f" to install lint tools:\n\n  {command}\n"
