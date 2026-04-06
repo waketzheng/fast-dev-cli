@@ -11,19 +11,26 @@ system-info:
 
 # Use powershell for Windows so that 'Git Bash' and 'PyCharm Terminal' get the same result
 set windows-powershell := true
-VENV_CREATE := "pdm venv create --with uv --with-pip"
+VENV_CREATE := "pdm venv create --with-pip"
+PDM_DEPS := "pdm install --frozen -G :all"
 UV_DEPS := "uv sync --all-extras --all-groups"
 UV_PIP_I := "uv pip install"
 BIN_DIR := if os_family() == "windows" { "Scripts" } else { "bin" }
 PY_EXEC := if os_family() == "windows" { ".venv/Scripts/python.exe" } else { ".venv/bin/python" }
 SRC := "fast_dev_cli"
 
+uv_venv *args:
+    {{ VENV_CREATE }} --with uv {{ args }}
+
+win_venv *args:
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { just uv_venv {{args}}} else { {{VENV_CREATE}} {{ args }}}
+
 [unix]
 venv *args:
-    @if test ! -e .venv; then {{ VENV_CREATE }} {{ args }}; fi
+    @if test ! -e .venv; then just uv_venv {{ args }}; fi
 [windows]
 venv *args:
-    @if (-Not (Test-Path '.venv')) { {{ VENV_CREATE }} {{ args }} }
+    @if (-Not (Test-Path '.venv')) { just win_venv {{ args }}}
 
 venv313 *args:
     {{ VENV_CREATE }} 3.13 {{args}}
@@ -44,31 +51,37 @@ deps *args: venv
     @just uv_deps {{args}}
 [windows]
 deps *args: venv
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv sync ...'; just uv_deps {{ args }} } else { echo 'Using pdm ...'; pdm i -G :all --frozen {{ args }} }
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv sync ...'; just uv_deps {{ args }} } else { echo 'Using pdm ...'; {{PDM_DEPS}} {{ args }} }
 
 uv_lock *args:
     @just pypi_reverse
     uv lock {{args}}
-    @just deps --frozen
+    @just uv_deps --frozen
+
+win_lock *args:
+    @if (-Not (Test-Path 'pdm.lock')) { echo 'No pdm lock file, skip locking!' } else { pdm lock -G :all {{args}} }
 
 [unix]
-lock *args:
+lock *args: venv
     @just uv_lock {{args}}
 [windows]
-lock *args:
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock {{ args }} } else { echo 'Using pdm ...'; pdm lock -G :all {{ args }} }
+lock *args: venv
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock {{ args }} } else { just win_lock {{args}}}
 
-add *args:
+add *args: venv
     @just pypi_reverse
     uv add {{args}}
     @just pypi
 
+win_up *args:
+    @if (-Not (Test-Path 'pdm.lock')) { echo 'No pdm lock file, only install deps without update lock...'; {{PDM_DEPS}} {{args}}  } else { pdm update -G :all {{args}} }
+
 [unix]
-up *args:
+up *args: venv
     @just uv_lock --upgrade {{args}}
 [windows]
-up *args:
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock --upgrade {{ args }} } else { echo 'Using pdm ...'; pdm update -G :all {{ args }} }
+up *args: venv
+    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just uv_lock --upgrade {{ args }} } else { just win_up {{args}} }
 
 uv_clear *args:
     {{ UV_DEPS }} {{args}}
@@ -83,23 +96,23 @@ clear *args:
 run *args: venv
     .venv/{{BIN_DIR}}/{{args}}
 
-_lint *args:
-    pdm run fast lint --ty {{args}}
-    @just mypy {{SRC}}
-    @just right {{SRC}}
-
 uvx_py *args:
     uvx --python={{PY_EXEC}} {{args}}
 
-mypy *args:
-    @just uvx_py mypy --python-executable={{PY_EXEC}} {{args}}
+mypy path=(SRC) *args:
+    @just uvx_py mypy --python-executable={{PY_EXEC}} {{path}} {{args}}
 
-mypy310 *args:
-    uv export --python=3.10 --no-hashes --all-extras --all-groups --no-group test --frozen -o dev_requirements.txt
-    uvx --python=3.10 --with-requirements=dev_requirements.txt mypy --cache-dir=.mypy310_cache {{SRC}} {{args}}
+mypy310 path=(SRC) *args:
+    uv export --python=3.10 --no-hashes --all-extras --all-groups --frozen -o dev_requirements.txt
+    uvx --python=3.10 --with-requirements=dev_requirements.txt mypy --cache-dir=.mypy310_cache {{path}} {{args}}
 
-right *args:
-    @just uvx_py pyright --pythonpath={{PY_EXEC}} {{args}}
+right path=(SRC) *args:
+    @just uvx_py pyright --pythonpath={{PY_EXEC}} {{path}} {{args}}
+
+_lint *args:
+    pdm run fast lint --ty --bandit {{args}}
+    @just mypy
+    @just right
 
 lint *args: deps
     @just _lint {{args}}
@@ -114,7 +127,7 @@ style *args: deps
 
 _check *args:
     pdm run fast check --ty {{args}}
-    @just mypy {{SRC}}
+    just mypy
 
 check *args: deps
     @just _check {{args}}
