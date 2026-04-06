@@ -279,7 +279,7 @@ def test_make_style(mock_skip_mypy_0, mocker, mock_no_dmypy):
         make_style(["."], check_only=False, dry=True)
     assert expected in stream.getvalue()
     with capture_stdout() as stream:
-        make_style(".", check_only=False, dry=True)  # type:ignore[arg-type]
+        make_style(".", check_only=False, dry=True)  # type:ignore
     assert expected in stream.getvalue()
     with capture_stdout() as stream:
         make_style(["."], check_only=True, dry=True)

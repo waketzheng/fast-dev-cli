@@ -281,7 +281,7 @@ def _get_frontend_version() -> tuple[Path, str] | None:
     except ImportError:
         from json import loads as json_loads  # type:ignore[assignment]
     content = frontend_version_file.read_bytes()
-    metadata: dict[str, str] = json_loads(content)  # type:ignore[assignment]
+    metadata: dict[str, str] = json_loads(content)  # type:ignore
     try:
         current_version = metadata["version"]
     except (KeyError, TypeError):

@@ -21,7 +21,7 @@ deps:
 
 _check:
 	@just _check
-	pdm run twine check dist/*
+	uvx twine check dist/*
 check: deps _build _check
 
 _lint:

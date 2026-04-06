@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 
-import fast_dev_cli
+import fast_dev_cli.cli
 from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 
 
@@ -133,4 +133,4 @@ def test_run_by_module(tmp_path):
 def test_main(mocker):
     mocker.patch("fast_dev_cli.cli.cli")
     main()
-    fast_dev_cli.cli.cli.assert_called_once()  # type:ignore[attr-defined]
+    fast_dev_cli.cli.cli.assert_called_once()  # type:ignore
