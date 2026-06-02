@@ -15,9 +15,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast, get_args, overload
 
 import typer
-from click import UsageError
 from typer import Exit, Option, echo, secho
 from typer.models import ArgumentInfo, OptionInfo
+
+try:
+    from typer._click.exceptions import UsageError
+except ImportError:
+    from click import UsageError  # type:ignore[no-redef]
 
 try:
     from . import __version__
@@ -1181,17 +1185,21 @@ class LintCode(DryRun):
     ) -> str:
         if paths != "." and all(i.endswith(".html") for i in paths.split()):
             return f"prettier -w {paths}"
-        cmd = ""
-        ruff_check = "ruff check --extend-select=I,B,SIM" + " --fix" * ruff_check_fix
+        ruff_rules = ["I", "B"]
+        if ruff_check_sim and not load_bool("FASTDEVCLI_NO_SIM"):
+            ruff_rules.append("SIM")
+        if ruff_check_up or load_bool("FASTDEVCLI_UP"):
+            ruff_rules.append("UP")
+        ruff_check = "ruff check --extend-select=" + ",".join(ruff_rules)
+        if (
+            ruff_check_fix
+            and not check_only
+            and (not load_bool("NO_FIX") and not load_bool("FASTDEVCLI_NO_FIX"))
+        ):
+            ruff_check += " --fix"
         tools = ["ruff format", ruff_check, "mypy"]
         if check_only:
             tools[0] += " --check"
-        if check_only or load_bool("NO_FIX"):
-            tools[1] = tools[1].replace(" --fix", "")
-        if ruff_check_up or load_bool("FASTDEVCLI_UP"):
-            tools[1] = tools[1].replace(",SIM", ",SIM,UP")
-        if not ruff_check_sim or load_bool("FASTDEVCLI_NO_SIM"):
-            tools[1] = tools[1].replace(",SIM", "")
         if skip_mypy or load_bool("SKIP_MYPY") or load_bool("FASTDEVCLI_NO_MYPY"):
             # Sometimes mypy is too slow
             tools = tools[:-1]
@@ -1203,23 +1211,11 @@ class LintCode(DryRun):
                     tools[-1] += " --ignore-missing-imports"
                 if mypy_strict or load_bool("FASTDEVCLI_STRICT"):
                     tools[-1] += " --strict"
-        lint_them = " && ".join(
-            "{0}{" + str(i) + "} {1}" for i in range(2, len(tools) + 2)
-        )
-        if ruff_exists := cls.check_lint_tool_installed():
-            # `ruff <command>` get the same result with `pdm run ruff <command>`
-            # While `mypy .`(installed global and env not activated),
-            #   does not the same as `pdm run mypy .`
-            lint_them = " && ".join(
-                ("" if tool.startswith("ruff") else "{0}")
-                + (
-                    "{%d} {1}" % i  # noqa: UP031
-                )
-                for i, tool in enumerate(tools, 2)
-            )
+        ruff_exists = cls.check_lint_tool_installed()
         prefix = ""
         should_run_by_tool = with_prefix
-        if not should_run_by_tool and "mypy" in str(tools):
+        requires_mypy = any(tool.startswith("mypy") for tool in tools)
+        if requires_mypy and not should_run_by_tool:
             if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(
                 ".local/bin"
             ):  # Virtual environment activated and fast-dev-cli is installed in it
@@ -1265,7 +1261,17 @@ class LintCode(DryRun):
                         prefix = bin_dir
         if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
-        cmd += lint_them.format(prefix, paths, *tools)
+        cmd = " && ".join(
+            (
+                tool
+                # `ruff <command>` get the same result with `pdm run ruff <command>`.
+                # Other tools should run inside the selected environment.
+                if ruff_exists and tool.startswith("ruff")
+                else prefix + tool
+            )
+            + f" {paths}"
+            for tool in tools
+        )
         if bandit or load_bool("FASTDEVCLI_BANDIT"):
             command = prefix + "bandit"
             if Path("pyproject.toml").exists():
@@ -1727,7 +1733,7 @@ class MakeDeps(DryRun):
             if self.should_ensure_pip():
                 cmd = f"python -m ensurepip && {upgrade} && {cmd}"
             elif self.should_upgrade_pip():
-                cmd = "{upgrade} && {cmd}"
+                cmd = f"{upgrade} && {cmd}"
             return cmd
 
 

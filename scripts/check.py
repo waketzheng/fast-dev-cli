@@ -16,7 +16,7 @@ def run_and_echo(cmd, tool=TOOL, verbose=True):
         cmd = tool + " run " + cmd
     if verbose:
         print("--> " + cmd)
-    return os.system(cmd)
+    return os.system(cmd)  # ty:ignore[deprecated]
 
 
 if run_and_echo("fast check --skip-mypy", verbose=False) != 0:

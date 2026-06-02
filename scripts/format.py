@@ -9,5 +9,5 @@ if os.getcwd() != work_dir:
     os.chdir(work_dir)
 
 cmd = "pdm run fast lint --skip-mypy"
-if os.system(cmd) != 0:
+if os.system(cmd) != 0:  # ty:ignore[deprecated]
     sys.exit(1)

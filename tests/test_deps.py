@@ -2,6 +2,10 @@ from fast_dev_cli.cli import MakeDeps, capture_cmd_output
 
 
 def test_make_deps_class():
+    class PipDepsWithoutEnsure(MakeDeps):
+        def should_ensure_pip(self) -> bool:
+            return False
+
     assert (
         MakeDeps("uv", prod=False).gen()
         == "uv sync --inexact --active --all-extras --all-groups"
@@ -26,6 +30,10 @@ def test_make_deps_class():
     assert (
         MakeDeps("pip", prod=True).gen()
         == "python -m ensurepip && python -m pip install --upgrade pip && python -m pip install -e ."
+    )
+    assert (
+        PipDepsWithoutEnsure("pip", prod=False).gen()
+        == "python -m pip install --upgrade pip && python -m pip install -e . --group dev"
     )
 
 

@@ -5,7 +5,8 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
-import typer
+from typer import Exit
+from typer.colors import YELLOW
 
 import fast_dev_cli
 from fast_dev_cli.cli import (
@@ -314,8 +315,8 @@ def test_upgrade_unknown_tool(mocker):
     assert run_and_echo(cmd, verbose=False) == 1
     assert run_and_echo("pdm run " + cmd, verbose=False) == 1
     mocker.patch("fast_dev_cli.cli.secho")
-    with pytest.raises(typer.Exit):
+    with pytest.raises(Exit):
         upgrade(tool="pipenv")
     fast_dev_cli.cli.secho.assert_called_once_with(  # type:ignore
-        "Unknown tool 'pipenv'", fg=typer.colors.YELLOW
+        "Unknown tool 'pipenv'", fg=YELLOW
     )

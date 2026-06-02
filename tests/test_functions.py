@@ -4,7 +4,8 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
-import typer
+from typer import Exit as TyperExit
+from typer import Option
 
 from fast_dev_cli.cli import (
     DryRun,
@@ -85,7 +86,7 @@ def test_run_shell():
         )
     with pytest.raises(FileNotFoundError):
         exit_if_run_failed("in_valid_command", _exit=True, capture_output=True)
-    with pytest.raises(typer.Exit):
+    with pytest.raises(TyperExit):
         exit_if_run_failed(
             "in_valid_command", _exit=False, capture_output=True, shell=True
         )
@@ -111,8 +112,8 @@ def test_get_version_in_poetry_project(tmp_path: Path):
 def test_ensure_bool():
     assert _ensure_bool(True) is True
     assert _ensure_bool(False) is False
-    opt = typer.Option(False, "--check-only", "-c")
+    opt = Option(False, "--check-only", "-c")
     assert opt
     assert _ensure_bool(opt) is False
-    opt = typer.Option(True, "--check-only", "-c")
+    opt = Option(True, "--check-only", "-c")
     assert _ensure_bool(opt) is True
