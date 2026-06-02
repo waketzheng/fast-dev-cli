@@ -12,6 +12,7 @@ from fast_dev_cli.cli import (
     LintCode,
     Project,
     capture_cmd_output,
+    is_windows,
     lint,
     make_style,
     only_check,
@@ -61,6 +62,11 @@ def mock_ty_0(monkeypatch):
     monkeypatch.setenv("FASTDEVCLI_TY", "0")
 
 
+def get_bin_dir() -> str:
+    return ".venv" + ("\\Scripts\\" if is_windows() else "/bin/")
+
+
+BIN_DIR = get_bin_dir()
 SEP = " && "
 _CMD = "ruff format{} . && ruff check --extend-select=I,B,SIM{} . && mypy ."
 LINT_CMD = _CMD.format("", " --fix")
@@ -72,7 +78,8 @@ def test_check(mock_no_dmypy, monkeypatch, mocker):
     for cmd in CHECK_CMD.split(SEP):
         assert cmd in command
     command2 = capture_cmd_output("fast check --bandit --dry")
-    assert command2 == command + " && bandit -c pyproject.toml -r ."
+    bandit_check = "bandit -c pyproject.toml -r ."
+    assert command2 == command + " && " + BIN_DIR + bandit_check
     monkeypatch.setenv("FASTDEVCLI_BANDIT", "1")
     command3 = capture_cmd_output("fast check --dry")
     assert command3 == command2
@@ -160,7 +167,9 @@ def test_check_skip_mypy(mock_skip_mypy_0, mocker):
     command = capture_cmd_output(cmd)
     command2 = capture_cmd_output(cmd2)
     expected = "--> " + SEP.join(
-        filter(lambda i: not i.startswith("mypy"), CHECK_CMD.split(SEP))
+        filter(
+            lambda i: not i.strip().split()[0].endswith("mypy"), CHECK_CMD.split(SEP)
+        )
     )
     assert command == command2 == expected
 
@@ -187,10 +196,11 @@ def test_lint_cmd(mock_no_dmypy, monkeypatch):
         assert cmd in command
     assert capture_cmd_output(f"{lint_cmd} --dry") == command
     out = capture_cmd_output(f"{run}fast lint --dry")
-    assert out == "--> " + LINT_CMD
+    expected_lint_cmd = LINT_CMD.replace("&& mypy", "&& " + BIN_DIR + "mypy")
+    assert expected_lint_cmd in out
     assert capture_cmd_output(f"{lint_cmd} .") == capture_cmd_output(f"{lint_cmd}")
     out = capture_cmd_output(f"{run}fast lint")
-    assert LINT_CMD in out
+    assert expected_lint_cmd in out
     assert "mypy --strict" in capture_cmd_output("fast lint --strict --dry")
     monkeypatch.setenv("FASTDEVCLI_STRICT", "1")
     assert "mypy --strict" in capture_cmd_output("fast lint --dry")
@@ -332,7 +342,7 @@ def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
     with capture_stdout() as stream:
         lint(".", dry=True)
     output = stream.getvalue()
-    cmd = "pipx install ruff"
+    cmd = "uv tool install ruff"
     assert cmd in output
     tip = "You may need to run the following command to install ruff"
     assert tip in output
@@ -345,7 +355,7 @@ def test_lint_without_mypy_installed(mocker, mock_no_dmypy):
     with capture_stdout() as stream:
         lint(".", dry=True)
     output = stream.getvalue()
-    cmd = 'python -m pip install -U "fast-dev-cli"'
+    cmd = "python -m pip install -U mypy"
     assert cmd in output
     tip = "You may need to run the following command to install lint tools"
     assert tip in output
