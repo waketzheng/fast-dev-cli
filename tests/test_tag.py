@@ -32,7 +32,7 @@ def test_echo_when_not_dry(mocker, capsys):
     git_tag = GitTag("", dry=False)
     mocker.patch.object(git_tag, "mark_tag", return_value=True)
     git_tag.run()
-    assert "poetry publish --build" in capsys.readouterr().out
+    assert "pdm publish" in capsys.readouterr().out
 
 
 @contextmanager
