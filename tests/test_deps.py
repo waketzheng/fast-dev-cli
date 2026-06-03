@@ -1,4 +1,12 @@
+import re
+
 from fast_dev_cli.cli import MakeDeps, capture_cmd_output, run_and_echo
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    return ANSI_RE.sub("", text)
 
 
 def test_make_deps_class():
@@ -61,7 +69,7 @@ def test_fast_deps():
 def test_fast_deps_mutually_exclusive_options():
     cmd = "fast deps --uv --pdm --dry"
     assert run_and_echo(cmd, verbose=False) == 2
-    out = capture_cmd_output(cmd)
+    out = strip_ansi(capture_cmd_output(cmd))
     assert "Invalid value for '--uv' / '--pdm' / '--pip' / '--poetry'" in out
     assert "can only choose" in out
 
