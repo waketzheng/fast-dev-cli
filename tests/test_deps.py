@@ -1,4 +1,4 @@
-from fast_dev_cli.cli import MakeDeps, capture_cmd_output
+from fast_dev_cli.cli import MakeDeps, capture_cmd_output, run_and_echo
 
 
 def test_make_deps_class():
@@ -56,6 +56,14 @@ def test_fast_deps():
     assert out == "--> uv sync --active --all-extras --all-groups"
     out = capture_cmd_output("fast deps --uv --dry --no-active --no-inexact")
     assert out == "--> uv sync --all-extras --all-groups"
+
+
+def test_fast_deps_mutually_exclusive_options():
+    cmd = "fast deps --uv --pdm --dry"
+    assert run_and_echo(cmd, verbose=False) == 2
+    out = capture_cmd_output(cmd)
+    assert "Invalid value for '--uv' / '--pdm' / '--pip' / '--poetry'" in out
+    assert "can only choose" in out
 
 
 def test_smart_fast_deps(tmp_work_dir, monkeypatch):

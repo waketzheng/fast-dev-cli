@@ -19,11 +19,6 @@ from typer import Exit, Option, echo, secho
 from typer.models import ArgumentInfo, OptionInfo
 
 try:
-    from typer._click.exceptions import UsageError
-except ImportError:
-    from click import UsageError  # type:ignore[no-redef]
-
-try:
     from . import __version__
 except ImportError:  # pragma: no cover
     from importlib import import_module as _import  # For local unittest
@@ -1759,7 +1754,10 @@ def make_deps(
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if use_uv + use_pdm + use_pip + use_poetry > 1:
-        raise UsageError("`--uv/--pdm/--pip/--poetry` can only choose one!")
+        raise typer.BadParameter(
+            "can only choose one",
+            param_hint=("--uv", "--pdm", "--pip", "--poetry"),
+        )
     if use_uv:
         tool = "uv"
     elif use_pdm:
