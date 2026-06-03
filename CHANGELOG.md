@@ -1,8 +1,17 @@
 # ChangeLog
 
-## 0.22
+## 0.23
 
-### [0.22.1]*(Unreleased)*
+### [0.23.0](../../releases/tag/v0.23.0) - 2026-06-03
+
+#### Added
+- feat: support `--no-sim`
+
+#### Changed
+- feat: prefer to install ruff by `uv tool`
+- refactor: drop deps on click
+
+## 0.22
 
 ### [0.22.0](../../releases/tag/v0.22.0) - 2026-03-07
 
