@@ -738,6 +738,12 @@ class Project:
                     if t in backend:
                         cls._tool = t
                         return cls._tool
+        return cls._get_manage_tool(text, backend, skip_uv)
+
+    @classmethod
+    def _get_manage_tool(
+        cls: type[Self], text: str, backend: str, skip_uv: bool
+    ) -> ToolName | None:
         work_dir: Path | None = None
         uv_lock_exists: bool | None = None
         if skip_uv:
@@ -762,6 +768,12 @@ class Project:
         if uv_lock_exists:
             cls._tool = "uv"
             return cls._tool
+        return cls._parse_manage_tool(work_dir, text, backend)
+
+    @classmethod
+    def _parse_manage_tool(
+        cls: type[Self], work_dir: Path, text: str, backend: str
+    ) -> ToolName | None:
         pdm_lock_exists = Path(work_dir, "pdm.lock").exists()
         poetry_lock_exists = Path(work_dir, "poetry.lock").exists()
         match pdm_lock_exists + poetry_lock_exists:
@@ -1576,6 +1588,59 @@ def should_use_just() -> bool:
     return False
 
 
+def _parse_serve_file(uvicorn, filename: str, cmd: str, args: list) -> str:
+    if m := re.search(r"(.*):(\d+)$", filename):
+        h, p = m.group(1), m.group(2)
+        if h and "--host" not in str(args):
+            if h == "0":
+                args.append("--host=0.0.0.0")
+            else:
+                args.append(f"--host={h}")
+        args.append(f"--port={p}")
+        if uvicorn:
+            p = Path("main.py")
+            if p.exists():
+                cmd += " main:app"
+            elif Path("app", p.name).exists():
+                cmd += " app.main:app"
+            elif Path("app.py").exists():
+                cmd += " app:app"
+        return cmd
+    if uvicorn and ((filepath := Path(filename)).is_file() or filepath.suffix == ".py"):
+        filename = filepath.stem + ":app"
+        parent_names = [j for i in filepath.parents if (j := i.name)]
+        if parent_names:
+            filename = ".".join([*parent_names[::-1], filename])
+    cmd += " " + filename
+    return cmd
+
+
+def _runserver(uvicorn, host, port, file) -> tuple[str, list[str]]:
+    cmd = "uvicorn" if uvicorn else "fastapi dev"
+    args = []
+    if (host := getattr(host, "default", host)) and host not in (
+        "localhost",
+        "127.0.0.1",
+    ):
+        args.append(f"--host={host}")
+    no_port_yet = True
+    if file is not None:
+        filename = str(file)
+        try:
+            port = int(filename)
+        except ValueError:
+            cmd = _parse_serve_file(uvicorn, filename, cmd, args)
+        else:
+            if port != 8000:
+                args.append(f"--port={port}")
+                no_port_yet = False
+    if no_port_yet and (port := getattr(port, "default", port)) and str(port) != "8000":
+        args.append(f"--port={port}")
+    if shutil.which("pdm") is not None:
+        cmd = "pdm run " + cmd
+    return cmd, args
+
+
 def dev(
     port: int | None | OptionInfo,
     host: str | None | OptionInfo,
@@ -1590,56 +1655,7 @@ def dev(
         args = [i for i in sys.argv[2:] if i != "--dry"]
         cmd = "just dev"
     else:
-        cmd = "uvicorn" if uvicorn else "fastapi dev"
-        args = []
-        if (host := getattr(host, "default", host)) and host not in (
-            "localhost",
-            "127.0.0.1",
-        ):
-            args.append(f"--host={host}")
-        no_port_yet = True
-        if file is not None:
-            try:
-                port = int(str(file))
-            except ValueError:
-                if m := re.search(r"(.*):(\d+)$", str(file)):
-                    h, p = m.group(1), m.group(2)
-                    if h and "--host" not in str(args):
-                        if h == "0":
-                            args.append("--host=0.0.0.0")
-                        else:
-                            args.append(f"--host={h}")
-                    args.append(f"--port={p}")
-                    if uvicorn:
-                        p = Path("main.py")
-                        if p.exists():
-                            cmd += " main:app"
-                        elif Path("app", p.name).exists():
-                            cmd += " app.main:app"
-                        elif Path("app.py").exists():
-                            cmd += " app:app"
-                else:
-                    if uvicorn and (
-                        (filepath := Path(str(file))).is_file()
-                        or filepath.suffix == ".py"
-                    ):
-                        file = filepath.stem + ":app"
-                        parent_names = [j for i in filepath.parents if (j := i.name)]
-                        if parent_names:
-                            file = ".".join([*parent_names[::-1], file])
-                    cmd += f" {file}"
-            else:
-                if port != 8000:
-                    args.append(f"--port={port}")
-                    no_port_yet = False
-        if (
-            no_port_yet
-            and (port := getattr(port, "default", port))
-            and str(port) != "8000"
-        ):
-            args.append(f"--port={port}")
-        if shutil.which("pdm") is not None:
-            cmd = "pdm run " + cmd
+        cmd, args = _runserver(uvicorn, host, port, file)
     if args:
         cmd += " " + " ".join(args)
     exit_if_run_failed(cmd, dry=dry)

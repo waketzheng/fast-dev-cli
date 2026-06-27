@@ -114,13 +114,16 @@ right path=(SRC) *args:
 
 _format *args:
     just --fmt
-    just --evaluate
     pdm run fast lint --ty --bandit {{ args }}
+
+_codeqc *args:
+    just --evaluate
+    @just mypy {{ args }}
+    @just right {{ args }}
 
 _lint *args:
     @just _format {{ args }}
-    @just mypy {{ args }}
-    @just right {{ args }}
+    @just _codeqc {{ args }}
 
 lint *args: deps
     @just _lint {{ args }}
@@ -135,7 +138,7 @@ style *args: deps
 
 _check *args:
     pdm run fast check --ty {{ args }}
-    just mypy {{ SRC }}
+    @just _codeqc {{ args }}
 
 check *args: deps
     @just _check {{ args }}
