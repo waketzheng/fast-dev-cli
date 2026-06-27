@@ -58,8 +58,13 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm]
-version = { source = "file", path = "fast_dev_cli/__init__.py" }
 distribution = true
+
+[tool.pdm.version ]
+path = "fast_dev_cli/__init__.py"
+
+[tool.pdm.build]
+excludes = ["./**/.git", "./**/.*_cache", "examples", "scripts", "tests", "fastdevcli-slim"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
