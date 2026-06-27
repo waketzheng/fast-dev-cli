@@ -41,11 +41,11 @@ pypi *args:
     @uv run --no-sync fast pypi --quiet --slim {{ args }}
 
 # Update the registry in `uv.lock` to use the mirror set by the config.
-pypi_reverse *args:
+_pypi_reverse *args:
     @just pypi --reverse {{ args }}
 
 _uv_deps *args:
-    @just pypi_reverse
+    @just _pypi_reverse
     {{ UV_DEPS }} --reinstall-package={{ PROJECT_NAME }} {{ args }}
     @just pypi
 
@@ -57,7 +57,7 @@ deps *args: venv
     if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv sync ...'; just _uv_deps {{ args }} } else { echo 'Using pdm ...'; {{ PDM_DEPS }} {{ args }} }
 
 _uv_lock *args:
-    @just pypi_reverse
+    @just _pypi_reverse
     uv lock {{ args }}
     @just _uv_deps --frozen
 
@@ -72,7 +72,7 @@ lock *args: venv
     if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just _uv_lock {{ args }} } else { just _win_lock {{ args }}}
 
 add *args: venv
-    @just pypi_reverse
+    @just _pypi_reverse
     uv add {{ args }}
     @just pypi
 
@@ -96,7 +96,7 @@ clear *args:
 clear *args:
     @if (-Not (Test-Path 'pdm.lock')) { just _uv_clear {{ args }}  } else { pdm sync -G :all --clean {{ args }} }
 
-run *args: venv
+_run *args: venv
     .venv/{{ BIN_DIR }}/{{ args }}
 
 _uvx_py *args:
@@ -114,7 +114,7 @@ right path=(SRC) *args:
 
 _format *args:
     just --fmt
-    pdm run fast lint --ty --bandit {{ args }}
+    pdm run fast lint --ty {{ args }}
 
 _codeqc *args:
     just --evaluate
@@ -122,7 +122,7 @@ _codeqc *args:
     @just right {{ args }}
 
 _lint *args:
-    @just _format {{ args }}
+    @just _format --bandit {{ args }}
     @just _codeqc {{ args }}
 
 lint *args: deps
@@ -163,7 +163,7 @@ pipi *args: venv
     {{ UV_PIP_I }} {{ args }}
 [windows]
 pipi *args: venv
-    @if (-Not (Test-Path '.venv/Scripts/pip.exe')) { UV_PIP_I {{ args }} } else { @just run pip install {{ args }} }
+    @if (-Not (Test-Path '.venv/Scripts/pip.exe')) { UV_PIP_I {{ args }} } else { @just _run pip install {{ args }} }
 
 install_me:
     @just pipi -e .
