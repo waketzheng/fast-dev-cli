@@ -255,27 +255,17 @@ def read_version_from_file(
         secho(f"WARNING: can not find 'version' item in {version_file}!")
         return "0.0.0"
     pattern = re.compile(r"__version__\s*=")
-    for line in Path(version_file).read_text("utf-8").splitlines():
+    all_lines = Path(version_file).read_text("utf-8").strip().splitlines()
+    for line in all_lines:
         if pattern.match(line):
             return _parse_version(line, pattern)
-    # TODO: remove or refactor the following lines.
-    if work_dir is None:
-        work_dir = Project.get_work_dir()
-    package_dir = work_dir / package_name
-    if (
-        not (init_file := package_dir / "__init__.py").exists()
-        and not (init_file := work_dir / "src" / package_name / init_file.name).exists()
-        and not (init_file := work_dir / "app" / init_file.name).exists()
-    ):
-        secho("WARNING: __init__.py file does not exist!")
+    else:
+        pattern = re.compile(r"VERSION\s*=")
+        for line in all_lines:
+            if pattern.match(line):
+                return _parse_version(line, pattern)
+        secho(f"WARNING: can not find version pattern in {version_file}!")
         return "0.0.0"
-
-    pattern = re.compile(r"__version__\s*=")
-    for line in init_file.read_text("utf-8").splitlines():
-        if pattern.match(line):
-            return _parse_version(line, pattern)
-    secho(f"WARNING: can not find '__version__' var in {init_file}!")
-    return "0.0.0"
 
 
 def _get_frontend_version() -> tuple[Path, str] | None:
@@ -438,7 +428,7 @@ class BumpUp(DryRun):
 
     @staticmethod
     def parse_dynamic_version(
-        toml_text: str,
+        toml_text: str | None,
         context: dict[str, Any],
         work_dir: Path | None = None,
     ) -> str | None:
@@ -455,6 +445,8 @@ class BumpUp(DryRun):
         # version = { source = "file", path = "fast_dev_cli/__init__.py" }
         v_key = "version = "
         p_key = 'path = "'
+        if toml_text is None:
+            toml_text = Project.load_toml_text()
         for line in toml_text.splitlines():
             if not line.startswith(v_key):
                 continue
@@ -470,10 +462,20 @@ class BumpUp(DryRun):
         toml_text: str | None = None,
         work_dir: Path | None = None,
         package_name: str | None = None,
+        context: dict | None = None,
     ) -> str:
-        if toml_text is None:
-            toml_text = Project.load_toml_text()
-        context = tomllib.loads(toml_text)
+        if context is None:
+            if toml_text is None:
+                toml_text = Project.load_toml_text()
+            context = tomllib.loads(toml_text)
+        is_dynamic_version = False
+        with contextlib.suppress(KeyError):
+            if "version" in context["project"]["dynamic"]:
+                is_dynamic_version = True
+        if is_dynamic_version:
+            if filename := cls.parse_dynamic_version(toml_text, context, work_dir):
+                return filename
+            yellow_warn("Failed to find version file for this dynamic version project.")
         by_version_plugin = False
         try:
             ver = context["project"]["version"]
