@@ -2,6 +2,18 @@
 
 ## 0.23
 
+### [0.23.2]
+
+#### Changed
+- refactor: rename `extend_user` to `expand_user`
+- refactor: optimize parse version logic to fix TODO
+
+### [0.23.1](../../releases/tag/v0.23.1) - 2026-06-27
+
+#### Changed
+- chore: update justfile and exclude tests when build
+- refactor: break down long function into smaller units
+
 ### [0.23.0](../../releases/tag/v0.23.0) - 2026-06-03
 
 #### Added
