@@ -148,15 +148,15 @@ class Shell:
         if isinstance(command, str):
             cs = shlex.split(command)
             if "shell" not in self._kw and not (set(self._cmd) & {"|", ">", "&"}):
-                command = self.extend_user(cs)
+                command = self.expand_user(cs)
             elif any(i.startswith("~") for i in cs):
                 command = re.sub(r" ~", " " + os.path.expanduser("~"), command)
         else:
-            command = self.extend_user(command)
+            command = self.expand_user(command)
         return command
 
     @staticmethod
-    def extend_user(cs: list[str]) -> list[str]:
+    def expand_user(cs: list[str]) -> list[str]:
         if cs[0] == "echo":
             return cs
         for i, c in enumerate(cs):
