@@ -50,7 +50,8 @@ fast = "fast_dev_cli.cli:main"
 
 [dependency-groups]
 dev = [
-    "asynctor>=0.10.0",
+    "asynctor>=0.13.0",
+    "httpx2>=2.5.0",
 ]
 
 [build-system]
