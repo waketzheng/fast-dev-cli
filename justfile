@@ -13,7 +13,7 @@ system-info:
 set windows-powershell
 PY_EXEC := if os_family() == "windows" { ".venv/Scripts/python.exe" } else { ".venv/bin/python" }
 PROJECT_NAME := file_name(justfile_directory())
-SRC := if path_exists("src") == "true" { "src" } else if path_exists(PROJECT_NAME) == "true" { PROJECT_NAME } else { 'fast_dev_cli' }
+SRC := if path_exists("src") == "true" { "src" } else { replace(PROJECT_NAME, "-", "_") }
 
 _venv_create *args:
     pdm venv create --with-pip {{ args }}

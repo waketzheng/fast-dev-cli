@@ -31,16 +31,16 @@ wheels = [
 
 [[package]]
 name = "asynctor"
-version = "0.13.0"
+version = "0.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/b3/7c95524d2c98543e50b1d94bdd625fc30e259e5d5302f93a2d6f12403c30/asynctor-0.13.0.tar.gz", hash = "sha256:d78570562a1791a56cb9aa630ded040ccafbc714f122c5428d3726fbda1f6d02", size = 50195, upload-time = "2026-07-04T04:16:17.167Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/40/d0c7e770fd2f6354b91a1d489b367eef56fecb15b24f264e15286033d6a9/asynctor-0.13.1.tar.gz", hash = "sha256:561b5a01faec659d6fa68d04c8247028d4348753059bd8036a3fbc3c37c6d8dc", size = 50285, upload-time = "2026-07-05T12:38:32.861Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/41/a53570db9054af7bea54cffe42e77c5c5c4c00b919e169e2c8d55611372f/asynctor-0.13.0-py3-none-any.whl", hash = "sha256:f6eee1566d4ad087a71fbf981341f5e92d4c4d81d596683e0be20655fc53d815", size = 54273, upload-time = "2026-07-04T04:16:16.124Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/22/5343ac08cc46fd4a5b9c49d48938e543cd1ec27c69a9b7f9bf17f7fd32f4/asynctor-0.13.1-py3-none-any.whl", hash = "sha256:1a52968064bf0d47e6c72dae4b826b34e52f17d0c10a46ee2d46cb2672cb34a2", size = 54408, upload-time = "2026-07-05T12:38:31.901Z" },
 ]
 
 [[package]]
@@ -180,7 +180,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
