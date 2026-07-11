@@ -11,37 +11,48 @@ system-info:
 
 # Use powershell for Windows so that 'Git Bash' and 'PyCharm Terminal' get the same result
 set windows-powershell
+
 PY_EXEC := if os_family() == "windows" { ".venv/Scripts/python.exe" } else { ".venv/bin/python" }
+WITH_UV := if os_family() == "windows" { `if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { 'true' } else { 'false' }` } else { "true" }
 PROJECT_NAME := file_name(justfile_directory())
 SRC := if path_exists("src") == "true" { "src" } else { replace(PROJECT_NAME, "-", "_") }
 
+# ---------- virtualenv ----------
 _venv_create *args:
     pdm venv create --with-pip {{ args }}
 
 _uv_venv *args:
     @just _venv_create --with uv {{ args }}
 
-_win_venv *args:
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { just _uv_venv {{ args }}} else { just _venv_create {{ args }}}
-
+# Create virtual environment with uv by pdm
 [unix]
 venv *args:
     @if test ! -e .venv; then just _uv_venv {{ args }}; fi
+
+# Create virtual environment with pip by pdm
 [windows]
 venv *args:
-    @if (-Not (Test-Path '.venv')) { just _win_venv {{ args }}}
+    @if (-Not (Test-Path '.venv')) {
+        if ( "{{ WITH_UV }}" -eq "true" ) {
+            just _uv_venv {{ args }}
+        } else {
+            just _venv_create {{ args }}
+        }
+    }
 
 _venv313 *args:
     @just venv 3.13 {{ args }}
+
+# ---------- pypi mirror helpers ----------
+# Update the registry in `uv.lock` to use the mirror set by the config.
+_pypi_reverse *args:
+    @just pypi --reverse {{ args }}
 
 # Change registry in uv.lock to be pypi.org
 pypi *args:
     @uv run --no-sync fast pypi --quiet {{ args }}
 
-# Update the registry in `uv.lock` to use the mirror set by the config.
-_pypi_reverse *args:
-    @just pypi --reverse {{ args }}
-
+# ---------- dependency installation ----------
 _pdm_deps *args:
     pdm install --frozen -G :all {{ args }}
 
@@ -53,16 +64,23 @@ _uv_deps *args:
     @just _uv_sync --reinstall-package={{ PROJECT_NAME }} {{ args }}
     @just pypi
 
-# Install dependencies
+# Use uv to install dependencies
 [unix]
 install *args: venv
     @just _uv_deps {{ args }}
+
+# Use uv or pdm to install dependencies
 [windows]
 install *args: venv
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv sync ...'; just _uv_deps {{ args }} } else { echo 'Using pdm ...'; just _pdm_deps {{ args }} }
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _uv_deps {{ args }}
+    } else {
+        just _pdm_deps {{ args }}
+    }
 
 alias deps := install
 
+# ---------- lock ----------
 _uv_lock *args:
     @just _pypi_reverse
     uv lock {{ args }}
@@ -74,43 +92,77 @@ _win_lock *args:
 [unix]
 lock *args: venv
     @just _uv_lock {{ args }}
+
 [windows]
 lock *args: venv
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just _uv_lock {{ args }} } else { just _win_lock {{ args }}}
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _uv_lock {{ args }}
+    } else {
+        just _win_lock {{ args }}
+    }
 
+# ---------- add / remove ----------
 _pypi_wrap_uv *args:
     @just _pypi_reverse
     uv {{ args }}
     @just pypi
 
 # Run `uv add` to update deps and keep register to be pypi.org
+[unix]
 add *args: venv
     @just _pypi_wrap_uv add {{ args }}
 
+[windows]
+add *args: venv
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _pypi_wrap_uv add {{ args }}
+    } else {
+        pdm add --no-lock {{ args }}
+    }
+
 # Run `uv remove` to update deps and keep register to be pypi.org
+[unix]
 remove *args: venv
     @just _pypi_wrap_uv remove {{ args }}
 
+[windows]
+remove *args: venv
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _pypi_wrap_uv remove {{ args }}
+    } else {
+        pdm remove --no-lock {{ args }}
+    }
+
+# ---------- upgrade ----------
 _win_up *args:
     @if (-Not (Test-Path 'pdm.lock')) { echo 'No pdm lock file, only install deps without update lock...'; just _pdm_deps {{ args }}  } else { pdm update -G :all {{ args }} }
 
 [unix]
 up *args: venv
     @just _uv_lock --upgrade {{ args }}
+
 [windows]
 up *args: venv
-    if (Test-Path '~/AppData/Roaming/uv/tools/rust-just') { echo 'uv lock...'; just _uv_lock --upgrade {{ args }} } else { just _win_up {{ args }} }
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _uv_lock --upgrade {{ args }}
+    } else {
+        just _win_up {{ args }}
+    }
 
-_uv_clear *args:
-    @just _uv_sync {{ args }}
-
+# Install project dependencies and remove those that not are not required
 [unix]
 clear *args:
-    @just _uv_clear {{ args }}
+    @just _uv_sync {{ args }}
+
 [windows]
 clear *args:
-    @if (-Not (Test-Path 'pdm.lock')) { just _uv_clear {{ args }}  } else { pdm sync -G :all --clean {{ args }} }
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _uv_sync {{ args }}
+    } else {
+        if (-Not (Test-Path 'pdm.lock')) { just _uv_sync {{ args }}  } else { pdm sync -G :all --clean {{ args }} }
+    }
 
+# ---------- code quality ----------
 _uvx_py *args:
     uvx --python={{ PY_EXEC }} {{ args }}
 
@@ -158,6 +210,7 @@ _check *args:
 check *args: install
     @just _check {{ args }}
 
+# ---------- build / test ----------
 _build *args:
     uv build --offline --clear {{ args }}
 
@@ -170,32 +223,56 @@ _test *args:
 test *args: install
     @just _test {{ args }}
 
+dev *args: venv
+    pdm run fast dev {{ args }}
+
+[unix]
 prod *args: venv
     uv sync --no-dev {{ args }}
 
+[windows]
+prod *args: venv
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        uv sync --no-dev {{ args }}
+    } else {
+        if (-Not (Test-Path 'pdm.lock')) {
+            pdm install --prod --frozen {{ args }}
+        } else {
+            pdm sync -G :all --prod --clean {{ args }}
+        }
+    }
+
+# ---------- pip install ----------
 _uv_pip *args:
     uv pip install {{ args }}
 
 [unix]
 pipi *args: venv
     @just _uv_pip {{ args }}
+
 [windows]
 pipi *args: venv
-    @if (-Not (Test-Path '.venv/Scripts/pip.exe')) { just _uv_pip {{ args }} } else { pdm run pip install {{ args }} }
+    @if ( "{{ WITH_UV }}" -eq "true" ) {
+        just _uv_pip {{ args }}
+    } else {
+        if (-Not (Test-Path '.venv/Scripts/pip.exe')) { uv pip install {{ args }} } else { pdm run pip install {{ args }} }
+    }
 
-_install_me:
-    @just pipi -e .
-
+# ---------- project setup ----------
+# Install pre-commit hooks and project dependencies
 start:
     prek install
     @just deps
 
-version part="patch" *args:
+# ---------- versioning ----------
+_version part="patch" *args:
     pdm run fast bump {{ part }} {{ args }}
 
+# Bump version with patch part
 bump *args:
-    @just version patch --commit {{ args }}
+    @just _version patch --commit {{ args }}
 
+# Make git tag with project version and empty message
 tag *args:
     pdm run fast tag {{ args }}
 
@@ -207,5 +284,5 @@ release: venv bump tag _log
 
 # Bump version with minor part(0.1.1->0.2.0) and auto mark tag
 minor *args:
-    @just version minor --commit {{ args }}
+    @just _version minor --commit {{ args }}
     @just _log

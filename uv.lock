@@ -31,16 +31,16 @@ wheels = [
 
 [[package]]
 name = "asynctor"
-version = "0.13.1"
+version = "0.13.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/22/40/d0c7e770fd2f6354b91a1d489b367eef56fecb15b24f264e15286033d6a9/asynctor-0.13.1.tar.gz", hash = "sha256:561b5a01faec659d6fa68d04c8247028d4348753059bd8036a3fbc3c37c6d8dc", size = 50285, upload-time = "2026-07-05T12:38:32.861Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/aa/473287d27ec7e86500937d97625c40314ed5c0d5b36c61baa6a8d6a96526/asynctor-0.13.2.tar.gz", hash = "sha256:b2a70eba090c8cc3a7dff11362279ec05b60616a8213149a682957a727c9350d", size = 50537, upload-time = "2026-07-09T17:55:48.72Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/22/5343ac08cc46fd4a5b9c49d48938e543cd1ec27c69a9b7f9bf17f7fd32f4/asynctor-0.13.1-py3-none-any.whl", hash = "sha256:1a52968064bf0d47e6c72dae4b826b34e52f17d0c10a46ee2d46cb2672cb34a2", size = 54408, upload-time = "2026-07-05T12:38:31.901Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/5e/2ee375031c75517640d3d784981bb16809d20d5c06424dd9ac7ea7758f12/asynctor-0.13.2-py3-none-any.whl", hash = "sha256:b1e38fce33de95685f75c65a798233728c18a85d2820cf36f80fb000f326591e", size = 54693, upload-time = "2026-07-09T17:55:47.388Z" },
 ]
 
 [[package]]
