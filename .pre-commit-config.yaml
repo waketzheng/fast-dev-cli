@@ -1,18 +1,23 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-default_language_version:
-    python: python3.11
 repos:
-  - repo: git@github.com:pre-commit/pre-commit-hooks
-    # https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0  # Use the ref you want to point at
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    # To upgrade hooks run: `prek autoupdate`
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        args: ['--maxkb=750']
+        exclude: ^uv.lock$
       - id: check-toml
       - id: check-yaml
         args: [ --unsafe ]
       - id: end-of-file-fixer
       - id: trailing-whitespace
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.48.0
+    hooks:
+      - id: typos
 
   - repo: local
     hooks:
@@ -21,3 +26,9 @@ repos:
         entry: pdm run fast lint --ty --bandit
         language: system
         types: [python]
+
+      - id: pypi
+        name: ensure pypi for uv lock
+        files: './^uv.lock'
+        entry: pdm run fast pypi
+        language: system

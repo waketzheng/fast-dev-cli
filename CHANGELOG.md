@@ -287,7 +287,7 @@
 
 ### [0.11.5](../../releases/tag/v0.11.5) - 2024-12-31
 
-- Fix emptry prefix when virtual environment not activated
+- Fix empty prefix when virtual environment not activated
 
 ### [0.11.4](../../releases/tag/v0.11.4) - 2024-11-13
 
@@ -301,7 +301,7 @@
 
 - Refactor check script to make it easy to change tool
 - Default to add one more space after bump up emoji
-- Suppport py2 for format script
+- Support py2 for format script
 
 ### [0.11.1](../../releases/tag/v0.11.1) - 2024-11-01
 

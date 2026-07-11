@@ -21,7 +21,7 @@ pdm use 3
 source .venv/*/activate  # for Linux/MacOS/GitBash
 .venv\Scripts\activate  # For Windows
 
-# Install dependenices
+# Install dependencies
 python -m ensurepip
 python -m pip install --upgrade pip
 pdm export --without-hashes -o dev_requirements.txt
