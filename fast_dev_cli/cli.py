@@ -1743,7 +1743,9 @@ class MakeDeps(DryRun):
         if self._verbose:
             cmd += " --verbose"
         if self._no_dev:
-            cmd += " --no-dev"
+            opt = " --no-dev"
+            if opt not in cmd:
+                cmd += opt
         if self._no_extra:
             cmd += " " + " ".join(f"--no-extra {i}" for i in self._no_extra)
         if self._no_group:
@@ -1759,7 +1761,9 @@ class MakeDeps(DryRun):
             uv_sync = "uv sync" + " --inexact" * self._inexact
             if self._active:
                 uv_sync += " --active"
-            return uv_sync + ("" if self._prod else " --all-extras --all-groups")
+            return uv_sync + (
+                " --no-dev" if self._prod else " --all-extras --all-groups"
+            )
         elif self._tool == "poetry":
             return "poetry install " + (
                 "--only=main" if self._prod else "--all-extras --all-groups"

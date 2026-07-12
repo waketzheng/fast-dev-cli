@@ -14,16 +14,17 @@ def test_make_deps_class():
         def should_ensure_pip(self) -> bool:
             return False
 
+    assert MakeDeps("uv", prod=False).gen() == "uv sync --all-extras --all-groups"
     assert (
-        MakeDeps("uv", prod=False).gen()
+        MakeDeps("uv", prod=False, inexact=True, active=True).gen()
         == "uv sync --inexact --active --all-extras --all-groups"
     )
     assert (
-        MakeDeps("uv", prod=False, active=False).gen()
+        MakeDeps("uv", prod=False, inexact=True).gen()
         == "uv sync --inexact --all-extras --all-groups"
     )
-    assert MakeDeps("uv", prod=True).gen() == "uv sync --inexact --active"
-    assert MakeDeps("uv", prod=True, active=False).gen() == "uv sync --inexact"
+    assert MakeDeps("uv", prod=True).gen() == "uv sync --no-dev"
+    assert MakeDeps("uv", prod=True, inexact=True).gen() == "uv sync --inexact --no-dev"
     assert MakeDeps("pdm", prod=False).gen() == "pdm install --frozen -G :all"
     assert MakeDeps("pdm", prod=True).gen() == "pdm install --frozen --prod"
     assert (
@@ -49,21 +50,23 @@ def test_fast_deps():
     out = capture_cmd_output("fast deps --pdm --dry")
     assert out == "--> pdm install --frozen -G :all"
     out = capture_cmd_output("fast deps --uv --prod --dry")
-    assert out == "--> uv sync --inexact --active"
+    assert out == "--> uv sync --no-dev"
+    out = capture_cmd_output("fast deps --uv --prod --dry --inexact --active")
+    assert out == "--> uv sync --inexact --active --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-active")
-    assert out == "--> uv sync --inexact"
+    assert out == "--> uv sync --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-inexact")
-    assert out == "--> uv sync --active"
+    assert out == "--> uv sync --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-active --no-inexact")
-    assert out == "--> uv sync"
+    assert out == "--> uv sync --no-dev"
     out = capture_cmd_output("fast deps --uv --dry")
-    assert out == "--> uv sync --inexact --active --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --no-active")
-    assert out == "--> uv sync --inexact --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --no-inexact")
-    assert out == "--> uv sync --active --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --no-active --no-inexact")
     assert out == "--> uv sync --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --inexact")
+    assert out == "--> uv sync --inexact --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --active")
+    assert out == "--> uv sync --active --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --uv --dry --active --inexact")
+    assert out == "--> uv sync --inexact --active --all-extras --all-groups"
 
 
 def test_fast_deps_mutually_exclusive_options():
@@ -86,13 +89,19 @@ def test_smart_fast_deps(tmp_work_dir, monkeypatch):
     )
     toml_file.touch()
     out = capture_cmd_output("fast deps --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --dry --inexact --active")
     assert out == "--> uv sync --inexact --active --all-extras --all-groups"
     pdm_lock = tmp_work_dir.joinpath("pdm.lock")
     pdm_lock.touch()
     out = capture_cmd_output("fast deps --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --dry --inexact --active")
     assert out == "--> uv sync --inexact --active --all-extras --all-groups"
     toml_file.write_text("[tool.pdm]\ndistribution=false")
     out = capture_cmd_output("fast deps --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    out = capture_cmd_output("fast deps --dry --inexact --active")
     assert out == "--> uv sync --inexact --active --all-extras --all-groups"
     monkeypatch.setenv("FASTDEVCLI_SKIP_UV", "1")
     out = capture_cmd_output("fast deps --dry")
