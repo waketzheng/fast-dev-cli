@@ -52,6 +52,7 @@ fast = "fast_dev_cli.cli:main"
 dev = [
     "asynctor>=0.13.0",
     "httpx2>=2.5.0",
+    "tomli-w>=1.2.0",
 ]
 
 [build-system]

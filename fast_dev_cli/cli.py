@@ -1754,13 +1754,35 @@ class MakeDeps(DryRun):
             cmd += " " + opts.strip()
         return cmd
 
+    def get_package_name(self) -> str:
+        with contextlib.suppress(FileNotFoundError, KeyError):
+            try:
+                toml_text = Project.load_toml_text()
+            except EnvError:
+                return ""
+            doc = tomllib.loads(toml_text)
+            tool_section = doc["tool"]
+            uv_package = tool_section.get("uv", {}).get("package")
+            if uv_package is not None:
+                return doc["project"]["name"] if uv_package else ""
+            match doc["build-system"]["build-backend"]:
+                case "pdm.backend":
+                    if not tool_section.get("pdm", {}).get("distribution", True):
+                        return ""
+                case x if x.startswith("poetry"):
+                    if not tool_section.get("poetry", {}).get("package-mode", True):
+                        return ""
+            return doc["project"]["name"]
+        return ""
+
     def _gen(self) -> str:
         if self._tool == "pdm":
             return "pdm install --frozen " + ("--prod" if self._prod else "-G :all")
         elif self._tool == "uv":
-            uv_sync = "uv sync" + " --inexact" * self._inexact
-            if self._active:
-                uv_sync += " --active"
+            uv_sync = "uv sync"
+            if project := self.get_package_name():
+                uv_sync += f" --reinstall-package={project}"
+            uv_sync += " --inexact" * self._inexact + " --active" * self._active
             return uv_sync + (
                 " --no-dev" if self._prod else " --all-extras --all-groups"
             )

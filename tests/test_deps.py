@@ -1,6 +1,10 @@
 import re
+import shutil
+from pathlib import Path
 
-from fast_dev_cli.cli import MakeDeps, capture_cmd_output, run_and_echo
+from tomli_w import dumps
+
+from fast_dev_cli.cli import MakeDeps, capture_cmd_output, run_and_echo, tomllib
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -14,17 +18,26 @@ def test_make_deps_class():
         def should_ensure_pip(self) -> bool:
             return False
 
-    assert MakeDeps("uv", prod=False).gen() == "uv sync --all-extras --all-groups"
+    assert (
+        MakeDeps("uv", prod=False).gen()
+        == "uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups"
+    )
     assert (
         MakeDeps("uv", prod=False, inexact=True, active=True).gen()
-        == "uv sync --inexact --active --all-extras --all-groups"
+        == "uv sync --reinstall-package=fast-dev-cli --inexact --active --all-extras --all-groups"
     )
     assert (
         MakeDeps("uv", prod=False, inexact=True).gen()
-        == "uv sync --inexact --all-extras --all-groups"
+        == "uv sync --reinstall-package=fast-dev-cli --inexact --all-extras --all-groups"
     )
-    assert MakeDeps("uv", prod=True).gen() == "uv sync --no-dev"
-    assert MakeDeps("uv", prod=True, inexact=True).gen() == "uv sync --inexact --no-dev"
+    assert (
+        MakeDeps("uv", prod=True).gen()
+        == "uv sync --reinstall-package=fast-dev-cli --no-dev"
+    )
+    assert (
+        MakeDeps("uv", prod=True, inexact=True).gen()
+        == "uv sync --reinstall-package=fast-dev-cli --inexact --no-dev"
+    )
     assert MakeDeps("pdm", prod=False).gen() == "pdm install --frozen -G :all"
     assert MakeDeps("pdm", prod=True).gen() == "pdm install --frozen --prod"
     assert (
@@ -50,23 +63,79 @@ def test_fast_deps():
     out = capture_cmd_output("fast deps --pdm --dry")
     assert out == "--> pdm install --frozen -G :all"
     out = capture_cmd_output("fast deps --uv --prod --dry")
-    assert out == "--> uv sync --no-dev"
+    assert out == "--> uv sync --reinstall-package=fast-dev-cli --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --inexact --active")
-    assert out == "--> uv sync --inexact --active --no-dev"
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --inexact --active --no-dev"
+    )
     out = capture_cmd_output("fast deps --uv --prod --dry --no-active")
-    assert out == "--> uv sync --no-dev"
+    assert out == "--> uv sync --reinstall-package=fast-dev-cli --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-inexact")
-    assert out == "--> uv sync --no-dev"
+    assert out == "--> uv sync --reinstall-package=fast-dev-cli --no-dev"
     out = capture_cmd_output("fast deps --uv --prod --dry --no-active --no-inexact")
-    assert out == "--> uv sync --no-dev"
+    assert out == "--> uv sync --reinstall-package=fast-dev-cli --no-dev"
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert (
+        out == "--> uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups"
+    )
+    out = capture_cmd_output("fast deps --uv --dry --inexact")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --inexact --all-extras --all-groups"
+    )
+    out = capture_cmd_output("fast deps --uv --dry --active")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --active --all-extras --all-groups"
+    )
+    out = capture_cmd_output("fast deps --uv --dry --active --inexact")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --inexact --active --all-extras --all-groups"
+    )
+
+
+def test_reinstall_package(tmp_work_dir):
     out = capture_cmd_output("fast deps --uv --dry")
     assert out == "--> uv sync --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --inexact")
-    assert out == "--> uv sync --inexact --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --active")
-    assert out == "--> uv sync --active --all-extras --all-groups"
-    out = capture_cmd_output("fast deps --uv --dry --active --inexact")
-    assert out == "--> uv sync --inexact --active --all-extras --all-groups"
+    toml_file = Path("pyproject.toml")
+    shutil.copy(Path(__file__).parent.parent.joinpath(toml_file.name), toml_file)
+    text = toml_file.read_text(encoding="utf-8")
+    doc = tomllib.loads(text)
+    doc["tool"]["pdm"]["distribution"] = False
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    doc["tool"]["pdm"]["distribution"] = True
+    doc["tool"]["uv"] = {"package": False}
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    doc["tool"]["uv"]["package"] = True
+    doc["project"]["name"] += "2"
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert (
+        out == "--> uv sync --reinstall-package=fast-dev-cli2 --all-extras --all-groups"
+    )
+    doc["build-system"]["build-backend"] = "poetry"
+    doc["tool"]["poetry"] = {"package-mode": False}
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert (
+        out == "--> uv sync --reinstall-package=fast-dev-cli2 --all-extras --all-groups"
+    )
+    doc["tool"].pop("uv")
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert out == "--> uv sync --all-extras --all-groups"
+    doc["build-system"]["build-backend"] = "hatchling.build"
+    toml_file.write_text(dumps(doc), encoding="utf-8")
+    out = capture_cmd_output("fast deps --uv --dry")
+    assert (
+        out == "--> uv sync --reinstall-package=fast-dev-cli2 --all-extras --all-groups"
+    )
 
 
 def test_fast_deps_mutually_exclusive_options():
