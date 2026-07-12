@@ -1,12 +1,22 @@
 # ChangeLog
 
-## 0.23
+## 0.24
 
-### [0.23.2]
+### [0.24.0](../../releases/tag/v0.24.0) - 2026-07-13
+
+#### Added
+- feat: auto add `--reinstall-package=xxx` for uv sync
+- feat: auto add `--no-dev` for uv when prod is true
+- feat: support `FASTDEVCLI_DEPS_OPTS` for `fast deps`
 
 #### Changed
 - refactor: rename `extend_user` to `expand_user`
 - refactor: optimize parse version logic to fix TODO
+
+#### Fixes
+- fix: issues found by crate-ci/typos which was new add to pre-commit config
+
+## 0.23
 
 ### [0.23.1](../../releases/tag/v0.23.1) - 2026-06-27
 
