@@ -223,9 +223,6 @@ _test *args:
 test *args: install
     @just _test {{ args }}
 
-dev *args: venv
-    pdm run fast dev {{ args }}
-
 [unix]
 prod *args: venv
     uv sync --no-dev {{ args }}
