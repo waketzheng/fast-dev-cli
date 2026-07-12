@@ -12,7 +12,7 @@ import subprocess  # nosec:B404
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast, get_args, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast, get_args, overload
 
 import typer
 from typer import Exit, Option, echo, secho
@@ -316,11 +316,7 @@ def get_current_version(
     check_version: bool = False,
 ) -> str | tuple[bool, str]:
     if is_poetry is True or Project.manage_by_poetry():
-        cmd = ["poetry", "version", "-s"]
-        if verbose:
-            echo(f"--> {' '.join(cmd)}")
-        if out := capture_cmd_output(cmd, raises=True):
-            out = out.splitlines()[-1].strip().split()[-1]
+        out = _get_poetry_project_version(verbose)
         if check_version:
             return True, out
         return out
@@ -352,6 +348,15 @@ def get_current_version(
         is_conflict = bool(local_version) and local_version != installed_version
         return is_conflict, current_version
     return current_version
+
+
+def _get_poetry_project_version(verbose: bool) -> str:
+    cmd = ["poetry", "version", "-s"]
+    if verbose:
+        echo(f"--> {' '.join(cmd)}")
+    if out := capture_cmd_output(cmd, raises=True):
+        out = out.splitlines()[-1].strip().split()[-1]
+    return out
 
 
 def _ensure_bool(value: bool | OptionInfo) -> bool:
@@ -442,7 +447,7 @@ class BumpUp(DryRun):
                     or work_dir.joinpath(version_path).exists()
                 ):
                     return version_path
-        # version = { source = "file", path = "fast_dev_cli/__init__.py" }
+        # e.g.: version = { source = "file", path = "fast_dev_cli/__init__.py" }
         v_key = "version = "
         p_key = 'path = "'
         if toml_text is None:
@@ -499,7 +504,6 @@ class BumpUp(DryRun):
                 by_version_plugin = version_value in ("0", "0.0.0", "init")
         if by_version_plugin:
             return cls.parse_plugin_version(context, package_name)
-
         return TOML_FILE
 
     @staticmethod
@@ -1706,13 +1710,21 @@ class MakeDeps(DryRun):
         tool: str,
         prod: bool = False,
         dry: bool = False,
-        active: bool = True,
-        inexact: bool = True,
+        active: bool = False,
+        inexact: bool = False,
+        no_dev: bool = False,
+        verbose: bool = False,
+        no_extra: list[str] | None = None,
+        no_group: list[str] | None = None,
     ) -> None:
         self._tool = tool
         self._prod = prod
-        self._active = active
-        self._inexact = inexact
+        self._active = active or load_bool("FASTDEVCLI_DEPS_ACTIVE")
+        self._inexact = inexact or load_bool("FASTDEVCLI_DEPS_INEXACT")
+        self._verbose = verbose
+        self._no_dev = no_dev
+        self._no_extra = no_extra
+        self._no_group = no_group
         super().__init__(dry=dry)
 
     def should_ensure_pip(self) -> bool:
@@ -1727,6 +1739,20 @@ class MakeDeps(DryRun):
         return ["dev"]
 
     def gen(self) -> str:
+        cmd = self._gen()
+        if self._verbose:
+            cmd += " --verbose"
+        if self._no_dev:
+            cmd += " --no-dev"
+        if self._no_extra:
+            cmd += " " + " ".join(f"--no-extra {i}" for i in self._no_extra)
+        if self._no_group:
+            cmd += " " + " ".join(f"--no-group {i}" for i in self._no_group)
+        if opts := os.getenv("FASTDEVCLI_DEPS_OPTS"):
+            cmd += " " + opts.strip()
+        return cmd
+
+    def _gen(self) -> str:
         if self._tool == "pdm":
             return "pdm install --frozen " + ("--prod" if self._prod else "-G :all")
         elif self._tool == "uv":
@@ -1763,11 +1789,15 @@ def make_deps(
     use_pip: bool = Option(False, "--pip", help="Use `pip` to install deps"),
     use_poetry: bool = Option(False, "--poetry", help="Use `poetry` to install deps"),
     active: bool = Option(
-        True, help="Add `--active` to uv sync command(Only work for uv project)"
+        False, help="Add `--active` to uv sync command(Only work for uv project)"
     ),
     inexact: bool = Option(
-        True, help="Add `--inexact` to uv sync command(Only work for uv project)"
+        False, help="Add `--inexact` to uv sync command(Only work for uv project)"
     ),
+    no_dev: bool = Option(False, "--no-dev"),
+    no_extra: Annotated[list[str] | None, Option()] = None,
+    no_group: Annotated[list[str] | None, Option()] = None,
+    verbose: bool = Option(False, "--verbose"),
     dry: bool = DryOption,
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
@@ -1786,7 +1816,14 @@ def make_deps(
         tool = "poetry"
     elif tool == ToolOption.default:
         tool = Project.get_manage_tool(cache=True) or "pip"
-    MakeDeps(tool, prod, active=active, inexact=inexact, dry=dry).run()
+    bool_opts = {
+        "active": active,
+        "inexact": inexact,
+        "no_dev": no_dev,
+        "verbose": verbose,
+        "dry": dry,
+    }
+    MakeDeps(tool, prod, no_extra=no_extra, no_group=no_group, **bool_opts).run()
 
 
 class UvPypi(DryRun):
