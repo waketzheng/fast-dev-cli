@@ -1714,6 +1714,7 @@ class MakeDeps(DryRun):
         inexact: bool = False,
         no_dev: bool = False,
         verbose: bool = False,
+        frozen: bool = False,
         no_extra: list[str] | None = None,
         no_group: list[str] | None = None,
     ) -> None:
@@ -1722,6 +1723,7 @@ class MakeDeps(DryRun):
         self._active = active or load_bool("FASTDEVCLI_DEPS_ACTIVE")
         self._inexact = inexact or load_bool("FASTDEVCLI_DEPS_INEXACT")
         self._verbose = verbose
+        self._frozen = frozen
         self._no_dev = no_dev
         self._no_extra = no_extra
         self._no_group = no_group
@@ -1750,6 +1752,8 @@ class MakeDeps(DryRun):
             cmd += " " + " ".join(f"--no-extra {i}" for i in self._no_extra)
         if self._no_group:
             cmd += " " + " ".join(f"--no-group {i}" for i in self._no_group)
+        if self._frozen:
+            cmd += " --frozen"
         if opts := os.getenv("FASTDEVCLI_DEPS_OPTS"):
             cmd += " " + opts.strip()
         return cmd
@@ -1823,6 +1827,7 @@ def make_deps(
     no_dev: bool = Option(False, "--no-dev"),
     no_extra: Annotated[list[str] | None, Option()] = None,
     no_group: Annotated[list[str] | None, Option()] = None,
+    frozen: bool = Option(False, "--frozen", "--frozen-lockfile", "--no-lock"),
     verbose: bool = Option(False, "--verbose"),
     dry: bool = DryOption,
 ) -> None:
@@ -1847,6 +1852,7 @@ def make_deps(
         "inexact": inexact,
         "no_dev": no_dev,
         "verbose": verbose,
+        "frozen": frozen,
         "dry": dry,
     }
     MakeDeps(tool, prod, no_extra=no_extra, no_group=no_group, **bool_opts).run()

@@ -79,6 +79,21 @@ def test_fast_deps():
     assert (
         out == "--> uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups"
     )
+    out = capture_cmd_output("fast deps --uv --dry --frozen")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups --frozen"
+    )
+    out = capture_cmd_output("fast deps --uv --dry --frozen-lockfile")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups --frozen"
+    )
+    out = capture_cmd_output("fast deps --uv --dry --no-lock")
+    assert (
+        out
+        == "--> uv sync --reinstall-package=fast-dev-cli --all-extras --all-groups --frozen"
+    )
     out = capture_cmd_output("fast deps --uv --dry --inexact")
     assert (
         out
