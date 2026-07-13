@@ -2,6 +2,11 @@
 
 ## 0.24
 
+### [0.24.1](../../releases/tag/v0.24.1) - 2026-07-13
+
+#### Added
+- feat: support `--frozen` for `fast deps`
+
 ### [0.24.0](../../releases/tag/v0.24.0) - 2026-07-13
 
 #### Added
