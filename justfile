@@ -247,7 +247,7 @@ _test *args:
 test *args: install
     @just _test {{ args }}
 
-_dev *args: venv
+dev *args: venv
     @just _fast dev {{ args }}
 
 [unix]

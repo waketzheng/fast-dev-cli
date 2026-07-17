@@ -111,14 +111,15 @@ def yellow_warn(msg: str) -> None:
     secho(msg, fg="yellow")
 
 
-def load_bool(name: str, default: bool = False) -> bool:
+def load_bool(name: str, default: bool = False, *, verbose: bool = True) -> bool:
     if not (v := os.getenv(name)):
         return default
     if (lower := v.lower()) in ("0", "false", "f", "off", "no", "n"):
         return False
     elif lower in ("1", "true", "t", "on", "yes", "y"):
         return True
-    secho(f"WARNING: can not convert value({v!r}) of {name} to bool!")
+    if verbose:
+        secho(f"WARNING: can not convert value({v!r}) of {name} to bool!")
     return default
 
 
@@ -1581,16 +1582,36 @@ def upload(
 
 
 def should_use_just() -> bool:
-    if shutil.which("just") is None:
+    if shutil.which("just") is None or load_bool("FASTDEVCLI_IGNORE_JUST_DEV"):
         return False
     d = Path.cwd()
     for _ in range(5):
         f = d / "justfile"
         if f.exists():
-            text = f.read_text(encoding="utf-8")
-            return any(i.startswith("dev *args:") for i in text.splitlines())
+            return _prefer_just_dev(f)
         if d.joinpath("pyproject.toml").exists():
             break
+    return False
+
+
+def _prefer_just_dev(f: Path) -> bool:
+    text = f.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    dev_recipe = "dev *args:"
+    re_import = re.compile(r"import[?]? ")
+    has_import = False
+    for i, line in enumerate(lines):
+        if line.startswith(dev_recipe):
+            # Avoid cycle callback
+            return "fast dev" not in lines[i + 1]
+        elif not has_import and re_import.match(line):
+            has_import = True
+    if has_import:
+        recipes = capture_cmd_output("just --list").splitlines()
+        for recipe in recipes:
+            recipe = recipe.strip()
+            if recipe.startswith(dev_recipe):
+                return "fast dev" not in recipe
     return False
 
 
