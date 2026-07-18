@@ -1585,18 +1585,34 @@ class Publish:
         twine = "python -m build && twine upload"
 
     @classmethod
-    def gen(cls) -> str:
-        if tool := Project.get_manage_tool():
+    def gen(cls, tool: str, verbose: bool) -> str:
+        if tool == "auto":
+            tool = Project.get_manage_tool() or ""
+        if tool:
+            if tool == "uv":
+                envs = ["UV_PUBLISH_INDEX", "UV_PUBLISH_URL", "UV_PUBLISH_TOKEN"]
+                if not any(os.getenv(i) for i in envs):
+                    if verbose:
+                        yellow_warn(f"Skip uv publish as envs ({envs}) not set")
+                    return "uv build"
+            elif tool == "pdm":
+                env = "PDM_PUBLISH_REPO"
+                if not os.getenv(env):
+                    if verbose:
+                        yellow_warn(f"Skip pdm publish as env ({env}) not set")
+                    return "pdm build"
             return cls.CommandEnum[tool]
         return cls.CommandEnum.twine
 
 
 @cli.command()
 def upload(
+    verbose: bool = False,
+    tool: str = ToolOption,
     dry: bool = DryOption,
 ) -> None:
     """Shortcut for package publish"""
-    cmd = Publish.gen()
+    cmd = Publish.gen(tool, verbose)
     exit_if_run_failed(cmd, dry=dry)
 
 
