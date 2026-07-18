@@ -1229,6 +1229,15 @@ class LintCode(DryRun):
         prefix = ""
         should_run_by_tool = with_prefix
         requires_mypy = any(tool.startswith("mypy") for tool in tools)
+        global_mypy = False
+        if requires_mypy and Path.home().joinpath(".local/bin/mypy").exists():
+            global_mypy = True
+            mypy_opt = "--python-executable=.venv/bin/python"
+            for i, t in enumerate(tools):
+                if t.startswith("mypy"):
+                    if mypy_opt not in t:
+                        tools[i] = t + " " + mypy_opt
+                    break
         if requires_mypy and not should_run_by_tool:
             if is_venv() and Path(sys.argv[0]).parent != Path.home().joinpath(
                 ".local/bin"
@@ -1245,6 +1254,8 @@ class LintCode(DryRun):
                         "You may need to run the following command"
                         f" to install ruff:\n\n  {command}\n"
                     )
+                elif global_mypy:
+                    should_run_by_tool = True
                 elif cls.missing_mypy_exec():
                     should_run_by_tool = True
                     if check_call('python -c "import fast_dev_cli"'):
@@ -1280,7 +1291,11 @@ class LintCode(DryRun):
                 tool
                 # `ruff <command>` get the same result with `pdm run ruff <command>`.
                 # Other tools should run inside the selected environment.
-                if ruff_exists and tool.startswith("ruff")
+                if (
+                    ruff_exists
+                    and tool.startswith("ruff")
+                    or (global_mypy and tool.startswith("mypy"))
+                )
                 else prefix + tool
             )
             + f" {paths}"
