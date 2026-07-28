@@ -114,13 +114,19 @@ def yellow_warn(msg: str) -> None:
 def load_bool(name: str, default: bool = False, *, verbose: bool = True) -> bool:
     if not (v := os.getenv(name)):
         return default
+    if (b := _convert_bool(v)) is not None:
+        return b
+    if verbose:
+        secho(f"WARNING: can not convert value({v!r}) of {name} to bool!")
+    return default
+
+
+def _convert_bool(v: str) -> bool | None:
     if (lower := v.lower()) in ("0", "false", "f", "off", "no", "n"):
         return False
     elif lower in ("1", "true", "t", "on", "yes", "y"):
         return True
-    if verbose:
-        secho(f"WARNING: can not convert value({v!r}) of {name} to bool!")
-    return default
+    return None
 
 
 def is_venv() -> bool:
@@ -141,7 +147,8 @@ class Shell:
     ) -> subprocess.CompletedProcess[str]:
         if isinstance(cmd, str):
             kw.setdefault("shell", True)
-        return subprocess.run(cmd, **kw)  # nosec:B603
+        check = kw.pop("check", False)
+        return subprocess.run(cmd, check=check, **kw)  # nosec:B603
 
     @property
     def command(self) -> list[str] | str:
@@ -260,13 +267,12 @@ def read_version_from_file(
     for line in all_lines:
         if pattern.match(line):
             return _parse_version(line, pattern)
-    else:
-        pattern = re.compile(r"VERSION\s*=")
-        for line in all_lines:
-            if pattern.match(line):
-                return _parse_version(line, pattern)
-        secho(f"WARNING: can not find version pattern in {version_file}!")
-        return "0.0.0"
+    pattern = re.compile(r"VERSION\s*=")
+    for line in all_lines:
+        if pattern.match(line):
+            return _parse_version(line, pattern)
+    secho(f"WARNING: can not find version pattern in {version_file}!")
+    return "0.0.0"
 
 
 def _get_frontend_version() -> tuple[Path, str] | None:
@@ -325,9 +331,9 @@ def get_current_version(
     if package_name is None:
         try:
             work_dir = Project.get_work_dir()
-        except EnvError as e:
+        except EnvError:
             if (res := _get_frontend_version()) is None:
-                raise e
+                raise
             current_version = res[1]
             if check_version:
                 return False, current_version
@@ -528,11 +534,11 @@ class BumpUp(DryRun):
         ds: list[Path] = []
         if package_name is not None:
             packages.insert(0, (package_name, ""))
-        for package_name, source_dir in packages:
-            ds.append(cwd / package_name)
-            ds.append(cwd / "src" / package_name)
+        for pack_name, source_dir in packages:
+            ds.append(cwd / pack_name)
+            ds.append(cwd / "src" / pack_name)
             if source_dir and source_dir != "src":
-                ds.append(cwd / source_dir / package_name)
+                ds.append(cwd / source_dir / pack_name)
         module_name = poetry_module_name(cwd.name)
         ds.extend([cwd / module_name, cwd / "src" / module_name, cwd])
         for d in ds:
@@ -919,7 +925,7 @@ class UpgradeDependencies(Project, DryRun):
         elif v == "[":
             echo(f"Skip complex dependence: {line}")
             return True
-        elif v.startswith(">") or v.startswith("<") or v[0].isdigit():
+        elif v.startswith((">", "<")) or v[0].isdigit():
             echo(f"Ignore bigger/smaller/equal: {line}")
             return True
         return False
@@ -1423,6 +1429,14 @@ def check(
     ).run()
 
 
+def _should_bandit() -> bool:
+    if v := os.getenv("FASTDEVCLI_BANDIT"):
+        return _convert_bool(v) or True
+    toml_text = Project.load_toml_text()
+    lines = toml_text.splitlines()
+    return any(i.startswith("[tool.bandit") for i in lines)
+
+
 @cli.command(name="lint")
 def make_style(
     files: list[str] | None = typer.Argument(default=None),  # noqa:B008
@@ -1444,6 +1458,9 @@ def make_style(
     strict: bool = Option(False, help="Whether run mypy with --strict"),
     ty: bool = Option(False, help="Whether use ty instead of mypy"),
     fix: bool | None = Option(None, help="Whether ruff check with --fix"),
+    auto_bandit: bool | None = Option(
+        None, help="Whether to run bandit if `[tool.bandit]` in pyproject.toml"
+    ),
 ) -> None:
     """Run: ruff check/format to reformat code and then mypy to check"""
     if getattr(files, "default", files) is None:
@@ -1452,7 +1469,9 @@ def make_style(
         files = [files]
     skip = _ensure_bool(skip_mypy)
     dmypy = _ensure_bool(use_dmypy)
-    bandit = _ensure_bool(bandit)
+    bandit = _ensure_bool(bandit) or (
+        auto_bandit is not None and _ensure_bool(auto_bandit) and _should_bandit()
+    )
     tool = _ensure_str(tool) or ""
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
@@ -1754,7 +1773,7 @@ def run_by_subprocess(cmd: str, dry: bool = DryOption) -> None:
         ):
             echo(f"Command not found: {command}")
             raise Exit(1) from None
-        raise e
+        raise
     else:
         if rc:
             raise Exit(rc)
