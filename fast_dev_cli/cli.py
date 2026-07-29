@@ -1729,10 +1729,11 @@ def dev(
     uvicorn: bool | None = None,
     prod: bool | None = None,
     reload: bool | None = None,
+    just: bool | None = None,
     file: str | None | ArgumentInfo = None,
     dry: bool = False,
 ) -> None:
-    if should_use_just():
+    if just is not False and should_use_just():
         args = [i for i in sys.argv[2:] if i != "--dry"]
         cmd = "just dev"
     else:
@@ -1751,10 +1752,13 @@ def runserver(
     uvicorn: bool | None = None,
     prod: bool | None = None,
     reload: bool | None = None,
+    just: bool | None = None,
     dry: bool = DryOption,
 ) -> None:
     """Start a fastapi server(only for fastapi>=0.111.0)"""
-    f = functools.partial(dev, port, host, fastapi, uvicorn, prod, reload, dry=dry)
+    f = functools.partial(
+        dev, port, host, fastapi, uvicorn, prod, reload, just, dry=dry
+    )
     if getattr(file_or_port, "default", file_or_port):
         f(file=file_or_port)
     else:

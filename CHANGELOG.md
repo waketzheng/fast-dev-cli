@@ -1,5 +1,18 @@
 # ChangeLog
 
+## 0.25
+
+### [0.25.1]*(Unrelease)*
+
+#### Added
+- feat: support `--no-just` for `fast dev`
+
+### [0.25.0](../../releases/tag/v0.25.0) - 2026-07-18
+
+#### Changed
+- feat: skip publish for uv/pdm when required env not set
+- refactor: only check requires mypy once
+
 ## 0.24
 
 ### [0.24.1](../../releases/tag/v0.24.1) - 2026-07-13
