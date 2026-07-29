@@ -8,6 +8,13 @@ from .utils import chdir
 def test_upload(capsys):
     upload(dry=True)
     out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "uv build"
+
+
+def test_upload_uv_publish(capsys, monkeypatch):
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "1")
+    upload(dry=True)
+    out = capsys.readouterr().out.strip()
     assert out.replace("--> ", "") == "uv build && uv publish"
 
 
@@ -22,6 +29,20 @@ def test_upload_poetry(tmp_path, capsys):
 
 def test_upload_uv(tmp_path, capsys):
     project_dir = tmp_path / "uv_proj"
+    project_dir.mkdir()
+    toml_file = project_dir / TOML_FILE
+    with chdir(project_dir):
+        run_and_echo("uv init", verbose=False)
+        if (s := "[tool.uv]") not in (text := toml_file.read_text()):
+            toml_file.write_text(text + os.linesep + s)
+        upload(dry=True)
+    out = capsys.readouterr().out.strip()
+    assert out.replace("--> ", "") == "uv build"
+
+
+def test_upload_uv_publish_url(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("UV_PUBLISH_URL", "1")
+    project_dir = tmp_path / "uv_proj2"
     project_dir.mkdir()
     toml_file = project_dir / TOML_FILE
     with chdir(project_dir):

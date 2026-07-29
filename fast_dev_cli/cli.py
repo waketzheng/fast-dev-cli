@@ -1604,7 +1604,7 @@ class Publish:
         twine = "python -m build && twine upload"
 
     @classmethod
-    def gen(cls, tool: str, verbose: bool) -> str:
+    def gen(cls, tool: str | None, verbose: bool) -> str:
         if tool == "auto":
             tool = Project.get_manage_tool() or ""
         if tool:
@@ -1631,7 +1631,7 @@ def upload(
     dry: bool = DryOption,
 ) -> None:
     """Shortcut for package publish"""
-    cmd = Publish.gen(tool, verbose)
+    cmd = Publish.gen(_ensure_str(tool), verbose)
     exit_if_run_failed(cmd, dry=dry)
 
 
