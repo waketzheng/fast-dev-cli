@@ -4,7 +4,7 @@ set allow-duplicate-recipes
 import? '.common-just/justfile'
 
 system-info:
-    @bash -c 'target=".common-just"; if [ -f "$target" ] || grep -q "$target" .git/config > /dev/null; then just _just_up; else just init; fi'
+    @bash -c 'target=".common-just"; if [ -d "$target" ] || git submodule | grep -q "$target"; then just _just_up; else just init; fi'
     @echo "This is an {{ arch() }} machine running on {{ os_family() }}"
     just --list
 
