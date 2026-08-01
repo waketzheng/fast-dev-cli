@@ -474,7 +474,7 @@ class BumpUp(DryRun):
         toml_text: str | None = None,
         work_dir: Path | None = None,
         package_name: str | None = None,
-        context: dict | None = None,
+        context: dict[str, Any] | None = None,
     ) -> str:
         if context is None:
             if toml_text is None:
@@ -762,7 +762,7 @@ class Project:
         if skip_uv:
             for name in ("pdm", "poetry"):
                 if f"[tool.{name}]" in text:
-                    cls._tool = cast(ToolName, name)
+                    cls._tool = name
                     return cls._tool
             work_dir = cls.get_work_dir(allow_cwd=True)
             for name in ("pdm", "poetry"):
@@ -797,11 +797,11 @@ class Project:
                 if backend:
                     for t in ("pdm", "poetry"):
                         if t in backend:
-                            cls._tool = cast(ToolName, t)
+                            cls._tool = t
                             return cls._tool
                 for name in ("pdm", "poetry"):
                     if f"[tool.{name}]" in text:
-                        cls._tool = cast(ToolName, name)
+                        cls._tool = name
                         return cls._tool
                 if x == 2:
                     cls._tool = (
@@ -1669,7 +1669,9 @@ def _prefer_just_dev(f: Path) -> bool:
     return False
 
 
-def _parse_serve_file(uvicorn, filename: str, cmd: str, args: list) -> str:
+def _parse_serve_file(
+    uvicorn: bool | None, filename: str, cmd: str, args: list[str]
+) -> str:
     if m := re.search(r"(.*):(\d+)$", filename):
         h, p = m.group(1), m.group(2)
         if h and "--host" not in str(args):
@@ -1696,7 +1698,12 @@ def _parse_serve_file(uvicorn, filename: str, cmd: str, args: list) -> str:
     return cmd
 
 
-def _runserver(uvicorn, host, port, file) -> tuple[str, list[str]]:
+def _runserver(
+    uvicorn: bool | None,
+    host: OptionInfo | str | None,
+    port: OptionInfo | int | None,
+    file: ArgumentInfo | str | None,
+) -> tuple[str, list[str]]:
     cmd = "uvicorn" if uvicorn else "fastapi dev"
     args = []
     if (host := getattr(host, "default", host)) and host not in (
@@ -1847,15 +1854,17 @@ class MakeDeps(DryRun):
             tool_section = doc["tool"]
             uv_package = tool_section.get("uv", {}).get("package")
             if uv_package is not None:
-                return doc["project"]["name"] if uv_package else ""
-            match doc["build-system"]["build-backend"]:
-                case "pdm.backend":
-                    if not tool_section.get("pdm", {}).get("distribution", True):
-                        return ""
-                case x if x.startswith("poetry"):
-                    if not tool_section.get("poetry", {}).get("package-mode", True):
-                        return ""
-            return doc["project"]["name"]
+                if not uv_package:
+                    return ""
+            else:
+                match doc["build-system"]["build-backend"]:
+                    case "pdm.backend":
+                        if not tool_section.get("pdm", {}).get("distribution", True):
+                            return ""
+                    case x if x.startswith("poetry"):
+                        if not tool_section.get("poetry", {}).get("package-mode", True):
+                            return ""
+            return cast(str, doc["project"]["name"])
         return ""
 
     def _gen(self) -> str:
@@ -1971,7 +1980,7 @@ class UvPypi(DryRun):
 
     @staticmethod
     def get_target_content(
-        text: str, verbose: bool, target_registry, target_host: str
+        text: str, verbose: bool, target_registry: str, target_host: str
     ) -> str | None:
         registry_pattern = r'(registry = ")(.*?)"'
         registry_urls = {i[1] for i in re.findall(registry_pattern, text)}
