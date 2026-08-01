@@ -2,10 +2,13 @@
 
 ## 0.25
 
-### [0.25.1]*(Unrelease)*
+### [0.25.2]*(Unrelease)*
+
+### [0.25.1](../../releases/tag/v0.25.1) - 2026-08-01
 
 #### Added
 - feat: support `--no-just` for `fast dev`
+- feat: support `--auto-bandit` for `fast lint`
 
 ### [0.25.0](../../releases/tag/v0.25.0) - 2026-07-18
 
