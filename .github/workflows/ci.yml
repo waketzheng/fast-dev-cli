@@ -21,9 +21,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", 3.14]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
+          enable-cache: true
+      - uses: astral-sh/ruff-action@v3
+      - uses: extractions/setup-just@v4  # Or: uv tool install rust-just
+      - name: Setup PDM by uv
+        run: |
+          uv tool install pdm --with pdm-plugin-i
+          pdm config check_update false
+          pdm config use_uv true
+      - name: Setup fast by uv
+        run: uv tool install fast-dev-cli
+      - name: Setup ty
+        run: uv tool install ty
+      - name: Install deps
+        run: |
+          just
+          just install
+      - name: Check code style and Type Hints
+        run: just _check
+      - name: Check Type Hints by mypy
+        run: just mypy
+      - name: Check Type Hints by pyright
+        run: just right
+
   test:
     if: ${{ !(github.event_name == 'pull_request' && github.head_ref == 'dev') }}
     runs-on: ubuntu-latest
+    needs: lint
     strategy:
       matrix:
         python-version: ["3.10", 3.11, 3.12, 3.13, 3.14]
@@ -75,12 +115,10 @@ jobs:
           which pipx
           which fast
           ln -s `which fast` $HOME/.local/bin/fast
-      - name: Install requirements/Check code style and Type Hint
+      - name: Install requirements
         run: |
           just
-          just check
-          just mypy
-          just right
+          just deps
       - name: Test with pytest
         run: |
           pdm run coverage run -m pytest
