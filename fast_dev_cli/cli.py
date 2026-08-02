@@ -607,7 +607,9 @@ class BumpUp(DryRun):
                 match part:
                     case "patch":
                         p3i = int(m.group()) if (m := re.match(r"\d+", p3)) else 0
-                        return f"{p1}.{p2}.{p3i + 1}"
+                        if len(version_parts) == 3:
+                            p3i += 1
+                        return f"{p1}.{p2}.{p3i}"
                     case "minor":
                         return f"{p1}.{p2i + 1}.0"
                     case "major":
