@@ -593,7 +593,8 @@ class BumpUp(DryRun):
             echo(f"Invalid part: {s!r}")
             raise Exit(1) from e
 
-    def parse_new_version(self, part: str, version: str) -> str:
+    @staticmethod
+    def parse_new_version(part: str, version: str) -> str:
         version_parts = version.split(".")
         if not version_parts[-1].isdigit():
             try:
