@@ -163,3 +163,18 @@ def test_invalid_justfile(tmp_work_dir):
     with chdir(subdir):
         run_and_echo(f"{fast} dev --dry > {out}", verbose=False)
         assert "just dev" in out.read_text()
+
+
+def test_fastapi_entrypoint(tmp_work_dir):
+    toml_file = tmp_work_dir.joinpath("pyproject.toml")
+    entrypoint = "api:app"
+    toml_file.write_text(f"[tool.fastapi]\n{entrypoint=}", encoding="utf-8")
+    out = tmp_work_dir / "out.txt"
+    fast = "python -m fast_dev_cli"
+    run_and_echo(f"{fast} dev --uvicorn --dry > {out}", verbose=False)
+    assert entrypoint in out.read_text()
+    run_and_echo(f"{fast} dev 0:8000 --uvicorn --dry > {out}", verbose=False)
+    assert entrypoint in out.read_text()
+    tmp_work_dir.joinpath("app.py").touch()
+    run_and_echo(f"{fast} dev app.py --uvicorn --dry > {out}", verbose=False)
+    assert entrypoint not in out.read_text()

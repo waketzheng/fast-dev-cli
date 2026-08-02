@@ -1722,6 +1722,17 @@ def _prefer_just_dev(f: Path) -> bool:
     return False
 
 
+def _load_fastapi_entrypoint() -> str:
+    with contextlib.suppress(FileNotFoundError, KeyError):
+        try:
+            toml_text = Project.load_toml_text()
+        except EnvError:
+            return ""
+        doc = tomllib.loads(toml_text)
+        return doc["tool"]["fastapi"]["entrypoint"]
+    return ""
+
+
 def _parse_serve_file(
     uvicorn: bool | None, filename: str, cmd: str, args: list[str]
 ) -> str:
@@ -1734,14 +1745,16 @@ def _parse_serve_file(
                 args.append(f"--host={h}")
         args.append(f"--port={p}")
         if uvicorn:
-            # TODO: load [tool.fastapi]
-            p = Path("main.py")
-            if p.exists():
-                cmd += " main:app"
-            elif Path("app", p.name).exists():
-                cmd += " app.main:app"
-            elif Path("app.py").exists():
-                cmd += " app:app"
+            if entrypoint := _load_fastapi_entrypoint():
+                cmd += " " + entrypoint
+            else:
+                p = Path("main.py")
+                if p.exists():
+                    cmd += " main:app"
+                elif Path("app", p.name).exists():
+                    cmd += " app.main:app"
+                elif Path("app.py").exists():
+                    cmd += " app:app"
         return cmd
     if uvicorn and ((filepath := Path(filename)).is_file() or filepath.suffix == ".py"):
         filename = filepath.stem + ":app"
@@ -1776,6 +1789,8 @@ def _runserver(
             if port != 8000:
                 args.append(f"--port={port}")
                 no_port_yet = False
+    elif uvicorn and (entrypoint := _load_fastapi_entrypoint()):
+        cmd += " " + entrypoint
     if no_port_yet and (port := getattr(port, "default", port)) and str(port) != "8000":
         args.append(f"--port={port}")
     if shutil.which("pdm") is not None:

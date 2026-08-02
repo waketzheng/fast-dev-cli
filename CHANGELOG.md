@@ -4,6 +4,9 @@
 
 ### [0.25.2]*(Unrelease)*
 
+#### Added
+- feat: auto load fastapi entrypoint for `fast dev --uvicorn`
+
 #### Fixes
 - fix: shell command not correctly quoted
 
