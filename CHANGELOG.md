@@ -2,7 +2,9 @@
 
 ## 0.25
 
-### [0.25.2]*(Unrelease)*
+### [0.25.3]*(Unrelease)*
+
+### [0.25.2](../../releases/tag/v0.25.2) - 2026-08-02
 
 #### Added
 - feat: auto load fastapi entrypoint for `fast dev --uvicorn`
