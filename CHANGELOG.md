@@ -2,7 +2,9 @@
 
 ## 0.25
 
-### [0.25.3]*(Unrelease)*
+### [0.25.4]*(Unrelease)*
+
+### [0.25.3](../../releases/tag/v0.25.3) - 2026-08-02
 
 #### Fixes
 - fix: bump version not remove `.dev1`
