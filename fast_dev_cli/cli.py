@@ -1645,6 +1645,7 @@ def should_use_just() -> bool:
             return _prefer_just_dev(f)
         if d.joinpath("pyproject.toml").exists():
             break
+        d = d.parent
     return False
 
 
@@ -1654,10 +1655,22 @@ def _prefer_just_dev(f: Path) -> bool:
     dev_recipe = "dev *args:"
     re_import = re.compile(r"import[?]? ")
     has_import = False
+    total = len(lines)
     for i, line in enumerate(lines):
         if line.startswith(dev_recipe):
             # Avoid cycle callback
-            return "fast dev" not in lines[i + 1]
+            command_lines = []
+            for j in range(i + 1, total):
+                try:
+                    s = lines[j]
+                except IndexError:
+                    break
+                if not s.startswith(" "):
+                    break
+                command_lines.append(s)
+            if not command_lines:  # Invalid justfile
+                return False
+            return all("fast dev" not in i for i in command_lines)
         elif not has_import and re_import.match(line):
             has_import = True
     if has_import:
@@ -1681,6 +1694,7 @@ def _parse_serve_file(
                 args.append(f"--host={h}")
         args.append(f"--port={p}")
         if uvicorn:
+            # TODO: load [tool.fastapi]
             p = Path("main.py")
             if p.exists():
                 cmd += " main:app"

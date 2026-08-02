@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import functools
 
+from asynctor.compat import chdir
+
 import fast_dev_cli.cli
 from fast_dev_cli.cli import dev, main, run_and_echo, runserver
 
@@ -134,3 +136,21 @@ def test_main(mocker):
     mocker.patch("fast_dev_cli.cli.cli")
     main()
     fast_dev_cli.cli.cli.assert_called_once()  # type:ignore
+
+
+def test_invalid_justfile(tmp_work_dir):
+    justfile = tmp_work_dir.joinpath("justfile")
+    justfile.write_text("dev *args:", encoding="utf-8")
+    out = tmp_work_dir / "out.txt"
+    fast = "python -m fast_dev_cli"
+    run_and_echo(f"{fast} dev --dry > {out}", verbose=False)
+    assert "fastapi dev" in out.read_text()
+    with justfile.open("a+") as f:
+        f.write("\n  echo aaa")
+    run_and_echo(f"{fast} dev --dry > {out}", verbose=False)
+    assert "just dev" in out.read_text()
+    subdir = tmp_work_dir / "subdir"
+    subdir.mkdir()
+    with chdir(subdir):
+        run_and_echo(f"{fast} dev --dry > {out}", verbose=False)
+        assert "just dev" in out.read_text()
