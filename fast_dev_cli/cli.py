@@ -593,6 +593,26 @@ class BumpUp(DryRun):
             echo(f"Invalid part: {s!r}")
             raise Exit(1) from e
 
+    def parse_new_version(self, part: str, version: str) -> str:
+        version_parts = version.split(".")
+        if not version_parts[-1].isdigit():
+            try:
+                p1, p2, p3 = version_parts[:3]
+                p2i = int(p2)
+                p1i = int(p1)
+            except ValueError:
+                ...
+            else:
+                match part:
+                    case "patch":
+                        p3i = int(m.group()) if (m := re.match(r"\d+", p3)) else 0
+                        return f"{p1}.{p2}.{p3i + 1}"
+                    case "minor":
+                        return f"{p1}.{p2i + 1}.0"
+                    case "major":
+                        return f"{p1i + 1}.0.0"
+        return ""
+
     def gen(self) -> str:
         should_sync, _version = get_current_version(check_version=True)
         filename = self.filename
@@ -606,9 +626,10 @@ class BumpUp(DryRun):
         self.part = part
         parse = r'--parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"'
         filename_arg = _quote_shell_arg(filename)
-        cmd = (
-            f'bumpversion {parse} --current-version="{_version}" {part} {filename_arg}'
-        )
+        cmd = f'bumpversion {parse} --current-version="{_version}" '
+        if new_version := self.parse_new_version(part, _version):
+            cmd += f'--new-version="{new_version}" '
+        cmd += f"{part} {filename_arg}"
         if self.commit:
             if part != "patch":
                 cmd += " --tag"
@@ -674,14 +695,12 @@ def version() -> None:
 @cli.command(name="bump")
 def bump_version(
     part: BumpUp.PartChoices,
+    sync: bool = False,
     commit: bool = Option(
         False, "--commit", "-c", help="Whether run `git commit` after version changed"
     ),
     emoji: bool | None = Option(
         None, "--emoji", help="Whether add emoji prefix to commit message"
-    ),
-    no_sync: bool = Option(
-        False, "--no-sync", help="Do not run sync command to update version"
     ),
     dry: bool = DryOption,
 ) -> None:
@@ -691,7 +710,7 @@ def bump_version(
     return BumpUp(
         _ensure_bool(commit),
         getattr(part, "value", part),
-        no_sync=_ensure_bool(no_sync),
+        no_sync=not _ensure_bool(sync),
         emoji=emoji,
         dry=dry,
     ).run()

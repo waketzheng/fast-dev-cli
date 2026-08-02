@@ -126,7 +126,7 @@ def test_bump_with_poetry(mocker, tmp_poetry_project, tmp_path):
     stream = StringIO()
     new_version = get_current_version()
     with redirect_stdout(stream):
-        bump_version(BumpUp.PartChoices.patch, commit=False, dry=True, no_sync=True)
+        bump_version(BumpUp.PartChoices.patch, commit=False, dry=True, sync=False)
     assert patch_without_commit.replace(version, new_version) in stream.getvalue()
     stream = StringIO()
     with redirect_stdout(stream), mock_sys_argv(["patch", "--dry", "--no-sync"]):
