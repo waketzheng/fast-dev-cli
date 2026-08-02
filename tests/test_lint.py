@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import platform
 import re
+import shlex
 import shutil
 from pathlib import Path
 
@@ -228,6 +229,14 @@ def test_lint_html():
     assert "prettier -w index.html flv.html" in capture_cmd_output("pdm run " + cmd)
     assert LintCode.to_cmd("index.html") == "prettier -w index.html"
     assert LintCode.to_cmd("index.html flv.html") == "prettier -w index.html flv.html"
+
+
+def test_lint_quotes_paths(mocker):
+    mocker.patch.object(LintCode, "check_lint_tool_installed", return_value=True)
+    paths = ["a b.py", "x; echo injected.py"]
+    command = LintCode(paths, skip_mypy=True).gen()
+    for segment in command.split(" && "):
+        assert shlex.split(segment)[-2:] == paths
 
 
 def test_with_dmypy():

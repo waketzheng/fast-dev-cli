@@ -4,7 +4,13 @@ from pathlib import Path
 
 from tomli_w import dumps
 
-from fast_dev_cli.cli import MakeDeps, capture_cmd_output, run_and_echo, tomllib
+from fast_dev_cli.cli import (
+    MakeDeps,
+    _quote_shell_arg,
+    capture_cmd_output,
+    run_and_echo,
+    tomllib,
+)
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -56,6 +62,16 @@ def test_make_deps_class():
     assert (
         PipDepsWithoutEnsure("pip", prod=False).gen()
         == "python -m pip install --upgrade pip && python -m pip install -e . --group dev"
+    )
+
+    extra = "docs & echo injected"
+    group = "qa group"
+    assert (
+        MakeDeps("uv", no_extra=[extra], no_group=[group])
+        .gen()
+        .endswith(
+            f"--no-extra {_quote_shell_arg(extra)} --no-group {_quote_shell_arg(group)}"
+        )
     )
 
 

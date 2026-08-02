@@ -4,6 +4,9 @@
 
 ### [0.25.2]*(Unrelease)*
 
+#### Fixes
+- fix: shell command not correctly quoted
+
 ### [0.25.1](../../releases/tag/v0.25.1) - 2026-08-01
 
 #### Added

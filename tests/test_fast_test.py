@@ -7,6 +7,7 @@ from pytest_mock import MockerFixture
 
 from fast_dev_cli.cli import (
     Project,
+    _quote_shell_arg,
     _should_run_test_script,
     capture_cmd_output,
     coverage_test,
@@ -97,6 +98,17 @@ def test_run_script_in_sub_directory(mocker: MockerFixture, capsys, script_path)
     unitcase(dry=True)
     out = capsys.readouterr().out
     assert f"cd {script_path.parent.parent} && python {TEST_SCRIPT}" in out
+
+
+def test_run_script_quotes_project_root(mocker: MockerFixture, capsys, tmp_path):
+    root = tmp_path / "project with spaces"
+    script = root / TEST_SCRIPT
+    mocker.patch("fast_dev_cli.cli.Project.get_work_dir", return_value=root)
+    mocker.patch("fast_dev_cli.cli._should_run_test_script", return_value=script)
+    mocker.patch("pathlib.Path.cwd", return_value=root / "subdir")
+    unitcase(dry=True)
+    expected = f"cd {_quote_shell_arg(root)} && python {TEST_SCRIPT}"
+    assert expected in capsys.readouterr().out
 
 
 def test_fast_test(mocker, capsys):

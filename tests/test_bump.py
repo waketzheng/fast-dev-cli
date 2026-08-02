@@ -1,5 +1,6 @@
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -68,6 +69,13 @@ def test_bump_dry(mocker):
     assert BumpUp(part="patch", commit=False, dry=True).gen() == patch_without_commit
     assert BumpUp(part="patch", commit=True, dry=True).gen() == patch_with_commit
     assert BumpUp(part="minor", commit=True, dry=True).gen() == minor_with_commit
+
+
+def test_bump_quotes_version_filename(mocker):
+    filename = "version files/v; echo injected.py"
+    mocker.patch("fast_dev_cli.cli.get_current_version", return_value=(False, "0.1.0"))
+    command = BumpUp(part="patch", commit=False, filename=filename, dry=True).gen()
+    assert shlex.split(command)[-2:] == [filename, "--allow-dirty"]
 
 
 def test_bump(

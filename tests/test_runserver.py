@@ -65,6 +65,15 @@ def test_runserver_no_pdm(capsys, mocker):
     )
 
 
+def test_runserver_quotes_filename(capsys, mocker):
+    mocker.patch("shutil.which", return_value=None)
+    filename = "app dir/main.py; echo injected"
+    runserver(filename, dry=True)
+    out = capsys.readouterr().out.strip().replace("--> ", "")
+    quoted = fast_dev_cli.cli._quote_shell_arg(filename)
+    assert out == f"fastapi dev {quoted}"
+
+
 def test_dev(capsys):
     dev(None, None, dry=True)
     out = capsys.readouterr().out.strip()

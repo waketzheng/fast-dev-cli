@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import shlex
 from pathlib import Path
 
 import pytest
@@ -48,7 +49,7 @@ def test_sync_not_in_venv(mocker, capsys):
         cmd = Sync("req.txt", "all", save=False, dry=True).gen()
     assert (
         cmd
-        == 'poetry export --without-hashes --extras="all" -o req.txt && poetry run python -m pip install -r req.txt && rm -f req.txt'
+        == "poetry export --without-hashes --extras=all -o req.txt && poetry run python -m pip install -r req.txt && rm -f req.txt"
     )
     sync(extras="all", save=False, dry=True)
     assert "pip install -r" in capsys.readouterr().out
@@ -77,7 +78,7 @@ def test_sync(mocker):
         cmd = Sync("req.txt", "all", save=False, dry=True).gen()
     assert (
         cmd
-        == 'poetry export --without-hashes --extras="all" -o req.txt && python -m pip install -r req.txt && rm -f req.txt'
+        == "poetry export --without-hashes --extras=all -o req.txt && python -m pip install -r req.txt && rm -f req.txt"
     )
     mocker.patch(
         "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
@@ -238,3 +239,21 @@ def test_sync_no_tool(mocker, tmp_path):
             Sync("req.txt", "", True, dry=True).gen()
             == "python -m pip install -r req.txt"
         )
+
+
+def test_sync_quotes_shell_arguments(mocker, tmp_path):
+    mocker.patch("fast_dev_cli.cli.Project.get_manage_tool", return_value="poetry")
+    mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    mocker.patch(
+        "fast_dev_cli.cli.UpgradeDependencies.should_with_dev", return_value=True
+    )
+    filename = "req file; echo injected.txt"
+    extras = "$(echo injected)"
+    with chdir(tmp_path):
+        command = Sync(filename, extras, save=False, dry=True).gen()
+
+    export, install, remove = command.split(" && ")
+    assert shlex.split(export)[-2:] == ["-o", filename]
+    assert f"--extras={extras}" in shlex.split(export)
+    assert shlex.split(install)[-1] == filename
+    assert shlex.split(remove)[-1] == filename

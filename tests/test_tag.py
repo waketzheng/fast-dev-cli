@@ -1,3 +1,4 @@
+import shlex
 import sys
 from contextlib import contextmanager
 
@@ -33,6 +34,23 @@ def test_echo_when_not_dry(mocker, capsys):
     mocker.patch.object(git_tag, "mark_tag", return_value=True)
     git_tag.run()
     assert "pdm publish" in capsys.readouterr().out
+
+
+def test_tag_quotes_message(mocker):
+    message = "release $(echo injected) & next"
+    git_tag = GitTag(message, dry=True)
+    mocker.patch("fast_dev_cli.cli.get_current_version", return_value=(False, "1.2.3"))
+    mocker.patch.object(git_tag, "has_v_prefix", return_value=False)
+    mocker.patch.object(git_tag, "should_push", return_value=False)
+    tag_command = git_tag.gen().split(" && ", 1)[0]
+    assert shlex.split(tag_command) == [
+        "git",
+        "tag",
+        "-a",
+        "1.2.3",
+        "-m",
+        message,
+    ]
 
 
 @contextmanager

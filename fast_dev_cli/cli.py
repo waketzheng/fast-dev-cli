@@ -378,6 +378,36 @@ def _ensure_str(value: str | OptionInfo | None) -> str | None:
     return getattr(value, "default", "")
 
 
+def _quote_shell_arg(value: str | Path) -> str:
+    text = str(value)
+    if not is_windows():
+        return shlex.quote(text)
+    if text and not re.search(r'[\s"&|<>^()%!]', text):
+        return text
+
+    # Quote for the Windows C runtime while keeping cmd.exe metacharacters inert.
+    result = ['"']
+    backslashes = 0
+    for char in text:
+        if char == "\\":
+            backslashes += 1
+        elif char == '"':
+            result.append("\\" * (backslashes * 2 + 1))
+            result.append(char)
+            backslashes = 0
+        else:
+            result.append("\\" * backslashes)
+            result.append(char)
+            backslashes = 0
+    result.append("\\" * (backslashes * 2))
+    result.append('"')
+    return "".join(result)
+
+
+def _join_shell_args(args: list[str]) -> str:
+    return " ".join(_quote_shell_arg(arg) for arg in args)
+
+
 class DryRun:
     def __init__(self, _exit: bool = False, dry: bool = False) -> None:
         self.dry = _ensure_bool(dry)
@@ -575,7 +605,10 @@ class BumpUp(DryRun):
                 part = self.get_part(a)
         self.part = part
         parse = r'--parse "(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"'
-        cmd = f'bumpversion {parse} --current-version="{_version}" {part} {filename}'
+        filename_arg = _quote_shell_arg(filename)
+        cmd = (
+            f'bumpversion {parse} --current-version="{_version}" {part} {filename_arg}'
+        )
         if self.commit:
             if part != "patch":
                 cmd += " --tag"
@@ -1088,7 +1121,10 @@ class GitTag(DryRun):
         if self.has_v_prefix():
             # Add `v` at prefix to compare with bumpversion tool
             _version = "v" + _version
-        cmd = f"git tag -a {_version} -m {self.message!r} && git push --tags"
+        cmd = (
+            f"git tag -a {_quote_shell_arg(_version)} "
+            f"-m {_quote_shell_arg(self.message)} && git push --tags"
+        )
         if self.should_push():
             cmd += " && git push"
         if should_sync and not self._no_sync and (sync := Project.get_sync_command()):
@@ -1190,7 +1226,7 @@ class LintCode(DryRun):
     @classmethod
     def to_cmd(
         cls: type[Self],
-        paths: str = ".",
+        paths: str | list[str] = ".",
         check_only: bool = False,
         bandit: bool = False,
         skip_mypy: bool = False,
@@ -1203,8 +1239,12 @@ class LintCode(DryRun):
         prefer_ty: bool = False,
         ruff_check_fix: bool = True,
     ) -> str:
-        if paths != "." and all(i.endswith(".html") for i in paths.split()):
-            return f"prettier -w {paths}"
+        path_args = shlex.split(paths) if isinstance(paths, str) else paths
+        if not path_args:
+            path_args = ["."]
+        quoted_paths = _join_shell_args(path_args)
+        if path_args != ["."] and all(i.endswith(".html") for i in path_args):
+            return f"prettier -w {quoted_paths}"
         ruff_rules = ["I", "B"]
         if ruff_check_sim and not load_bool("FASTDEVCLI_NO_SIM"):
             ruff_rules.append("SIM")
@@ -1294,7 +1334,7 @@ class LintCode(DryRun):
                         prefix += "--no-sync "
                     elif Path(bin_dir := ".venv/bin/").exists():
                         prefix = bin_dir
-        if cls.prefer_dmypy(paths, tools, use_dmypy=use_dmypy):
+        if cls.prefer_dmypy(quoted_paths, tools, use_dmypy=use_dmypy):
             tools[-1] = "dmypy run"
         cmd = " && ".join(
             (
@@ -1308,7 +1348,7 @@ class LintCode(DryRun):
                 )
                 else prefix + tool
             )
-            + f" {paths}"
+            + f" {quoted_paths}"
             for tool in tools
         )
         if bandit or load_bool("FASTDEVCLI_BANDIT"):
@@ -1317,36 +1357,35 @@ class LintCode(DryRun):
                 toml_text = Project.load_toml_text()
                 if "[tool.bandit" in toml_text:
                     command += " -c pyproject.toml"
-            if paths == "." and " -c " not in command:
-                paths = cls.get_package_name()
-            command += f" -r {paths}"
+            if quoted_paths == "." and " -c " not in command:
+                quoted_paths = _quote_shell_arg(cls.get_package_name())
+            command += f" -r {quoted_paths}"
             cmd += " && " + command
         return cmd
 
     def gen(self) -> str:
-        paths = "."
+        paths = ["."]
         if args := self.args:
-            ps = args.split() if isinstance(args, str) else [str(i) for i in args]
+            ps = shlex.split(args) if isinstance(args, str) else [str(i) for i in args]
             if len(ps) == 1:
-                paths = ps[0]
+                path = ps[0]
                 if (
-                    paths != "."
+                    path != "."
                     # `Path("a.").suffix` got "." in py3.14 and got "" with py<3.14
-                    and (p := Path(paths)).suffix in ("", ".")
+                    and (p := Path(path)).suffix in ("", ".")
                     and not p.exists()
                 ):
                     # e.g.:
                     # stem -> stem.py
                     # me. -> me.py
-                    if paths.endswith("."):
-                        p = p.with_name(paths[:-1])
+                    if path.endswith("."):
+                        p = p.with_name(path[:-1])
                     for suffix in (".py", ".html"):
                         p = p.with_suffix(suffix)
                         if p.exists():
-                            paths = p.name
+                            ps[0] = p.name
                             break
-            else:
-                paths = " ".join(ps)
+            paths = ps
         return self.to_cmd(
             paths,
             self.check_only,
@@ -1517,10 +1556,11 @@ class Sync(DryRun):
     def gen(self) -> str:
         extras, save = self.extras, self._save
         should_remove = not Path.cwd().joinpath(self.filename).exists()
+        filename = _quote_shell_arg(self.filename)
         if not (tool := Project.get_manage_tool()):
             if should_remove or not is_venv():
                 raise EnvError("There project is not managed by uv/pdm/poetry!")
-            return f"python -m pip install -r {self.filename}"
+            return f"python -m pip install -r {filename}"
         prefix = ""
         if not is_venv():
             prefix = f"{tool} run " + "--no-sync " * (tool == "uv")
@@ -1533,7 +1573,7 @@ class Sync(DryRun):
                 if not UpgradeDependencies.should_with_dev():
                     export_cmd = export_cmd.replace(" --with=dev", "")
                 if extras and isinstance(extras, str | list):
-                    export_cmd += f" --{extras=}".replace("'", '"')
+                    export_cmd += f" --extras={_quote_shell_arg(str(extras))}"
             elif check_call(prefix + "python -m pip --version"):
                 ensure_pip = ""
         elif check_call(prefix + "python -m pip --version"):
@@ -1543,7 +1583,7 @@ class Sync(DryRun):
         )
         if should_remove and not save:
             install_cmd += " && rm -f {0}"
-        return install_cmd.format(self.filename, prefix, export_cmd)
+        return install_cmd.format(filename, prefix, export_cmd)
 
 
 @cli.command()
@@ -1573,11 +1613,11 @@ def test(dry: bool, ignore_script: bool = False) -> None:
     if not _ensure_bool(ignore_script) and (
         test_script := _should_run_test_script(script_dir)
     ):
-        cmd = test_script.relative_to(root).as_posix()
+        cmd = _quote_shell_arg(test_script.relative_to(root).as_posix())
         if test_script.suffix == ".py":
             cmd = "python " + cmd
         if cwd != root:
-            cmd = f"cd {root} && " + cmd
+            cmd = f"cd {_quote_shell_arg(root)} && " + cmd
     else:
         cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
         if not is_venv() or not check_call("coverage --version"):
@@ -1708,7 +1748,7 @@ def _parse_serve_file(
         parent_names = [j for i in filepath.parents if (j := i.name)]
         if parent_names:
             filename = ".".join([*parent_names[::-1], filename])
-    cmd += " " + filename
+    cmd += " " + _quote_shell_arg(filename)
     return cmd
 
 
@@ -1760,7 +1800,7 @@ def dev(
     else:
         cmd, args = _runserver(uvicorn, host, port, file)
     if args:
-        cmd += " " + " ".join(args)
+        cmd += " " + _join_shell_args(args)
     exit_if_run_failed(cmd, dry=dry)
 
 
@@ -1849,9 +1889,13 @@ class MakeDeps(DryRun):
             if opt not in cmd:
                 cmd += opt
         if self._no_extra:
-            cmd += " " + " ".join(f"--no-extra {i}" for i in self._no_extra)
+            cmd += " " + " ".join(
+                f"--no-extra {_quote_shell_arg(i)}" for i in self._no_extra
+            )
         if self._no_group:
-            cmd += " " + " ".join(f"--no-group {i}" for i in self._no_group)
+            cmd += " " + " ".join(
+                f"--no-group {_quote_shell_arg(i)}" for i in self._no_group
+            )
         if self._frozen:
             cmd += " --frozen"
         if opts := os.getenv("FASTDEVCLI_DEPS_OPTS"):
@@ -1887,7 +1931,7 @@ class MakeDeps(DryRun):
         elif self._tool == "uv":
             uv_sync = "uv sync"
             if project := self.get_package_name():
-                uv_sync += f" --reinstall-package={project}"
+                uv_sync += " " + _quote_shell_arg(f"--reinstall-package={project}")
             uv_sync += " --inexact" * self._inexact + " --active" * self._active
             return uv_sync + (
                 " --no-dev" if self._prod else " --all-extras --all-groups"
