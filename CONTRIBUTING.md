@@ -1,10 +1,15 @@
 # Contributing
 
-## Install pdm
+## Install uv/rust-just/pdm
 ```shell
-pipx install pdm
+pipx install uv
+uv tool install rust-just
+uv tool install pdm
+pdm config check_update false
 ```
 - See more at:
+https://github.com/astral-sh/uv
+https://github.com/casey/just
 https://pdm-project.org/latest/#installation
 
 ## Set up environment
@@ -12,34 +17,23 @@ https://pdm-project.org/latest/#installation
 git clone git@github.com:waketzheng/fast-dev-cli.git
 cd fast-dev-cl
 ```
-- Create virtual environment and install dependencies by pdm
+- Create virtual environment by pdm and install dependencies by uv
 ```shell
 # Create virtual environment
-pdm use 3
-
-# Activate virtual environment
-source .venv/*/activate  # for Linux/MacOS/GitBash
-.venv\Scripts\activate  # For Windows
+just venv
 
 # Install dependencies
-python -m ensurepip
-python -m pip install --upgrade pip
-pdm export --without-hashes -o dev_requirements.txt
-python -m pip install -r dev_requirements.txt
-python -m pip install -e .
+just install
 ```
 ## Lint code
 ```shell
-./scripts/format.py
+just lint
 ```
 ## Check
 ```shell
-./scripts/check.py
+just check
 ```
 ## Test
 ```shell
-pipx install poetry
-pipx inject poetry poetry-plugin-version
-# or: pdm run python -m pip install poetry poetry-plugin-version
-./scripts/test.py
+just test
 ```
