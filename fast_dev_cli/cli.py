@@ -1658,6 +1658,16 @@ def coverage_test(
     return test(dry, ignore_script)
 
 
+def _not_a_distribution() -> bool:
+    with contextlib.suppress(FileNotFoundError, KeyError, EnvError):
+        toml_text = Project.load_toml_text()
+        doc = tomllib.loads(toml_text)
+        match doc["build-system"]["build-backend"]:
+            case "pdm.backend":
+                return doc.get("tool", {}).get("pdm", {}).get("distribution") is False
+    return True
+
+
 class Publish:
     class CommandEnum(StrEnum):
         poetry = "poetry publish --build"
@@ -1673,6 +1683,12 @@ class Publish:
             if tool == "uv":
                 envs = ["UV_PUBLISH_INDEX", "UV_PUBLISH_URL", "UV_PUBLISH_TOKEN"]
                 if not any(os.getenv(i) for i in envs):
+                    if _not_a_distribution():
+                        if verbose:
+                            yellow_warn(
+                                "Skip uv publish as project is not distribution"
+                            )
+                        return "fast version"
                     if verbose:
                         yellow_warn(f"Skip uv publish as envs ({envs}) not set")
                     return "uv build"
