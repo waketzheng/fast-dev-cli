@@ -2,12 +2,14 @@
 
 ## 0.25
 
-### [0.25.4]*(Unrelease)*
+### [0.25.5]*(Unrelease)*
+
+### [0.25.4](../../releases/tag/v0.25.4) - 2026-08-09
 
 ### [0.25.3](../../releases/tag/v0.25.3) - 2026-08-02
 
-#### Fixes
-- fix: bump version not remove `.dev1`
+#### Changed
+- feat: skip uv build when project is not distribution
 
 ### [0.25.2](../../releases/tag/v0.25.2) - 2026-08-02
 
