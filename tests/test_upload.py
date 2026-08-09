@@ -37,7 +37,7 @@ def test_upload_uv(tmp_path, capsys):
             toml_file.write_text(text + os.linesep + s)
         upload(dry=True)
     out = capsys.readouterr().out.strip()
-    assert out.replace("--> ", "") == "uv build"
+    assert out.replace("--> ", "") == "fast version"
 
 
 def test_upload_uv_publish_url(tmp_path, capsys, monkeypatch):
