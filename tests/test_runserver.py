@@ -165,6 +165,21 @@ def test_invalid_justfile(tmp_work_dir):
         assert "just dev" in out.read_text()
 
 
+def test_just(tmp_work_dir):
+    file = tmp_work_dir / "a.txt"
+    read_text = functools.partial(file.read_text, encoding="utf-8")
+    run_and_echo(f"fast dev --just --dry > {file}", verbose=False)
+    assert "just dev" in read_text()
+    run_and_echo(f"fast dev --dry > {file}", verbose=False)
+    assert "just dev" not in read_text()
+    justfile = tmp_work_dir.joinpath("justfile")
+    justfile.write_text("dev *args:\n  echo aaa", encoding="utf-8")
+    run_and_echo(f"fast dev --dry > {file}", verbose=False)
+    assert "just dev" in read_text()
+    run_and_echo(f"fast dev --no-just --dry > {file}", verbose=False)
+    assert "just dev" not in read_text()
+
+
 def test_fastapi_entrypoint(tmp_work_dir):
     toml_file = tmp_work_dir.joinpath("pyproject.toml")
     entrypoint = "api:app"

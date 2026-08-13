@@ -1847,7 +1847,7 @@ def dev(
     file: str | None | ArgumentInfo = None,
     dry: bool = False,
 ) -> None:
-    if just is not False and should_use_just():
+    if just is True or (just is None and should_use_just()):
         args = [i for i in sys.argv[2:] if i != "--dry"]
         cmd = "just dev"
     else:
