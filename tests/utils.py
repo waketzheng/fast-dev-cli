@@ -17,7 +17,7 @@ __all__ = (
 
 
 @contextmanager
-def mock_sys_argv(args: list[str]):
+def mock_sys_argv(args: list[str]) -> Generator[None]:
     origin = sys.argv[1:]
     sys.argv[1:] = args
     yield
@@ -25,7 +25,7 @@ def mock_sys_argv(args: list[str]):
 
 
 @contextmanager
-def capture_stdout():
+def capture_stdout() -> Generator[StringIO]:
     """Redirect sys.stdout to a new StringIO
 
     Example::
@@ -41,7 +41,7 @@ def capture_stdout():
 
 
 @contextmanager
-def temp_file(name: str, text=""):
+def temp_file(name: str, text: str = "") -> Generator[None]:
     path = Path(__file__).parent / name
     if text:
         path.write_text(text)

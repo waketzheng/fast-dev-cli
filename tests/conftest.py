@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -53,7 +54,7 @@ tmp_work_dir = chdir_tmp_fixture()
 
 
 @pytest.fixture
-def tmp_poetry_project(tmp_work_dir: Path):
+def tmp_poetry_project(tmp_work_dir: Path) -> Generator[Path]:
     Path(TOML_FILE).write_text(TOML_CONTENT)
     run_and_echo("poetry config --local virtualenvs.in-project true")
     yield tmp_work_dir
