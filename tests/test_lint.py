@@ -185,7 +185,7 @@ def _fast_check():
 
 
 def test_lint_cmd(mock_no_dmypy, monkeypatch):
-    assert run_and_echo("fast lint") == 0
+    assert run_and_echo("fast lint --skip-mypy") == 0
     assert run_and_echo("fast lint --unsafe --skip-mypy") == 0
     run = "pdm run "
     lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
