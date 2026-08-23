@@ -1304,8 +1304,8 @@ class LintCode(DryRun):
         requires_mypy = any(tool.startswith("mypy") for tool in tools)
         global_mypy = False
         if requires_mypy:
-            should_run_by_tool = cls._parse_mypy(
-                tool, should_run_by_tool, ruff_exists, tools
+            should_run_by_tool, global_mypy = cls._parse_mypy(
+                tool, should_run_by_tool, ruff_exists, tools, global_mypy
             )
         if should_run_by_tool and tool:
             if tool == ToolOption.default:
@@ -1348,8 +1348,13 @@ class LintCode(DryRun):
 
     @classmethod
     def _parse_mypy(
-        cls, tool: str, should_run_by_tool: bool, ruff_exists: bool, tools: list[str]
-    ) -> bool:
+        cls,
+        tool: str,
+        should_run_by_tool: bool,
+        ruff_exists: bool,
+        tools: list[str],
+        global_mypy: bool,
+    ) -> tuple[bool, bool]:
         local_bin = Path.home().joinpath(".local/bin")
         if local_bin.joinpath("mypy").exists():
             global_mypy = True
@@ -1394,7 +1399,7 @@ class LintCode(DryRun):
                         should_run_by_tool = True
             else:
                 should_run_by_tool = True
-        return should_run_by_tool
+        return should_run_by_tool, global_mypy
 
     def gen(self) -> str:
         paths = ["."]
