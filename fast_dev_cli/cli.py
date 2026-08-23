@@ -1200,6 +1200,7 @@ class LintCode(DryRun):
         strict: bool = False,
         ty: bool = False,
         fix: bool = True,
+        unsafe: bool = False,
     ) -> None:
         self.args = args
         self.check_only = check_only
@@ -1213,6 +1214,7 @@ class LintCode(DryRun):
         self._strict = strict
         self._ty = _ensure_bool(ty)
         self._fix = _ensure_bool(fix)
+        self._unsafe = _ensure_bool(unsafe)
         super().__init__(_exit, dry)
 
     @staticmethod
@@ -1260,6 +1262,7 @@ class LintCode(DryRun):
         mypy_strict: bool = False,
         prefer_ty: bool = False,
         ruff_check_fix: bool = True,
+        unsafe_fixes: bool = False,
     ) -> str:
         path_args = shlex.split(paths) if isinstance(paths, str) else paths
         if not path_args:
@@ -1279,6 +1282,8 @@ class LintCode(DryRun):
             and (not load_bool("NO_FIX") and not load_bool("FASTDEVCLI_NO_FIX"))
         ):
             ruff_check += " --fix"
+            if unsafe_fixes:
+                ruff_check += " --unsafe-fixes"
         tools = ["ruff format", ruff_check, "mypy"]
         if check_only:
             tools[0] += " --check"
@@ -1421,6 +1426,7 @@ class LintCode(DryRun):
             mypy_strict=self._strict,
             prefer_ty=self._ty,
             ruff_check_fix=self._fix,
+            unsafe_fixes=self._unsafe,
         )
 
 
@@ -1441,6 +1447,7 @@ def lint(
     strict: bool = False,
     ty: bool = False,
     fix: bool = True,
+    unsafe: bool = False,
 ) -> None:
     if files is None:
         files = parse_files(sys.argv[1:])
@@ -1459,6 +1466,7 @@ def lint(
         strict=strict,
         ty=ty,
         fix=fix,
+        unsafe=unsafe,
     ).run()
 
 
@@ -1519,6 +1527,7 @@ def make_style(
     strict: bool = Option(False, help="Whether run mypy with --strict"),
     ty: bool = Option(False, help="Whether use ty instead of mypy"),
     fix: bool | None = Option(None, help="Whether ruff check with --fix"),
+    unsafe: bool = Option(False, help="Whether ruff check with --unsafe-fixes"),
     auto_bandit: bool | None = Option(
         None, help="Whether to run bandit if `[tool.bandit]` in pyproject.toml"
     ),
@@ -1537,6 +1546,7 @@ def make_style(
     up = _ensure_bool(up)
     sim = _ensure_bool(sim)
     strict = _ensure_bool(strict)
+    unsafe = _ensure_bool(unsafe)
     kwargs = {"dry": dry, "skip_mypy": skip, "dmypy": dmypy, "bandit": bandit}
     if _ensure_bool(check_only):
         run = check
@@ -1544,7 +1554,7 @@ def make_style(
         prefix = _ensure_bool(prefix)
         if fix is None or not isinstance(fix, bool):
             fix = load_bool("FASTDEVCLI_FIX", True)
-        run = functools.partial(lint, prefix=prefix, fix=fix)
+        run = functools.partial(lint, prefix=prefix, fix=fix, unsafe=unsafe)
     run(files, tool=tool, up=up, sim=sim, strict=strict, ty=ty, **kwargs)
 
 
