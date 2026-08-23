@@ -34,11 +34,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           activate-environment: true
           enable-cache: true
-      - uses: astral-sh/ruff-action@v3
+          version: "latest"
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+      - name: Install ruff without running check or format
+        uses: astral-sh/ruff-action@v4.1.0
+        with:
+          args: "--version"
       - uses: extractions/setup-just@v4  # Or: uv tool install rust-just
       - name: Setup PDM by uv
         run: |
