@@ -1767,7 +1767,12 @@ def _load_fastapi_entrypoint() -> str:
         except EnvError:
             return ""
         doc = tomllib.loads(toml_text)
-        return doc["tool"]["fastapi"]["entrypoint"]
+        entrypoint = doc["tool"]["fastapi"]["entrypoint"]
+        if isinstance(entrypoint, str):
+            return entrypoint
+        secho(
+            f"Unexpected value type: tool.fastapi.{entrypoint=}", fg=typer.colors.YELLOW
+        )
     return ""
 
 
