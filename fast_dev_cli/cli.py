@@ -1346,6 +1346,11 @@ class LintCode(DryRun):
             cmd += " && " + command
         return cmd
 
+    @staticmethod
+    def global_mypy_installed(local_bin: Path) -> bool:
+        # Make it easy to mock for testing
+        return local_bin.joinpath("mypy").exists()
+
     @classmethod
     def _parse_mypy(
         cls,
@@ -1356,7 +1361,7 @@ class LintCode(DryRun):
         global_mypy: bool,
     ) -> tuple[bool, bool]:
         local_bin = Path.home().joinpath(".local/bin")
-        if local_bin.joinpath("mypy").exists():
+        if cls.global_mypy_installed(local_bin):
             global_mypy = True
             mypy_opt = "--python-executable=.venv/bin/python"
             for i, t in enumerate(tools):

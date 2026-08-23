@@ -361,6 +361,7 @@ def test_lint_without_ruff_installed(mocker, mock_no_dmypy):
 def test_lint_without_mypy_installed(mocker, mock_no_dmypy):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     mocker.patch("fast_dev_cli.cli.LintCode.missing_mypy_exec", return_value=True)
+    mocker.patch("fast_dev_cli.cli.LintCode.global_mypy_installed", return_value=False)
     with capture_stdout() as stream:
         lint(".", dry=True)
     output = stream.getvalue()
