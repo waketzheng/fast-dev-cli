@@ -1304,53 +1304,9 @@ class LintCode(DryRun):
         requires_mypy = any(tool.startswith("mypy") for tool in tools)
         global_mypy = False
         if requires_mypy:
-            # TODO: move this long logic to a single function
-            local_bin = Path.home().joinpath(".local/bin")
-            if local_bin.joinpath("mypy").exists():
-                global_mypy = True
-                mypy_opt = "--python-executable=.venv/bin/python"
-                for i, t in enumerate(tools):
-                    if t.startswith("mypy"):
-                        if mypy_opt not in t:
-                            tools[i] = t + " " + mypy_opt
-                        break
-            if not should_run_by_tool:
-                if is_venv() and Path(sys.argv[0]).parent != local_bin:
-                    # Virtual environment activated and fast-dev-cli is installed in it
-                    if not ruff_exists:
-                        should_run_by_tool = True
-                        command = "pipx install ruff"
-                        if shutil.which("pipx") is None:
-                            ensure_pipx = (
-                                "pip install --user pipx\n  pipx ensurepath\n  "
-                            )
-                            command = ensure_pipx + command
-                        elif prefer_uv_tool():
-                            command = "uv tool install ruff"
-                        yellow_warn(
-                            "You may need to run the following command"
-                            f" to install ruff:\n\n  {command}\n"
-                        )
-                    elif global_mypy:
-                        should_run_by_tool = True
-                    elif cls.missing_mypy_exec():
-                        should_run_by_tool = True
-                        if check_call('python -c "import fast_dev_cli"'):
-                            command = "python -m pip install -U mypy"
-                            yellow_warn(
-                                "You may need to run the following command"
-                                f" to install lint tools:\n\n  {command}\n"
-                            )
-                elif tool == ToolOption.default:
-                    root = Project.get_work_dir(allow_cwd=True)
-                    if py := shutil.which("python"):
-                        try:
-                            Path(py).relative_to(root)
-                        except ValueError:
-                            # Virtual environment not activated
-                            should_run_by_tool = True
-                else:
-                    should_run_by_tool = True
+            should_run_by_tool = cls._parse_mypy(
+                tool, should_run_by_tool, ruff_exists, tools
+            )
         if should_run_by_tool and tool:
             if tool == ToolOption.default:
                 tool = Project.get_manage_tool() or ""
@@ -1389,6 +1345,56 @@ class LintCode(DryRun):
             command += f" -r {quoted_paths}"
             cmd += " && " + command
         return cmd
+
+    @classmethod
+    def _parse_mypy(
+        cls, tool: str, should_run_by_tool: bool, ruff_exists: bool, tools: list[str]
+    ) -> bool:
+        local_bin = Path.home().joinpath(".local/bin")
+        if local_bin.joinpath("mypy").exists():
+            global_mypy = True
+            mypy_opt = "--python-executable=.venv/bin/python"
+            for i, t in enumerate(tools):
+                if t.startswith("mypy"):
+                    if mypy_opt not in t:
+                        tools[i] = t + " " + mypy_opt
+                    break
+        if not should_run_by_tool:
+            if is_venv() and Path(sys.argv[0]).parent != local_bin:
+                # Virtual environment activated and fast-dev-cli is installed in it
+                if not ruff_exists:
+                    should_run_by_tool = True
+                    command = "pipx install ruff"
+                    if shutil.which("pipx") is None:
+                        ensure_pipx = "pip install --user pipx\n  pipx ensurepath\n  "
+                        command = ensure_pipx + command
+                    elif prefer_uv_tool():
+                        command = "uv tool install ruff"
+                    yellow_warn(
+                        "You may need to run the following command"
+                        f" to install ruff:\n\n  {command}\n"
+                    )
+                elif global_mypy:
+                    should_run_by_tool = True
+                elif cls.missing_mypy_exec():
+                    should_run_by_tool = True
+                    if check_call('python -c "import fast_dev_cli"'):
+                        command = "python -m pip install -U mypy"
+                        yellow_warn(
+                            "You may need to run the following command"
+                            f" to install lint tools:\n\n  {command}\n"
+                        )
+            elif tool == ToolOption.default:
+                root = Project.get_work_dir(allow_cwd=True)
+                if py := shutil.which("python"):
+                    try:
+                        Path(py).relative_to(root)
+                    except ValueError:
+                        # Virtual environment not activated
+                        should_run_by_tool = True
+            else:
+                should_run_by_tool = True
+        return should_run_by_tool
 
     def gen(self) -> str:
         paths = ["."]
