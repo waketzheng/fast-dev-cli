@@ -4,6 +4,9 @@
 
 ### [0.25.6]*(Unrelease)*
 
+#### Added
+- feat: support `fast lint --unsafe`
+
 ### [0.25.5](../../releases/tag/v0.25.5) - 2026-08-13
 
 #### Changed
