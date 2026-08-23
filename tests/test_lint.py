@@ -24,11 +24,6 @@ from .utils import capture_stdout, chdir, mock_sys_argv
 
 
 @pytest.fixture
-def mock_no_fix(monkeypatch):
-    monkeypatch.setenv("NO_FIX", "1")
-
-
-@pytest.fixture
 def mock_skip_mypy(monkeypatch):
     monkeypatch.setenv("SKIP_MYPY", "1")
 
@@ -190,6 +185,8 @@ def _fast_check():
 
 
 def test_lint_cmd(mock_no_dmypy, monkeypatch):
+    assert run_and_echo("fast lint") == 0
+    assert run_and_echo("fast lint --unsafe --skip-mypy") == 0
     run = "pdm run "
     lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
     command = capture_cmd_output(f"{lint_cmd} . --dry")
@@ -325,6 +322,9 @@ def test_lint_class(mocker, mock_no_dmypy):
 
 def test_lint_func(mocker, mock_no_dmypy, mock_ty_0):
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
+    with capture_stdout() as stream:
+        lint(["lint"], unsafe=True, dry=True)
+    assert "--unsafe-fixes" in stream.getvalue()
     expected = LINT_CMD
     if shutil.which("mypy") is None:
         prefix = "uv run " if platform.system() == "Windows" else ".venv/bin/"
@@ -372,7 +372,10 @@ def test_lint_without_mypy_installed(mocker, mock_no_dmypy):
     assert f"{tip}:\n\n  {cmd}" in output
 
 
-def test_no_fix(mock_no_fix, mocker, mock_no_dmypy):
+def test_no_fix(monkeypatch, mocker, mock_no_dmypy):
+    assert "--unsafe-fixes" in LintCode(".", unsafe=True).gen()
+    monkeypatch.setenv("NO_FIX", "1")
+    assert "--unsafe-fixes" not in LintCode(".", unsafe=True).gen()
     mocker.patch("fast_dev_cli.cli.is_venv", return_value=True)
     expected = LINT_CMD.replace(" --fix", "")
     if shutil.which("mypy") is None:
