@@ -79,12 +79,6 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
       - uses: actions/checkout@v7
       - name: Setup Python
         id: setup-python
@@ -92,8 +86,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v7
-      - uses: astral-sh/ruff-action@v3
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          version: "latest"
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+      - name: Install ruff without running check or format
+        uses: astral-sh/ruff-action@v4.1.0
+        with:
+          args: "--version"
       - name: Setup PDM by uv
         run: |
           uv tool install pdm --with pdm-plugin-i
