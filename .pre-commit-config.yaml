@@ -15,7 +15,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.50.1
+    rev: v1.50.2
     hooks:
       - id: typos
 
@@ -23,12 +23,37 @@ repos:
     hooks:
       - id: format
         name: check and reformat by ruff/ty/bandit
-        entry: pdm run fast lint --ty --bandit
+        entry: pdm run fast lint --ty --auto-bandit
         language: system
         types: [python]
 
       - id: pypi
         name: ensure pypi for uv lock
-        files: './^uv.lock'
         entry: pdm run fast pypi --slim
+        pass_filenames: false
         language: system
+
+      - id: mypy
+        name: Check type hints by mypy
+        entry: just mypy
+        language: system
+        pass_filenames: false
+        groups: [check]
+        stages: [manual]
+
+      - id: build
+        name: Build sdist by uv
+        entry: uv build
+        language: system
+        pass_filenames: false
+        groups: [check]
+        stages: [manual]
+
+      - id: twine
+        name: Check sdist by twine
+        entry: pdm run twine check dist/*
+        language: system
+        pass_filenames: false
+        priority: 20
+        groups: [check]
+        stages: [manual]

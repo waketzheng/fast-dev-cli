@@ -48,4 +48,4 @@ def test_run_by_subprocess(capsys):
         run_by_subprocess("not-exit-command")
     out = capsys.readouterr().out
     assert "Command not found: not-exit-command" in out
-    assert not run_by_subprocess(f"cat {__file__}|grep xxx")
+    assert run_by_subprocess(f"cat {__file__}|grep xxx") is None
