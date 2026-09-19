@@ -2,7 +2,14 @@
 
 ## 0.25
 
-### [0.25.6]*(Unrelease)*
+### [0.25.8]*(Unrelease)*
+
+### [0.25.7](../../releases/tag/v0.25.7) - 2026-09-19
+
+#### Added
+- feat: support `fast vi`
+
+### [0.25.6](../../releases/tag/v0.25.6) - 2026-08-23
 
 #### Added
 - feat: support `fast lint --unsafe`
