@@ -2241,6 +2241,65 @@ def pypi(
     UvPypi(p, dry, verbose, quiet, slim, reverse).run()
 
 
+class SuffixParser:
+    usually = ("py", "md", "json", "txt", "proto")
+
+    @classmethod
+    def fill(cls, files: list[str]) -> list[str]:
+        names = []
+        for f in files:
+            if f.endswith("."):
+                f = cls.guess(f)
+            else:
+                p = Path(f)
+                if not Path(f).suffix and not p.exists():
+                    f = cls.guess(f, ".")
+            names.append(f)
+        return names
+
+    @classmethod
+    def guess(cls, file: str, sep: str = "") -> str:
+        for s in cls.usually:
+            f = file + sep + s
+            if os.path.exists(f):
+                return f
+        p = Path(file)
+        d = p.parent
+        ff = list(d.glob(p.name + sep + "*"))
+        match len(ff):
+            case 0:
+                ...
+            case 1:
+                return ff[0].as_posix()
+            case _:
+                typer.echo(f"Found several match files: {ff}")
+        return file
+
+
+@cli.command()
+def vi(
+    files: Annotated[list[str], typer.Argument()],
+    dry: Annotated[
+        bool, Option(help="Only print, not really run shell command")
+    ] = False,
+    vertical: bool | None = Option(None, "-O", help="Open vertically"),
+    horizon: bool | None = Option(None, "-o", help="Open horizontally"),
+    guess: Annotated[
+        bool, Option(help="Whether guess file suffix if not exist")
+    ] = True,
+) -> None:
+    cmd = "vim "
+    if len(files) > 1:
+        if horizon:
+            cmd += "-o "
+        elif vertical is not False:
+            cmd += "-O "
+    if guess:
+        files = SuffixParser.fill(files)
+    cmd += " ".join(files)
+    exit_if_run_failed(cmd, dry=dry)
+
+
 def version_callback(value: bool) -> None:
     if value:
         echo("Fast Dev Cli Version: " + typer.style(__version__, bold=True))
