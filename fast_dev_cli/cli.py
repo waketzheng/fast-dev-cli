@@ -2225,7 +2225,7 @@ class UvPypi(DryRun):
 
 @cli.command()
 def pypi(
-    file: str | None = typer.Argument(default=None),
+    file: Annotated[str | None, typer.Argument()] = None,
     dry: bool = DryOption,
     verbose: bool = False,
     quiet: bool = False,
@@ -2282,8 +2282,8 @@ def vi(
     dry: Annotated[
         bool, Option(help="Only print, not really run shell command")
     ] = False,
-    vertical: bool | None = Option(None, "-O", help="Open vertically"),
-    horizon: bool | None = Option(None, "-o", help="Open horizontally"),
+    vertical: Annotated[bool | None, Option(..., "-O", help="Open vertically")] = None,
+    horizon: Annotated[bool | None, Option(..., "-o", help="Open horizontally")] = None,
     guess: Annotated[
         bool, Option(help="Whether guess file suffix if not exist")
     ] = True,
@@ -2308,14 +2308,16 @@ def version_callback(value: bool) -> None:
 
 @cli.callback()
 def common(
-    version: bool = Option(
-        None,
-        "--version",
-        "-V",
-        callback=version_callback,
-        is_eager=True,
-        help="Show the version of this tool",
-    ),
+    version: Annotated[
+        bool | None,
+        Option(
+            ...,
+            *("--version", "-V"),
+            callback=version_callback,
+            is_eager=True,
+            help="Show the version of this tool",
+        ),
+    ] = None,
 ) -> None: ...
 
 
