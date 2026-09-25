@@ -1269,7 +1269,11 @@ class LintCode(DryRun):
             path_args = ["."]
         quoted_paths = _join_shell_args(path_args)
         if path_args != ["."] and all(i.endswith(".html") for i in path_args):
-            return f"prettier -w {quoted_paths}"
+            prettier = "prettier"
+            if is_windows() and (abspath := shutil.which(prettier)):
+                # If prettier is installed by `npm i -g`
+                prettier = Path(abspath).name  # prettier.CMD
+            return f"{prettier} -w {quoted_paths}"
         ruff_rules = ["I", "B"]
         if ruff_check_sim and not load_bool("FASTDEVCLI_NO_SIM"):
             ruff_rules.append("SIM")
@@ -2242,7 +2246,7 @@ def pypi(
 
 
 class SuffixParser:
-    usually = ("py", "md", "json", "txt", "proto")
+    usually = ("py", "md", "json", "txt", "proto", "toml")
 
     @classmethod
     def fill(cls, files: list[str]) -> list[str]:
