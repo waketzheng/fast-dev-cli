@@ -55,10 +55,11 @@ def _prepare_package(
             text = text.replace(f'"{package_path.name}"', f'"{package_name}"')
         toml_file.write_text(text + CONF)
         if package_path.name != package_name:
+            src, dst = package_path.name, package_name
             if is_src_layout:
-                shutil.move(src_dir / package_path.name, src_dir / package_name)
-            else:
-                shutil.move(package_path.name, package_name)
+                src, dst = src_dir / src, src_dir / dst
+            if Path(src).exists():
+                shutil.move(src, dst)
         init_file.write_text('__version__ = "0.0.1"\n')
         yield init_file
 
