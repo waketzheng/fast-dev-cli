@@ -2,7 +2,12 @@
 
 ## 0.25
 
-### [0.25.9]*(Unrelease)*
+### [0.25.10]*(Unrelease)*
+
+### [0.25.9](../../releases/tag/v0.25.9) - 2026-09-26
+
+#### Added
+- feat: support `fast test /path/to/file`
 
 ### [0.25.8](../../releases/tag/v0.25.8) - 2026-09-26
 
