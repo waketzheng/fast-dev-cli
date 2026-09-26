@@ -2,7 +2,9 @@
 
 ## 0.25
 
-### [0.25.8]*(Unrelease)*
+### [0.25.9]*(Unrelease)*
+
+### [0.25.8](../../releases/tag/v0.25.8) - 2026-09-26
 
 #### Fixes
 - fix: `fast lint xxx.html` can not find prettier that installed by `npm i -g` on Windows
