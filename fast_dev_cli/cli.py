@@ -1658,7 +1658,9 @@ def _should_run_test_script(path: Path = Path("scripts")) -> Path | None:
     return None
 
 
-def test(dry: bool, ignore_script: bool = False) -> None:
+def test(
+    dry: bool, ignore_script: bool = False, files: list[Path] | None = None
+) -> None:
     cwd = Path.cwd()
     root = Project.get_work_dir(cwd=cwd, allow_cwd=True)
     script_dir = root / "scripts"
@@ -1672,6 +1674,8 @@ def test(dry: bool, ignore_script: bool = False) -> None:
             cmd = f"cd {_quote_shell_arg(root)} && " + cmd
     else:
         cmd = 'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
+        if files:
+            cmd = "pytest -s " + " ".join(i.as_posix() for i in files)
         if not is_venv() or not check_call("coverage --version"):
             sep = " && "
             prefix = f"{tool} run " if (tool := Project.get_manage_tool()) else ""
@@ -1681,11 +1685,12 @@ def test(dry: bool, ignore_script: bool = False) -> None:
 
 @cli.command(name="test")
 def coverage_test(
+    files: Annotated[list[Path] | None, typer.Argument()] = None,
     dry: bool = DryOption,
     ignore_script: bool = Option(False, "--ignore-script", "-i"),
 ) -> None:
     """Run unittest by pytest and report coverage"""
-    return test(dry, ignore_script)
+    return test(dry, ignore_script, files=files)
 
 
 def _not_a_distribution() -> bool:

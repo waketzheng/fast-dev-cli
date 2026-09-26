@@ -125,3 +125,12 @@ def test_fast_test(mocker, capsys):
         'coverage run -m pytest -s && coverage report --omit="tests/*" -m'
         in capsys.readouterr().out
     )
+
+
+def test_fast_test_files(mocker, capsys):
+    output = capture_cmd_output("fast test --dry --ignore-script tests/test_vi.py")
+    assert "pytest -s tests/test_vi.py" in output
+    output = capture_cmd_output(
+        "fast test --dry -i tests/test_version.py tests/test_tag.py"
+    )
+    assert "pytest -s tests/test_version.py tests/test_tag.py" in output
