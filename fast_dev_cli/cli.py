@@ -283,7 +283,7 @@ def _get_frontend_version() -> tuple[Path, str] | None:
     try:
         from asynctor.jsons import json_loads
     except ImportError:
-        from json import loads as json_loads  # type:ignore[assignment]
+        from json import loads as json_loads  # type:ignore[no-redef]
     content = frontend_version_file.read_bytes()
     metadata: dict[str, str] = json_loads(content)  # type:ignore
     try:
@@ -1270,7 +1270,11 @@ class LintCode(DryRun):
         quoted_paths = _join_shell_args(path_args)
         if path_args != ["."] and all(i.endswith(".html") for i in path_args):
             prettier = "prettier"
-            if is_windows() and (abspath := shutil.which(prettier)):
+            abspath = shutil.which(prettier)
+            if abspath is None and (npx := shutil.which("npx")):
+                npx = Path(npx).name.removesuffix(".exe")
+                prettier = f"{npx} prettier"
+            elif is_windows() and abspath:
                 # If prettier is installed by `npm i -g`
                 prettier = Path(abspath).name  # prettier.CMD
             return f"{prettier} -w {quoted_paths}"
