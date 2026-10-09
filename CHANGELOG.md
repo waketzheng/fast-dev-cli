@@ -2,7 +2,12 @@
 
 ## 0.25
 
-### [0.25.10]*(Unrelease)*
+### [0.25.11]*(Unrelease)*
+
+### [0.25.10](../../releases/tag/v0.25.10) - 2026-10-09
+
+#### Added
+- feat: auto add `npx` prefix for prettier
 
 ### [0.25.9](../../releases/tag/v0.25.9) - 2026-09-26
 
