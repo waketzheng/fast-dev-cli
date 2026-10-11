@@ -1,8 +1,14 @@
 # ChangeLog
 
-## 0.25
+## 0.26
 
-### [0.25.11]*(Unrelease)*
+### [0.26.1]*(Unrelease)*
+
+### [0.26.0](../../releases/tag/v0.26.0) - 2026-10-11
+#### Added
+- feat: `fast reverse`
+
+## 0.25
 
 ### [0.25.10](../../releases/tag/v0.25.10) - 2026-10-09
 

@@ -2251,7 +2251,27 @@ def pypi(
     ):
         yellow_warn(f"{p.name!r} not found!")
         return
+    if not verbose:
+        verbose = dry and not quiet
     UvPypi(p, dry, verbose, quiet, slim, reverse).run()
+
+
+@cli.command()
+def reverse(
+    file: Annotated[str | None, typer.Argument()] = None,
+    dry: bool = DryOption,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> None:
+    """Change registry of uv.lock to be pypi.org"""
+    if not (p := Path(_ensure_str(file) or "uv.lock")).exists() and not (
+        (p := Project.get_work_dir() / p.name).exists()
+    ):
+        yellow_warn(f"{p.name!r} not found!")
+        return
+    if not verbose:
+        verbose = dry and not quiet
+    UvPypi(p, dry, verbose, quiet, reverse=True).run()
 
 
 class SuffixParser:
