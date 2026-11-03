@@ -211,7 +211,7 @@ def test_lint_cmd(mock_no_dmypy, monkeypatch):
     assert "ty check" in output
 
 
-def test_lint_html():
+def test_lint_html(mocker):
     run = "pdm run "
     lint_cmd = f"{run}python fast_dev_cli/cli.py lint"
     command = capture_cmd_output(f"{lint_cmd} index.html --dry")
@@ -224,8 +224,19 @@ def test_lint_html():
     cmd = "fast lint index.html flv.html --dry"
     assert "prettier -w index.html flv.html" in capture_cmd_output(cmd)
     assert "prettier -w index.html flv.html" in capture_cmd_output("pdm run " + cmd)
+    mocker.patch.object(shutil, "which", return_value="prettier")
     assert LintCode.to_cmd("index.html") == "prettier -w index.html"
     assert LintCode.to_cmd("index.html flv.html") == "prettier -w index.html flv.html"
+
+
+def test_lint_html_without_prettier(mocker):
+    mocker.patch.object(
+        shutil, "which", side_effect=lambda x: None if x == "prettier" else x
+    )
+    assert LintCode.to_cmd("index.html") == "npx prettier -w index.html"
+    assert (
+        LintCode.to_cmd("index.html flv.html") == "npx prettier -w index.html flv.html"
+    )
 
 
 def test_lint_quotes_paths(mocker):

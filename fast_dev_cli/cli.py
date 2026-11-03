@@ -1276,7 +1276,7 @@ class LintCode(DryRun):
                 prettier = f"{npx} prettier"
             elif is_windows() and abspath:
                 # If prettier is installed by `npm i -g`
-                prettier = Path(abspath).name  # prettier.CMD
+                prettier = Path(abspath).name.removesuffix(".exe")  # prettier.CMD
             return f"{prettier} -w {quoted_paths}"
         ruff_rules = ["I", "B"]
         if ruff_check_sim and not load_bool("FASTDEVCLI_NO_SIM"):
