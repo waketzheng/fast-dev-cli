@@ -463,35 +463,34 @@ def test_not_in_root(mocker, mock_no_dmypy, mock_ty_0):
         assert cmd == expected
 
 
-def test_get_manage_tool(tmp_path):
-    with chdir(tmp_path):
-        try:
-            Project.get_manage_tool()
-        except Exception as e:
-            assert e.__class__.__name__ == "EnvError"
-        Path(TOML_FILE).write_text("[tool.poetry]")
-        assert Project.get_manage_tool() == "poetry"
-        Path(TOML_FILE).write_text("[tool.pdm]")
-        assert Project.get_manage_tool() == "pdm"
-        Path(TOML_FILE).write_text("[tool.uv]")
-        assert Project.get_manage_tool() == "uv"
+def test_get_manage_tool(tmp_work_dir):
+    try:
+        Project.get_manage_tool()
+    except Exception as e:
+        assert e.__class__.__name__ == "EnvError"
+    Path(TOML_FILE).write_text("[tool.poetry]")
+    assert Project.get_manage_tool() == "poetry"
+    Path(TOML_FILE).write_text("[tool.pdm]")
+    assert Project.get_manage_tool() == "pdm"
+    Path(TOML_FILE).write_text("[tool.uv]")
+    assert Project.get_manage_tool() == "uv"
 
 
 class TestGetPackageName:
     project = "hello-world"
 
-    def test_get_package_name(self, tmp_path):
+    def test_get_package_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         project_dir = tmp_path / self.project
         project_dir.mkdir()
         module_name = project_dir.name.replace("-", "_").replace(" ", "_")
-        with chdir(project_dir):
-            Path(TOML_FILE).touch()
-            Path(module_name).mkdir()
-            assert LintCode.get_package_name() == module_name
-            Path("src").mkdir()
-            assert LintCode.get_package_name() == module_name
-            shutil.rmtree(module_name)
-            assert LintCode.get_package_name() == "src"
+        monkeypatch.chdir(project_dir)
+        Path(TOML_FILE).touch()
+        Path(module_name).mkdir()
+        assert LintCode.get_package_name() == module_name
+        Path("src").mkdir()
+        assert LintCode.get_package_name() == module_name
+        shutil.rmtree(module_name)
+        assert LintCode.get_package_name() == "src"
 
 
 class TestGetPackageNameWithSpace(TestGetPackageName):
