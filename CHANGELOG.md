@@ -2,9 +2,15 @@
 
 ## 0.26
 
-### [0.26.1]*(Unrelease)*
+### [0.26.2]*(Unrelease)*
+
+### [0.26.1](../../releases/tag/v0.26.1) - 2026-11-04
+
+#### Fixes
+- fix: git status diff clean message
 
 ### [0.26.0](../../releases/tag/v0.26.0) - 2026-10-11
+
 #### Added
 - feat: `fast reverse`
 
