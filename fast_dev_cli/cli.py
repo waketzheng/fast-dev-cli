@@ -1268,7 +1268,9 @@ class LintCode(DryRun):
         if not path_args:
             path_args = ["."]
         quoted_paths = _join_shell_args(path_args)
-        if path_args != ["."] and all(i.endswith(".html") for i in path_args):
+        if path_args != ["."] and all(
+            i.endswith((".html", ".js", ".vue")) for i in path_args
+        ):
             prettier = "prettier"
             abspath = shutil.which(prettier)
             if abspath is None and (npx := shutil.which("npx")):
