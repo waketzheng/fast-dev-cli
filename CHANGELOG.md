@@ -2,7 +2,12 @@
 
 ## 0.26
 
-### [0.26.2]*(Unrelease)*
+### [0.26.3]*(Unrelease)*
+
+### [0.26.2](../../releases/tag/v0.26.2) - 2026-11-22
+
+#### Fixes
+- fix: use `prettier` when `fast lint` target is one or come .js/.vue files
 
 ### [0.26.1](../../releases/tag/v0.26.1) - 2026-11-04
 
