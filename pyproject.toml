@@ -90,7 +90,7 @@ omit = ["tests/*", "fast_dev_cli/__main__.py"]
 [tool.ty.src]
 exclude = ['*.bak']
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 unused-ignore-comment = "ignore"
 unused-type-ignore-comment = "ignore"
 [tool.ty.environment]
