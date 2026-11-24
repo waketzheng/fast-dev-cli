@@ -145,7 +145,7 @@ test = 'just test {args}'
 lint = 'just lint {args}'
 check = 'just check {args}'
 tag = "just tag {args}"
-bump = "just bump patch --commit {args}"
+bump = "just bump {args}"
 ci = {composite = ["deps", "check", "test"]}
 start = {composite = ["prek install", "deps"]}
 style = {composite = ["ruff format", "ruff check --fix --unsafe-fixes {args}"]}
