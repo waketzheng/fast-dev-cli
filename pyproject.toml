@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development",
@@ -40,7 +41,7 @@ standard = [
 all = [
     "emoji >=2.12.1",
     "packaging >=20.5",
-    "bandit>=1.7.9",
+    "bandit >=1.7.9",
     "pytest-mock >=3.14.0",
     "fast-dev-cli[standard]"
 ]
@@ -138,13 +139,13 @@ exclude_dirs = ["tests", "scripts", "examples", ".venv"]
 up = 'just up {args}'
 tree = 'pdm list --tree {args}'
 deps = 'just deps {args}'
-prod = 'pdm install --prod --frozen {args}'
+prod = 'just deps --prod --frozen {args}'
 fresh = {composite = ["up", "deps"]}
-test = 'pdm run fast test {args}'
+test = 'just test {args}'
 lint = 'just lint {args}'
 check = 'just check {args}'
-tag = "pdm run fast tag {args}"
-bump = "pdm run fast bump patch --commit {args}"
+tag = "just tag {args}"
+bump = "just bump patch --commit {args}"
 ci = {composite = ["deps", "check", "test"]}
 start = {composite = ["prek install", "deps"]}
 style = {composite = ["ruff format", "ruff check --fix --unsafe-fixes {args}"]}
